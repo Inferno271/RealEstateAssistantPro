@@ -4,6 +4,15 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.realestateassistant.pro.data.remote.FirebaseAuthManager
 import com.realestateassistant.pro.data.remote.FirebaseDatabaseManager
+import com.realestateassistant.pro.data.repository.AppointmentRepositoryImpl
+import com.realestateassistant.pro.data.repository.AuthRepositoryImpl
+import com.realestateassistant.pro.data.repository.ClientRepositoryImpl
+import com.realestateassistant.pro.data.repository.PropertyRepositoryImpl
+import com.realestateassistant.pro.domain.repository.AppointmentRepository
+import com.realestateassistant.pro.domain.repository.AuthRepository
+import com.realestateassistant.pro.domain.repository.ClientRepository
+import com.realestateassistant.pro.domain.repository.PropertyRepository
+import com.realestateassistant.pro.domain.usecase.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,21 +45,82 @@ object AppModule {
 
     /**
      * Предоставляет экземпляр FirebaseAuthManager
-     * @param auth экземпляр FirebaseAuth
      * @return FirebaseAuthManager instance
      */
     @Provides
     @Singleton
-    fun provideFirebaseAuthManager(auth: FirebaseAuth): FirebaseAuthManager = 
-        FirebaseAuthManager()
+    fun provideFirebaseAuthManager(): FirebaseAuthManager = FirebaseAuthManager()
 
     /**
      * Предоставляет экземпляр FirebaseDatabaseManager
-     * @param database экземпляр FirebaseDatabase
      * @return FirebaseDatabaseManager instance
      */
     @Provides
     @Singleton
-    fun provideFirebaseDatabaseManager(database: FirebaseDatabase): FirebaseDatabaseManager = 
-        FirebaseDatabaseManager()
+    fun provideFirebaseDatabaseManager(): FirebaseDatabaseManager = FirebaseDatabaseManager()
+
+    @Provides
+    @Singleton
+    fun provideAuthRepository(
+        firebaseAuthManager: FirebaseAuthManager
+    ): AuthRepository = AuthRepositoryImpl(firebaseAuthManager)
+
+    @Provides
+    @Singleton
+    fun providePropertyRepository(
+        firebaseDatabaseManager: FirebaseDatabaseManager
+    ): PropertyRepository = PropertyRepositoryImpl(firebaseDatabaseManager)
+
+    @Provides
+    @Singleton
+    fun provideClientRepository(
+        firebaseDatabaseManager: FirebaseDatabaseManager
+    ): ClientRepository = ClientRepositoryImpl(firebaseDatabaseManager)
+
+    @Provides
+    @Singleton
+    fun provideAppointmentRepository(
+        firebaseDatabaseManager: FirebaseDatabaseManager
+    ): AppointmentRepository = AppointmentRepositoryImpl(firebaseDatabaseManager)
+
+    @Provides
+    @Singleton
+    fun providePropertyUseCases(repository: PropertyRepository): PropertyUseCases {
+        return PropertyUseCases(
+            addProperty = AddProperty(repository),
+            updateProperty = UpdateProperty(repository),
+            deleteProperty = DeleteProperty(repository),
+            getProperty = GetProperty(repository),
+            getAllProperties = GetAllProperties(repository)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideClientUseCases(repository: ClientRepository): ClientUseCases {
+        return ClientUseCases(
+            addClient = AddClient(repository),
+            updateClient = UpdateClient(repository),
+            deleteClient = DeleteClient(repository),
+            getClient = GetClient(repository),
+            getAllClients = GetAllClients(repository),
+            getClientsByRentalType = GetClientsByRentalType(repository)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideAppointmentUseCases(repository: AppointmentRepository): AppointmentUseCases {
+        return AppointmentUseCases(
+            createAppointment = CreateAppointment(repository),
+            updateAppointment = UpdateAppointment(repository),
+            deleteAppointment = DeleteAppointment(repository),
+            getAppointment = GetAppointment(repository),
+            getAllAppointments = GetAllAppointments(repository),
+            getAppointmentsByProperty = GetAppointmentsByProperty(repository),
+            getAppointmentsByClient = GetAppointmentsByClient(repository),
+            getAppointmentsByDate = GetAppointmentsByDate(repository),
+            getAppointmentsByDateRange = GetAppointmentsByDateRange(repository)
+        )
+    }
 } 
