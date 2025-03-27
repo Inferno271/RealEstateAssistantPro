@@ -5,7 +5,6 @@ package com.realestateassistant.pro.domain.model
  *
  * Общие поля (для обоих вариантов аренды):
  * - id: идентификатор объекта.
- * - title: название объекта.
  * - propertyType: тип недвижимости.
  * - separateEntrance: наличие отдельного входа.
  * - view: вид объекта.
@@ -52,54 +51,128 @@ package com.realestateassistant.pro.domain.model
  * - maxGuests: максимальное количество гостей.
  * - shortTermConditions: условия краткосрочной аренды.
  * - discounts: информация о скидках и акциях.
+ *
+ * Дополнительные поля для посуточной аренды:
+ * - instantBooking: возможность мгновенного бронирования.
+ * - smokingAllowed: разрешение на курение.
+ * - petsAllowed: разрешение на животных.
+ * - partiesAllowed: разрешение на мероприятия.
+ * - childrenAllowed: разрешение на детей.
+ * - minimumAge: минимальный возраст гостей.
+ * - documentsRequired: требование предоставления документов.
+ * - depositRequired: требование предоставления депозита.
+ * - cleaningIncluded: включение уборки в стоимость.
+ * - cleaningFee: стоимость уборки.
+ * - bedrooms: количество спален.
+ * - beds: количество кроватей.
+ * - bathrooms: количество ванных комнат.
+ * - amenities: удобства и услуги.
+ * - houseRules: правила проживания.
+ * - cancellationPolicy: политика отмены бронирования.
+ * - checkInInstructions: инструкции для заезда.
+ * - nearbyAttractions: достопримечательности вблизи.
+ * - transportationAccess: транспортное сообщение.
+ * - weekendPrice: стоимость на выходные.
+ * - holidayPrice: стоимость в праздничные дни.
+ * - weeklyDiscount: скидка на неделю.
+ * - monthlyDiscount: скидка на месяц.
+ * - seasonalPricing: сезонное ценообразование.
  */
 
 data class Property(
     val id: String = "",
-    val title: String = "",
+    
+    // Контактная информация
+    val contactName: String = "",
+    val contactPhone: List<String> = emptyList(),
+    val additionalContactInfo: String? = null,
+
+    // Общая информация
     val propertyType: String = "",
-    val separateEntrance: Boolean = false,
-    val view: String = "",
     val address: String = "",
-    val housingComplex: String? = null,
-    val complexClass: String? = null,
     val district: String = "",
+    val nearbyObjects: List<String> = emptyList(),
+    val views: List<String> = emptyList(),
     val area: Double = 0.0,
     val roomsCount: Int = 0,
+    val isStudio: Boolean = false,
+    val layout: String = "",
     val floor: Int = 0,
     val totalFloors: Int = 0,
-    val levelsCount: Int? = null,
-    val layout: String = "",
-    val balconyCount: Int = 0,
-    val loggiaCount: Int = 0,
-    val terraceCount: Int = 0,
-    val solarium: Boolean = false,
-    val gazebo: Boolean = false,
-    val barbecue: Boolean = false,
-    val poolType: String? = null,
-    val sauna: Boolean = false,
-    val bath: Boolean = false,
-    val hammam: Boolean = false,
-    val parkingInfo: String = "",
-    val mediaUrls: List<String> = emptyList(),
-    val contactName: String = "",
-    val contactPhone: String = "",
-    
-    // Поля для длительной аренды
-    val monthlyPrice: Double? = null,
-    val minLeaseTerm: String? = null,
-    val deposit: Double? = null,
-    val paymentTerms: String? = null,
-    val utilities: String? = null,
-    val specialConditions: String? = null,
-    
-    // Поля для посуточной аренды
+    val description: String? = null,
+    val management: List<String> = emptyList(),
+
+    // Характеристики объекта
+    val repairState: String = "",
+    val bedsCount: Int? = null,
+    val bathroomsCount: Int? = null,
+    val bathroomType: String = "",
+    val noFurniture: Boolean = false,
+    val hasAppliances: Boolean = false,
+    val heatingType: String = "",
+    val balconiesCount: Int = 0,
+    val elevatorsCount: Int? = null,
+    val hasParking: Boolean = false,
+    val parkingType: String? = null,
+    val parkingSpaces: Int? = null,
+    val amenities: List<String> = emptyList(),
+    val smokingAllowed: Boolean = false,
+
+    // Условия проживания
+    val childrenAllowed: Boolean = false,
+    val minChildAge: String? = null,
+    val maxChildrenCount: String? = null,
+    val petsAllowed: Boolean = false,
+    val maxPetsCount: String? = null,
+    val allowedPetTypes: List<String> = emptyList(),
+
+    // Для длительной аренды
+    val monthlyRent: Double? = null,
+    val hasCompensationContract: Boolean = false,
+    val isSelfEmployed: Boolean = false,
+    val isPersonalIncomeTax: Boolean = false,
+    val isCompanyIncomeTax: Boolean = false,
+    val utilitiesIncluded: Boolean = false,
+    val utilitiesCost: Double? = null,
+    val minRentPeriod: String? = null,
+    val maxRentPeriod: Int? = null,
+    val depositMonths: String? = null,
+    val depositCustomAmount: Double? = null,
+    val securityDeposit: Double? = null,
+    val additionalExpenses: String? = null,
+    val longTermRules: String? = null,
+
+    // Для посуточной аренды
     val dailyPrice: Double? = null,
-    val minNights: Int? = null,
-    val availabilityCalendar: List<Long>? = null,
+    val minStayDays: Int? = null,
+    val maxStayDays: Int? = null,
+    val maxGuests: Int? = null,
     val checkInTime: String? = null,
     val checkOutTime: String? = null,
-    val maxGuests: Int? = null,
-    val shortTermConditions: String? = null,
-    val discounts: String? = null
+    val shortTermDeposit: Double? = null,
+    val shortTermDepositCustomAmount: Double? = null,
+    val seasonalPrices: List<SeasonalPrice> = emptyList(),
+    val weekdayPrice: Double? = null,
+    val weekendPrice: Double? = null,
+    val weeklyDiscount: Double? = null,
+    val monthlyDiscount: Double? = null,
+    val additionalServices: String? = null,
+    val shortTermRules: String? = null,
+    val cleaningService: Boolean = false,
+    val cleaningDetails: String? = null,
+    val hasExtraBed: Boolean = false,
+    val extraBedPrice: Double? = null,
+    val partiesAllowed: Boolean = false,
+    val specialOffers: String? = null,
+    val additionalComments: String? = null,
+
+    // Фото и документы
+    val photos: List<String> = emptyList(),
+    val documents: List<String> = emptyList()
+)
+
+data class SeasonalPrice(
+    val startDate: Long = 0L,
+    val endDate: Long = 0L,
+    val price: Double = 0.0
 ) 
