@@ -129,7 +129,10 @@ fun ExpandablePropertyCard(
     )
     
     ElevatedCard(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .heightIn(min = 0.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
@@ -139,12 +142,15 @@ fun ExpandablePropertyCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentHeight()
         ) {
             // Заголовок с иконкой разворачивания
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .wrapContentHeight()
                     .clickable { expandedSections[sectionKey] = !isExpanded },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -166,12 +172,16 @@ fun ExpandablePropertyCard(
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = expandVertically(),
-                exit = shrinkVertically()
+                exit = shrinkVertically(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
             ) {
                 Column(
                     modifier = Modifier
                         .padding(top = 8.dp)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     content()
@@ -187,10 +197,15 @@ fun PropertyCard(
     content: @Composable () -> Unit
 ) {
     ElevatedCard(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .heightIn(min = 0.dp),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentHeight(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             content()

@@ -66,7 +66,8 @@ fun PhoneListField(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 160.dp),
+                    .heightIn(max = 160.dp, min = 0.dp)
+                    .wrapContentHeight(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(

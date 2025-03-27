@@ -191,7 +191,9 @@ fun PhotoGalleryViewer(
             // Используем HorizontalPager для свайпа изображений
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .wrapContentHeight()
             ) { page ->
                 AsyncImage(
                     model = photos[page],
@@ -206,15 +208,20 @@ fun PhotoGalleryViewer(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(16.dp)
+                    .wrapContentSize()
             ) {
                 Surface(
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .wrapContentSize(),
                     shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(8.dp)
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .wrapContentSize()
                     ) {
                         Text(
                             text = "${pagerState.currentPage + 1}/${photos.size}",
@@ -227,7 +234,9 @@ fun PhotoGalleryViewer(
                         // Создаем свой индикатор
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.padding(8.dp)
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .wrapContentSize()
                         ) {
                             val maxVisibleDots = 9
                             val visibleCount = minOf(photos.size, maxVisibleDots)

@@ -45,7 +45,10 @@ fun MultiSelectField(
             verticalAlignment = Alignment.CenterVertically
         ) {
             LazyRow(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .wrapContentHeight()
+                    .heightIn(min = 32.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 contentPadding = PaddingValues(horizontal = 2.dp)
             ) {
@@ -92,6 +95,9 @@ fun MultiSelectField(
         
         if (availableOptions.isNotEmpty()) {
             LazyRow(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .heightIn(min = 32.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 contentPadding = PaddingValues(horizontal = 2.dp)
             ) {
@@ -144,7 +150,9 @@ fun EditOptionsDialog(
         },
         text = {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier
+                    .padding(16.dp)
+                    .wrapContentHeight(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 var newItemText by remember { mutableStateOf("") }
@@ -199,7 +207,8 @@ fun EditOptionsDialog(
                     LazyColumn(
                         modifier = Modifier
                             .weight(1f)
-                            .heightIn(max = 300.dp),
+                            .heightIn(max = 300.dp, min = 50.dp)
+                            .wrapContentHeight(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(options) { option ->

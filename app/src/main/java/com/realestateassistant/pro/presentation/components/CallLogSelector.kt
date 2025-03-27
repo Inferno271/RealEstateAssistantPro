@@ -109,12 +109,16 @@ fun CallLogSelector(
                     }
                     else -> {
                         Column(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
                         ) {
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .weight(1f),
+                                    .weight(1f)
+                                    .wrapContentHeight()
+                                    .heightIn(min = 0.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 items(callLogEntries) { entry ->

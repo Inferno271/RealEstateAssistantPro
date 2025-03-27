@@ -112,7 +112,10 @@ fun MediaSection(
         expandedSections = expandedSections
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .heightIn(min = 0.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
@@ -123,7 +126,10 @@ fun MediaSection(
             // Отображение выбранных фотографий, если они есть
             if (formState.photos.isNotEmpty()) {
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .heightIn(min = 100.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(formState.photos) { photoUri ->
@@ -172,7 +178,10 @@ fun MediaSection(
             // Отображение выбранных документов, если они есть
             if (formState.documents.isNotEmpty()) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .heightIn(min = 0.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     formState.documents.forEachIndexed { index, documentUri ->
