@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,8 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
+import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import java.io.File
+import com.realestateassistant.pro.utils.CoilUtils
 
 @Composable
 fun PhotoThumbnail(
@@ -39,6 +44,7 @@ fun PhotoThumbnail(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val imageLoader = remember { CoilUtils.createImageLoader(context) }
     
     Box(
         modifier = modifier
@@ -46,15 +52,53 @@ fun PhotoThumbnail(
             .clip(RoundedCornerShape(8.dp))
             .clickable { onShowFullscreen(photoUri, allPhotos) }
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(photoUri)
-                .crossfade(true)
-                .build(),
+        SubcomposeAsyncImage(
+            model = CoilUtils.createImageRequest(
+                    context,
+                    photoUri
+                ).build(),
             contentDescription = "Фото объекта",
             contentScale = ContentScale.Crop,
+            imageLoader = imageLoader,
             modifier = Modifier.fillMaxSize()
-        )
+        ) {
+            val state = painter.state
+            when {
+                // Отображение индикатора загрузки
+                state is AsyncImagePainter.State.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
+                // Обработка ошибки загрузки
+                state is AsyncImagePainter.State.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BrokenImage,
+                            contentDescription = "Ошибка загрузки",
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+                // Успешно загруженное изображение
+                else -> {
+                    SubcomposeAsyncImageContent()
+                }
+            }
+        }
         
         // Кнопка удаления
         IconButton(
@@ -174,6 +218,8 @@ fun PhotoGalleryViewer(
 ) {
     val initialPage = photos.indexOf(initialPhoto).coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = initialPage) { photos.size }
+    val context = LocalContext.current
+    val imageLoader = remember { CoilUtils.createImageLoader(context) }
     
     Dialog(
         onDismissRequest = onDismiss,
@@ -186,7 +232,7 @@ fun PhotoGalleryViewer(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.95f))
+                .background(Color.Black)
         ) {
             // Используем HorizontalPager для свайпа изображений
             HorizontalPager(
@@ -195,11 +241,75 @@ fun PhotoGalleryViewer(
                     .fillMaxSize()
                     .wrapContentHeight()
             ) { page ->
-                AsyncImage(
-                    model = photos[page],
+                SubcomposeAsyncImage(
+                    model = CoilUtils.createImageRequest(
+                            context,
+                            photos[page]
+                        ).build(),
                     contentDescription = "Фото ${page + 1}/${photos.size}",
                     contentScale = ContentScale.Fit,
+                    imageLoader = imageLoader,
                     modifier = Modifier.fillMaxSize()
+                ) {
+                    val state = painter.state
+                    when {
+                        // Отображение индикатора загрузки
+                        state is AsyncImagePainter.State.Loading -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
+                        }
+                        // Обработка ошибки загрузки
+                        state is AsyncImagePainter.State.Error -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.BrokenImage,
+                                        contentDescription = "Ошибка загрузки",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(48.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Не удалось загрузить изображение",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
+                        // Успешно загруженное изображение
+                        else -> {
+                            SubcomposeAsyncImageContent()
+                        }
+                    }
+                }
+            }
+            
+            // Кнопка закрытия
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+                    .size(36.dp)
+                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Закрыть",
+                    tint = Color.White
                 )
             }
             
@@ -215,7 +325,7 @@ fun PhotoGalleryViewer(
                         .padding(8.dp)
                         .wrapContentSize(),
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+                    color = Color.Black.copy(alpha = 0.7f)
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -226,7 +336,7 @@ fun PhotoGalleryViewer(
                         Text(
                             text = "${pagerState.currentPage + 1}/${photos.size}",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = Color.White
                         )
                         
                         Spacer(modifier = Modifier.height(4.dp))
@@ -247,63 +357,55 @@ fun PhotoGalleryViewer(
                                     PageIndicator(
                                         isSelected = index == pagerState.currentPage,
                                         activeColor = MaterialTheme.colorScheme.primary,
-                                        inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                        inactiveColor = Color.White.copy(alpha = 0.3f)
                                     )
                                 }
                             } else {
-                                // Показываем часть индикаторов с троеточием
-                                val start = maxOf(0, pagerState.currentPage - 3)
-                                val end = minOf(photos.size, start + 7)
+                                // Если точек много, показываем только часть
+                                val currentPage = pagerState.currentPage
+                                val halfVisible = visibleCount / 2
                                 
-                                // Показываем индикаторы
-                                if (start > 0) {
-                                    // Троеточие в начале
+                                // Определяем диапазон видимых точек
+                                val startIndex = if (currentPage <= halfVisible) {
+                                    0
+                                } else if (currentPage >= photos.size - halfVisible) {
+                                    photos.size - visibleCount
+                                } else {
+                                    currentPage - halfVisible
+                                }
+                                
+                                val endIndex = (startIndex + visibleCount).coerceAtMost(photos.size)
+                                
+                                // Показываем троеточие в начале, если нужно
+                                if (startIndex > 0) {
                                     Text(
                                         text = "...",
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                        style = MaterialTheme.typography.bodyMedium
+                                        color = Color.White.copy(alpha = 0.5f),
+                                        style = MaterialTheme.typography.bodySmall
                                     )
                                 }
                                 
-                                for (i in start until end) {
+                                // Показываем видимые индикаторы
+                                for (i in startIndex until endIndex) {
                                     PageIndicator(
                                         isSelected = i == pagerState.currentPage,
                                         activeColor = MaterialTheme.colorScheme.primary,
-                                        inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                        inactiveColor = Color.White.copy(alpha = 0.3f)
                                     )
                                 }
                                 
-                                if (end < photos.size) {
-                                    // Троеточие в конце
+                                // Показываем троеточие в конце, если нужно
+                                if (endIndex < photos.size) {
                                     Text(
                                         text = "...",
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                        style = MaterialTheme.typography.bodyMedium
+                                        color = Color.White.copy(alpha = 0.5f),
+                                        style = MaterialTheme.typography.bodySmall
                                     )
                                 }
                             }
                         }
                     }
                 }
-            }
-            
-            // Кнопка закрытия
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .size(48.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                        shape = RoundedCornerShape(50)
-                    )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Закрыть",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
             }
         }
     }

@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
-    id("com.google.gms.google-services")
     id("kotlin-kapt")
 }
 
@@ -13,12 +12,23 @@ android {
 
     defaultConfig {
         applicationId = "com.realestateassistant.pro"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Настройка экспорта схемы для Room
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += mapOf(
+                    "room.schemaLocation" to "$projectDir/schemas",
+                    "room.incremental" to "true",
+                    "room.expandProjection" to "true"
+                )
+            }
+        }
     }
 
     buildTypes {
@@ -52,13 +62,31 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth.ktx)
-    implementation(libs.firebase.database.ktx)
-    
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    // Gson для работы с JSON
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // Обновлённая навигация для Jetpack Compose
+    implementation("androidx.navigation:navigation-compose:2.8.5")
+    
+    // Room зависимости
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    kapt(libs.room.compiler)
+    testImplementation(libs.room.testing)
+    
+    // SQLCipher для шифрования базы данных
+    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+    implementation("androidx.sqlite:sqlite-ktx:2.4.0")
+    
+    // Security
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    
+    // Extended иконки для Material Design
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -71,4 +99,7 @@ dependencies {
     
     // Pager для реализации свайпа изображений
     implementation("androidx.compose.foundation:foundation:1.6.0")
+
+    // Yandex MapKit
+    implementation("com.yandex.android:maps.mobile:4.15.0-lite")
 }

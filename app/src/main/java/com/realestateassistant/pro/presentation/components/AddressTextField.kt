@@ -1,18 +1,16 @@
 package com.realestateassistant.pro.presentation.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,101 +19,124 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
+import android.util.Log
 import com.realestateassistant.pro.network.YandexSuggestService
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-@OptIn(FlowPreview::class)
+data class GeocodedAddress(
+    val address: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null
+)
+
+data class AddressSuggestion(
+    val value: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null
+)
+
 @Composable
 fun AddressTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
+    value: GeocodedAddress,
+    onValueChange: (GeocodedAddress) -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "Адрес",
-    placeholder: String = "Введите адрес"
+    label: String = "Адрес"
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     var isFocused by remember { mutableStateOf(false) }
-    var showSuggestions by remember { mutableStateOf(false) }
+    var showDropdown by remember { mutableStateOf(false) }
+    var suggestions by remember { mutableStateOf<List<AddressSuggestion>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
     
-    // Используем Flow для дебаунса ввода, чтобы не делать запросы при каждом нажатии клавиши
-    val searchTextFlow = remember { MutableStateFlow("") }
-    val suggestions = remember { mutableStateListOf<YandexSuggestService.AddressSuggestion>() }
+    // Создаем состояние для дебаунсинга ввода
+    val inputFlow = remember { MutableStateFlow("") }
+    var debouncedJob: Job? by remember { mutableStateOf(null) }
     
-    // Наблюдаем за текстом и делаем запрос с задержкой
-    LaunchedEffect(searchTextFlow) {
-        searchTextFlow
-            .debounce(300) // Задержка 300 мс
-            .filter { it.length >= 3 } // Фильтр на минимальную длину
-            .distinctUntilChanged() // Только при изменении
-            .collectLatest { query ->
-                if (query.length >= 3) {
-                    isLoading = true
-                    errorMessage = null
-                    try {
-                        val result = YandexSuggestService.getSuggestions(query, context)
-                        suggestions.clear()
-                        suggestions.addAll(result)
-                        showSuggestions = result.isNotEmpty() && isFocused
-                    } catch (e: YandexSuggestService.NoInternetException) {
-                        errorMessage = e.message ?: "Отсутствует подключение к интернету"
-                    } catch (e: YandexSuggestService.ApiException) {
-                        errorMessage = e.message ?: "Ошибка при обращении к серверу"
-                    } catch (e: YandexSuggestService.ParsingException) {
-                        errorMessage = e.message ?: "Ошибка при обработке ответа"
-                    } catch (e: Exception) {
-                        errorMessage = "Произошла ошибка: ${e.message}"
-                    } finally {
-                        isLoading = false
+    // Настраиваем дебаунсинг ввода
+    LaunchedEffect(Unit) {
+        val scope = CoroutineScope(Dispatchers.Main)
+        debouncedJob = scope.launch {
+            inputFlow
+                .debounce(500) // Задержка в 500 мс перед запросом
+                .collect { input ->
+                    if (input.length >= 3) {
+                        isLoading = true
+                        error = null
+                        try {
+                            val result = withContext(Dispatchers.IO) {
+                                val apiSuggestions = YandexSuggestService.getSuggestions(input, context)
+                                // Преобразуем API тип в наш собственный
+                                apiSuggestions.map { apiSuggestion ->
+                                    AddressSuggestion(
+                                        value = apiSuggestion.fullAddress,
+                                        latitude = apiSuggestion.latitude,
+                                        longitude = apiSuggestion.longitude
+                                    )
+                                }
+                            }
+                            suggestions = result
+                            showDropdown = suggestions.isNotEmpty()
+                        } catch (e: Exception) {
+                            error = "Ошибка загрузки подсказок: ${e.message}"
+                            Log.e("AddressTextField", "Error loading address suggestions", e)
+                        } finally {
+                            isLoading = false
+                        }
+                    } else {
+                        suggestions = emptyList()
+                        showDropdown = false
                     }
                 }
-            }
-    }
-    
-    // При изменении значения обновляем Flow
-    LaunchedEffect(value) {
-        if (value != searchTextFlow.value) {
-            searchTextFlow.value = value
         }
     }
     
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .zIndex(if (showSuggestions) 1f else 0f)
-    ) {
+    // Очищаем ресурсы при уходе с экрана
+    DisposableEffect(Unit) {
+        onDispose {
+            debouncedJob?.cancel()
+        }
+    }
+    
+    Column(modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(
-            value = value,
-            onValueChange = { 
-                onValueChange(it)
-                if (it.isEmpty()) {
-                    suggestions.clear()
-                    showSuggestions = false
-                    errorMessage = null
-                } else {
-                    showSuggestions = it.length >= 3 && isFocused && suggestions.isNotEmpty()
-                }
+            value = value.address,
+            onValueChange = { newValue ->
+                onValueChange(GeocodedAddress(address = newValue))
+                inputFlow.value = newValue
             },
+            label = { Text(label) },
+            singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { focusState ->
                     isFocused = focusState.isFocused
-                    if (focusState.isFocused && value.length >= 3 && suggestions.isNotEmpty()) {
-                        showSuggestions = true
+                    if (isFocused && value.address.length >= 3) {
+                        // При фокусе показываем ранее загруженные подсказки
+                        showDropdown = suggestions.isNotEmpty()
                     } else {
-                        showSuggestions = false
+                        showDropdown = false
                     }
                 },
-            label = { Text(label) },
-            placeholder = { Text(placeholder) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            trailingIcon = {
+                if (value.address.isNotEmpty()) {
+                    IconButton(onClick = { 
+                        onValueChange(GeocodedAddress())
+                        suggestions = emptyList()
+                        showDropdown = false
+                    }) {
+                        Icon(Icons.Default.Clear, contentDescription = "Очистить")
+                    }
+                }
+            },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
@@ -123,67 +144,65 @@ fun AddressTextField(
                     tint = MaterialTheme.colorScheme.primary
                 )
             },
-            trailingIcon = {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else if (value.isNotEmpty()) {
-                    IconButton(onClick = { 
-                        onValueChange("")
-                        suggestions.clear()
-                        showSuggestions = false
-                        errorMessage = null
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Очистить"
-                        )
-                    }
-                }
-            },
-            isError = errorMessage != null
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                focusManager.clearFocus()
+                showDropdown = false
+            }),
+            isError = error != null,
+            supportingText = error?.let { { Text(it) } }
         )
         
-        // Сообщение об ошибке
-        if (errorMessage != null) {
+        // Отображаем координаты (опционально, для отладки)
+        if (value.latitude != null && value.longitude != null) {
             Text(
-                text = errorMessage ?: "",
-                color = MaterialTheme.colorScheme.error,
+                text = "Координаты: ${String.format("%.6f", value.latitude)}, ${String.format("%.6f", value.longitude)}",
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, top = 60.dp)
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
             )
         }
         
-        // Выпадающий список с подсказками
-        if (showSuggestions) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 250.dp)
-                    .padding(top = 60.dp) // Смещение вниз от поля ввода
-                    .background(
-                        MaterialTheme.colorScheme.surface,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .border(
-                        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
-                        shape = RoundedCornerShape(8.dp)
-                    )
+        if (showDropdown && isFocused) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp)
             ) {
-                items(suggestions) { suggestion ->
-                    AddressSuggestionItem(
-                        suggestion = suggestion,
-                        onClick = {
-                            onValueChange(suggestion.fullAddress)
-                            suggestions.clear()
-                            showSuggestions = false
-                            focusManager.clearFocus()
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp)
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.height(24.dp).width(24.dp))
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth().height(250.dp)
+                    ) {
+                        items(suggestions) { suggestion ->
+                            SuggestionItem(
+                                suggestion = suggestion,
+                                onClick = {
+                                    // Сохраняем адрес и координаты
+                                    val geocodedAddress = GeocodedAddress(
+                                        address = suggestion.value,
+                                        latitude = suggestion.latitude,
+                                        longitude = suggestion.longitude
+                                    )
+                                    onValueChange(geocodedAddress)
+                                    
+                                    Log.d("AddressTextField", "Выбран адрес: ${suggestion.value}, координаты: ${suggestion.latitude}, ${suggestion.longitude}")
+                                    
+                                    // Очищаем фокус и скрываем подсказки
+                                    focusManager.clearFocus()
+                                    showDropdown = false
+                                }
+                            )
                         }
-                    )
+                    }
                 }
             }
         }
@@ -191,8 +210,8 @@ fun AddressTextField(
 }
 
 @Composable
-private fun AddressSuggestionItem(
-    suggestion: YandexSuggestService.AddressSuggestion,
+fun SuggestionItem(
+    suggestion: AddressSuggestion,
     onClick: () -> Unit
 ) {
     Row(
@@ -205,30 +224,12 @@ private fun AddressSuggestionItem(
         Icon(
             imageVector = Icons.Default.LocationOn,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
+            tint = MaterialTheme.colorScheme.primary
         )
-        
         Spacer(modifier = Modifier.width(12.dp))
-        
-        Column {
-            Text(
-                text = suggestion.title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            
-            if (suggestion.fullAddress != suggestion.title) {
-                Text(
-                    text = suggestion.fullAddress,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
+        Text(
+            text = suggestion.value,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 } 

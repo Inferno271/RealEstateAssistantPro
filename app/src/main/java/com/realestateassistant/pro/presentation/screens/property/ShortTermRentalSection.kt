@@ -62,13 +62,13 @@ fun ShortTermRentalSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedTextFieldWithColors(
+            TimeTextField(
                 value = formState.checkInTime,
                 onValueChange = { onFormStateChange(formState.copy(checkInTime = it)) },
                 label = "Заезд с",
                 modifier = Modifier.weight(1f)
             )
-            OutlinedTextFieldWithColors(
+            TimeTextField(
                 value = formState.checkOutTime,
                 onValueChange = { onFormStateChange(formState.copy(checkOutTime = it)) },
                 label = "Выезд до",
@@ -76,26 +76,33 @@ fun ShortTermRentalSection(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            NumericTextField(
-                value = formState.shortTermDeposit,
-                onValueChange = { onFormStateChange(formState.copy(shortTermDeposit = it)) },
-                label = "Залог (% от суток)",
-                modifier = Modifier.weight(1f),
-                allowDecimal = true
-            )
-            NumericTextField(
-                value = formState.shortTermDepositCustomAmount,
-                onValueChange = { onFormStateChange(formState.copy(shortTermDepositCustomAmount = it)) },
-                label = "Сумма залога",
-                modifier = Modifier.weight(1f),
-                allowDecimal = true,
-                suffix = " ₽"
-            )
-        }
+        NumericTextField(
+            value = formState.shortTermDepositCustomAmount,
+            onValueChange = { onFormStateChange(formState.copy(shortTermDepositCustomAmount = it)) },
+            label = "Залог",
+            allowDecimal = true,
+            suffix = " ₽"
+        )
+        
+        NumericTextField(
+            value = formState.shortTermDeposit,
+            onValueChange = { onFormStateChange(formState.copy(shortTermDeposit = it)) },
+            label = "Страховой депозит",
+            allowDecimal = true,
+            suffix = " ₽"
+        )
+        
+        // Добавляем компонент для сезонных цен
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        SeasonalPriceEditor(
+            seasonalPrices = formState.seasonalPrices,
+            onSeasonalPricesChanged = { updatedPrices ->
+                onFormStateChange(formState.copy(seasonalPrices = updatedPrices))
+            }
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
 
         NumericTextField(
             value = formState.weekdayPrice,
@@ -191,16 +198,16 @@ fun ShortTermRentalSection(
             value = formState.specialOffers,
             onValueChange = { onFormStateChange(formState.copy(specialOffers = it)) },
             label = "Специальные предложения",
-            minLines = 3,
-            maxLines = 5
+            minLines = 2,
+            maxLines = 3
         )
 
         OutlinedTextFieldWithColors(
             value = formState.additionalComments,
             onValueChange = { onFormStateChange(formState.copy(additionalComments = it)) },
             label = "Дополнительные комментарии",
-            minLines = 3,
-            maxLines = 5
+            minLines = 2,
+            maxLines = 3
         )
     }
-} 
+}

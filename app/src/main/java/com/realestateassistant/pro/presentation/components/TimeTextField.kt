@@ -1,6 +1,10 @@
 package com.realestateassistant.pro.presentation.components
 
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -13,10 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.material3.MaterialTheme
 
 /**
- * Компонент для ввода времени в формате ЧЧ:ММ
+ * Компонент для ввода времени в формате ЧЧ:ММ с дополнительными опциями форматирования
  */
 @Composable
 fun TimeTextField(
@@ -66,10 +69,21 @@ fun TimeTextField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = modifier,
         placeholder = { Text("ЧЧ:ММ") },
+        leadingIcon = { 
+            Icon(
+                imageVector = Icons.Outlined.AccessTime,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline
-        )
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+            unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        singleLine = true,
+        supportingText = { Text("Введите время в формате ЧЧ:ММ") }
     )
 }
 

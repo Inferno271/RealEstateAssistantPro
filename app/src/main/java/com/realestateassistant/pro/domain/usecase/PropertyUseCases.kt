@@ -2,6 +2,7 @@ package com.realestateassistant.pro.domain.usecase
 
 import com.realestateassistant.pro.domain.model.Property
 import com.realestateassistant.pro.domain.repository.PropertyRepository
+import kotlinx.coroutines.flow.Flow
 
 class AddProperty(private val repository: PropertyRepository) {
     suspend operator fun invoke(property: Property): Result<Property> {
@@ -33,11 +34,25 @@ class GetAllProperties(private val repository: PropertyRepository) {
     }
 }
 
+class ObserveAllProperties(private val repository: PropertyRepository) {
+    operator fun invoke(): Flow<List<Property>> {
+        return repository.observeAllProperties()
+    }
+}
+
+class ObservePropertiesByType(private val repository: PropertyRepository) {
+    operator fun invoke(type: String): Flow<List<Property>> {
+        return repository.observePropertiesByType(type)
+    }
+}
+
 // Собираем все use case в один контейнер для удобства работы
 data class PropertyUseCases(
     val addProperty: AddProperty,
     val updateProperty: UpdateProperty,
     val deleteProperty: DeleteProperty,
     val getProperty: GetProperty,
-    val getAllProperties: GetAllProperties
+    val getAllProperties: GetAllProperties,
+    val observeAllProperties: ObserveAllProperties,
+    val observePropertiesByType: ObservePropertiesByType
 ) 

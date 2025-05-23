@@ -30,7 +30,9 @@ object YandexSuggestService {
     data class AddressSuggestion(
         val title: String,
         val fullAddress: String,
-        val geoId: String? = null
+        val geoId: String? = null,
+        val latitude: Double? = null,
+        val longitude: Double? = null
     )
 
     /**
@@ -47,9 +49,12 @@ object YandexSuggestService {
         }
 
         try {
+            Log.d(TAG, "Начинается получение подсказок для запроса: $query")
             val encodedQuery = URLEncoder.encode(query, "UTF-8")
-            val urlString = "$BASE_URL?apikey=$API_KEY&text=$encodedQuery&types=geo&lang=ru_RU"
+            // Добавляем параметр "locations", чтобы получить координаты
+            val urlString = "$BASE_URL?apikey=$API_KEY&text=$encodedQuery&types=geo&lang=ru_RU&results=5"
             
+            Log.d(TAG, "URL запроса: $urlString")
             val url = URL(urlString)
             val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
@@ -58,6 +63,8 @@ object YandexSuggestService {
             
             try {
                 val responseCode = connection.responseCode
+                Log.d(TAG, "Код ответа: $responseCode")
+                
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     val reader = BufferedReader(InputStreamReader(connection.inputStream))
                     val response = StringBuilder()
@@ -67,7 +74,10 @@ object YandexSuggestService {
                     }
                     reader.close()
                     
-                    return@withContext parseSuggestions(response.toString())
+                    val responseText = response.toString()
+                    Log.d(TAG, "Получен ответ: ${responseText.take(200)}...")
+                    
+                    return@withContext parseSuggestions(responseText)
                 } else {
                     Log.e(TAG, "HTTP error: $responseCode")
                     throw ApiException("Ошибка API: код $responseCode")
@@ -121,8 +131,38 @@ object YandexSuggestService {
                     null
                 }
                 
+                // Извлекаем координаты, если они есть
+                var latitude: Double? = null
+                var longitude: Double? = null
+                
+                if (item.has("position") && !item.isNull("position")) {
+                    try {
+                        val position = item.getJSONObject("position")
+                        if (position.has("lat") && position.has("lon")) {
+                            latitude = position.getDouble("lat")
+                            longitude = position.getDouble("lon")
+                            Log.d(TAG, "Извлечены координаты для '$fullAddress': lat=$latitude, lon=$longitude")
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Ошибка при извлечении координат", e)
+                    }
+                }
+                
+                if (item.has("center") && !item.isNull("center") && (latitude == null || longitude == null)) {
+                    try {
+                        val center = item.getJSONArray("center")
+                        if (center.length() >= 2) {
+                            longitude = center.getDouble(0)
+                            latitude = center.getDouble(1)
+                            Log.d(TAG, "Извлечены координаты из center для '$fullAddress': lat=$latitude, lon=$longitude")
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Ошибка при извлечении координат из center", e)
+                    }
+                }
+                
                 if (title.isNotEmpty()) {
-                    suggestions.add(AddressSuggestion(title, fullAddress, geoId))
+                    suggestions.add(AddressSuggestion(title, fullAddress, geoId, latitude, longitude))
                 }
             }
         } catch (e: Exception) {

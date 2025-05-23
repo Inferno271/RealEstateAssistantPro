@@ -85,6 +85,29 @@ class OptionsViewModel @Inject constructor() : ViewModel() {
     ))
     val petTypes: StateFlow<List<String>> = _petTypes
 
+    private val _poolTypes = MutableStateFlow(listOf(
+        "Крытый", "Открытый", "Инфинити", 
+        "Детский", "С подогревом", "Джакузи"
+    ))
+    val poolTypes: StateFlow<List<String>> = _poolTypes
+    
+    private val _familyCompositions = MutableStateFlow(listOf(
+        "Одинокий мужчина", "Одинокая женщина", 
+        "Семейная пара без детей", "Семейная пара с ребенком",
+        "Семейная пара с детьми", "Родитель с ребенком",
+        "Родитель с детьми", "Студенты", "Сотрудники компании",
+        "Пенсионеры", "Друзья/соседи"
+    ))
+    val familyCompositions: StateFlow<List<String>> = _familyCompositions
+
+    private val _additionalServices = MutableStateFlow(listOf(
+        "Трансфер", "Уборка", "Смена белья", 
+        "Завтрак", "Экскурсии", "Аренда авто",
+        "Детская кроватка", "Высокий стул", "Няня",
+        "СПА-услуги", "Доставка еды", "Прачечная"
+    ))
+    val additionalServices: StateFlow<List<String>> = _additionalServices
+
     fun updatePropertyTypes(newList: List<String>) {
         _propertyTypes.value = newList
     }
@@ -127,5 +150,17 @@ class OptionsViewModel @Inject constructor() : ViewModel() {
 
     fun updatePetTypes(newList: List<String>) {
         _petTypes.value = newList
+    }
+
+    fun updatePoolTypes(newList: List<String>) {
+        _poolTypes.value = newList
+    }
+    
+    fun updateFamilyCompositions(newList: List<String>) {
+        _familyCompositions.value = newList
+    }
+    
+    fun updateAdditionalServices(newList: List<String>) {
+        _additionalServices.value = newList
     }
 } 

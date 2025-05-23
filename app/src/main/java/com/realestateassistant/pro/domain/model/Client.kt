@@ -18,10 +18,13 @@ package com.realestateassistant.pro.domain.model
  * - desiredRoomsCount: желаемое количество комнат.
  * - peopleCount: количество человек для проживания.
  * - childrenCount: количество детей.
+ * - childrenAge: возраст детей (например, "3, 5, 7 лет").
  * - petsInfo: информация о животных (например, "2 собаки", "1 кошка").
  * - desiredArea: желаемая площадь недвижимости в кв.м.
  * - additionalRequirements: дополнительные требования (наличие мебели, бытовой техники и т.п.).
  * - legalPreferences: юридические предпочтения (например, возможность заключения официального договора).
+ * - moveInDeadline: срок актуальности заявки (до какой даты необходимо заселиться).
+ * - familyComposition: состав семьи (например, "Семейная пара с ребенком", "Студенты").
  *
  * Поля для клиентов, заинтересованных в посуточной аренде:
  * - shortTermCheckInDate: желаемая дата заезда (timestamp).
@@ -51,10 +54,13 @@ data class Client(
     val desiredRoomsCount: Int? = null,
     val peopleCount: Int? = null,
     val childrenCount: Int? = null,
+    val childrenAge: String? = null,
     val petsInfo: String? = null,
     val desiredArea: Double? = null,
     val additionalRequirements: String? = null,
     val legalPreferences: String? = null,
+    val moveInDeadline: Long? = null,
+    val familyComposition: String? = null,
 
     // Поля для посуточной аренды
     val shortTermCheckInDate: Long? = null,

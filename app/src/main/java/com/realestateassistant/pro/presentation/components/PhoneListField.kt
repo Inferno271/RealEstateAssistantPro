@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.realestateassistant.pro.util.CallLogHelper
+import com.realestateassistant.pro.util.PhoneUtils
 
 @Composable
 fun PhoneListField(
@@ -80,8 +81,10 @@ fun PhoneListField(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Кэшируем форматированный номер
-                            val formattedNumber = remember(phone) { formatPhoneNumber(phone) }
+                            // Форматируем номер телефона с учетом международного формата
+                            val formattedNumber = remember(phone) { 
+                                PhoneUtils.formatInternationalPhoneNumber(phone)
+                            }
                             
                             Text(
                                 text = formattedNumber,
@@ -185,23 +188,24 @@ fun PhoneListField(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    PhoneTextField(
+                    // Используем новый компонент PhoneInputField
+                    PhoneInputField(
                         value = newPhone,
                         onValueChange = { newPhone = it },
                         label = "Номер телефона",
                         isError = phoneError,
-                        errorMessage = if (phoneError) "Введите полный номер телефона" else null
+                        errorMessage = if (phoneError) "Введите корректный номер телефона" else null
                     )
                     
                     if (phoneError) {
                         Text(
-                            text = "Введите 10 цифр номера телефона без кода страны",
+                            text = "Введите корректный номер телефона с кодом страны",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
                     } else {
                         Text(
-                            text = "Пример: 9876543210 (без +7)",
+                            text = "Введите номер с выбором кода страны, например: +7 (XXX) XXX-XX-XX",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -211,11 +215,26 @@ fun PhoneListField(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (newPhone.length == 10) {
-                            onPhonesChange(phones + newPhone)
-                            showAddDialog = false
-                            newPhone = ""
-                            phoneError = false
+                        // Используем функцию валидации из PhoneUtils
+                        if (PhoneUtils.isValidPhoneNumber(newPhone)) {
+                            // Форматируем номер перед добавлением в E.164
+                            val normalizedPhone = PhoneUtils.normalizeInternationalPhoneNumber(newPhone)
+                            
+                            // Проверяем, не дублируется ли номер
+                            if (!phones.contains(normalizedPhone)) {
+                                onPhonesChange(phones + normalizedPhone)
+                                showAddDialog = false
+                                newPhone = ""
+                                phoneError = false
+                            } else {
+                                // Сообщаем о дубликате
+                                phoneError = true
+                                Toast.makeText(
+                                    context,
+                                    "Этот номер уже добавлен",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         } else {
                             phoneError = true
                         }
@@ -248,16 +267,15 @@ fun PhoneListField(
     if (showCallLogDialog) {
         CallLogSelector(
             onPhoneSelected = { phoneNumber ->
-                if (phoneNumber.length == 10 && phoneNumber !in phones) {
-                    onPhonesChange(phones + phoneNumber)
-                }
+                // Нормализуем номер через PhoneUtils
+                val internationalNumber = PhoneUtils.normalizeInternationalPhoneNumber(phoneNumber)
+                onPhonesChange(phones + internationalNumber)
+                showCallLogDialog = false
             },
-            onDismiss = { showCallLogDialog = false }
+            onDismiss = {
+                showCallLogDialog = false
+            }
         )
     }
 }
 
-// Вспомогательная функция для форматирования номера телефона
-fun formatPhoneNumber(phone: String): String {
-    return buildFormattedPhoneNumber(phone)
-} 

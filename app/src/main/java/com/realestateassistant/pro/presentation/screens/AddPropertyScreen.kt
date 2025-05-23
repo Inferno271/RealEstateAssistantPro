@@ -41,6 +41,17 @@ fun AddPropertyScreen(
     val bathroomTypes by optionsViewModel.bathroomTypes.collectAsState()
     val heatingTypes by optionsViewModel.heatingTypes.collectAsState()
     val parkingTypes by optionsViewModel.parkingTypes.collectAsState()
+    val poolTypes by optionsViewModel.poolTypes.collectAsState()
+    
+    // Получаем конфигурацию для текущего типа недвижимости
+    val currentCharacteristicsConfig by propertyViewModel.currentCharacteristicsConfig.collectAsState()
+    
+    // Обновляем конфигурацию при изменении типа недвижимости
+    LaunchedEffect(formState.propertyType) {
+        if (formState.propertyType.isNotEmpty()) {
+            propertyViewModel.updateCharacteristicsConfig(formState.propertyType)
+        }
+    }
 
     // Функция для очистки формы, но с сохранением контактной информации
     fun resetFormWithContact() {
@@ -115,7 +126,8 @@ fun AddPropertyScreen(
                 propertyTypes = propertyTypes,
                 districts = districts,
                 layouts = layouts,
-                expandedSections = expandedSections
+                expandedSections = expandedSections,
+                characteristicsConfig = currentCharacteristicsConfig
             )
             
             PropertyCharacteristicsSection(

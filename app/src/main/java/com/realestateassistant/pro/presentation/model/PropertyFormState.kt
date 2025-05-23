@@ -13,6 +13,8 @@ data class PropertyFormState(
     // Общая информация
     val propertyType: String = "",
     val address: String = "",
+    val latitude: String = "",
+    val longitude: String = "",
     val district: String = "",
     val nearbyObjects: List<String> = emptyList(),
     val views: List<String> = emptyList(),
@@ -24,6 +26,15 @@ data class PropertyFormState(
     val totalFloors: String = "",
     val description: String = "",
     val management: List<String> = emptyList(),
+
+    // Новые поля для разных типов недвижимости
+    val levelsCount: String = "",
+    val landArea: String = "",
+    val hasGarage: Boolean = false,
+    val garageSpaces: String = "",
+    val hasBathhouse: Boolean = false,
+    val hasPool: Boolean = false,
+    val poolType: String = "",
 
     // Характеристики объекта
     val repairState: String = "",
@@ -51,6 +62,8 @@ data class PropertyFormState(
 
     // Для длительной аренды
     val monthlyRent: String = "",
+    val winterMonthlyRent: String = "",
+    val summerMonthlyRent: String = "",
     val hasCompensationContract: Boolean = false,
     val isSelfEmployed: Boolean = false,
     val isPersonalIncomeTax: Boolean = false,
@@ -59,7 +72,6 @@ data class PropertyFormState(
     val utilitiesCost: String = "",
     val minRentPeriod: String = "",
     val maxRentPeriod: String = "",
-    val depositMonths: String = "",
     val depositCustomAmount: String = "",
     val securityDeposit: String = "",
     val additionalExpenses: String = "",
@@ -100,6 +112,8 @@ data class PropertyFormState(
             additionalContactInfo = additionalContactInfo.takeIf { it.isNotEmpty() },
             propertyType = propertyType,
             address = address,
+            latitude = latitude.toDoubleOrNull(),
+            longitude = longitude.toDoubleOrNull(),
             district = district,
             nearbyObjects = nearbyObjects,
             views = views,
@@ -111,6 +125,15 @@ data class PropertyFormState(
             totalFloors = totalFloors.toIntOrNull() ?: 0,
             description = description.takeIf { it.isNotEmpty() },
             management = management,
+            // Новые поля для разных типов недвижимости
+            levelsCount = levelsCount.toIntOrNull() ?: 0,
+            landArea = landArea.toDoubleOrNull() ?: 0.0,
+            hasGarage = hasGarage,
+            garageSpaces = garageSpaces.toIntOrNull() ?: 0,
+            hasBathhouse = hasBathhouse,
+            hasPool = hasPool,
+            poolType = poolType,
+            // Остальные поля
             repairState = repairState,
             bedsCount = bedsCount.toIntOrNull(),
             bathroomsCount = bathroomsCount.toIntOrNull(),
@@ -132,6 +155,8 @@ data class PropertyFormState(
             maxPetsCount = maxPetsCount.takeIf { petsAllowed },
             allowedPetTypes = allowedPetTypes,
             monthlyRent = monthlyRent.toDoubleOrNull(),
+            winterMonthlyRent = winterMonthlyRent.toDoubleOrNull(),
+            summerMonthlyRent = summerMonthlyRent.toDoubleOrNull(),
             hasCompensationContract = hasCompensationContract,
             isSelfEmployed = isSelfEmployed,
             isPersonalIncomeTax = isPersonalIncomeTax,
@@ -140,7 +165,6 @@ data class PropertyFormState(
             utilitiesCost = utilitiesCost.toDoubleOrNull(),
             minRentPeriod = minRentPeriod.takeIf { it.isNotEmpty() },
             maxRentPeriod = maxRentPeriod.toIntOrNull(),
-            depositMonths = depositMonths.takeIf { it.isNotEmpty() },
             depositCustomAmount = depositCustomAmount.toDoubleOrNull(),
             securityDeposit = securityDeposit.toDoubleOrNull(),
             additionalExpenses = additionalExpenses.takeIf { it.isNotEmpty() },
@@ -170,5 +194,118 @@ data class PropertyFormState(
             photos = photos,
             documents = documents
         )
+    }
+    
+    companion object {
+        fun fromProperty(property: Property): PropertyFormState {
+            // Определяем тип аренды на основе наличия параметров
+            val isLongTerm = property.monthlyRent != null || 
+                            property.winterMonthlyRent != null || 
+                            property.summerMonthlyRent != null
+            
+            return PropertyFormState(
+                isLongTerm = isLongTerm,
+                
+                // Контактная информация
+                contactName = property.contactName,
+                contactPhone = property.contactPhone,
+                additionalContactInfo = property.additionalContactInfo ?: "",
+                
+                // Общая информация
+                propertyType = property.propertyType,
+                address = property.address,
+                latitude = property.latitude?.toString() ?: "",
+                longitude = property.longitude?.toString() ?: "",
+                district = property.district,
+                nearbyObjects = property.nearbyObjects,
+                views = property.views,
+                area = property.area.toString(),
+                roomsCount = property.roomsCount.toString(),
+                isStudio = property.isStudio,
+                layout = property.layout,
+                floor = property.floor.toString(),
+                totalFloors = property.totalFloors.toString(),
+                description = property.description ?: "",
+                management = property.management,
+                
+                // Поля для разных типов недвижимости
+                levelsCount = property.levelsCount.toString(),
+                landArea = property.landArea.toString(),
+                hasGarage = property.hasGarage,
+                garageSpaces = property.garageSpaces.toString(),
+                hasBathhouse = property.hasBathhouse,
+                hasPool = property.hasPool,
+                poolType = property.poolType,
+                
+                // Характеристики объекта
+                repairState = property.repairState,
+                bedsCount = property.bedsCount?.toString() ?: "",
+                bathroomsCount = property.bathroomsCount?.toString() ?: "",
+                bathroomType = property.bathroomType,
+                noFurniture = property.noFurniture,
+                hasAppliances = property.hasAppliances,
+                heatingType = property.heatingType,
+                balconiesCount = property.balconiesCount.toString(),
+                elevatorsCount = property.elevatorsCount?.toString() ?: "",
+                hasParking = property.hasParking,
+                parkingType = property.parkingType ?: "",
+                parkingSpaces = property.parkingSpaces?.toString() ?: "",
+                amenities = property.amenities,
+                smokingAllowed = property.smokingAllowed,
+                
+                // Условия проживания
+                childrenAllowed = property.childrenAllowed,
+                minChildAge = property.minChildAge ?: "",
+                maxChildrenCount = property.maxChildrenCount ?: "",
+                petsAllowed = property.petsAllowed,
+                maxPetsCount = property.maxPetsCount ?: "",
+                allowedPetTypes = property.allowedPetTypes,
+                
+                // Для длительной аренды
+                monthlyRent = property.monthlyRent?.toString() ?: "",
+                winterMonthlyRent = property.winterMonthlyRent?.toString() ?: "",
+                summerMonthlyRent = property.summerMonthlyRent?.toString() ?: "",
+                hasCompensationContract = property.hasCompensationContract,
+                isSelfEmployed = property.isSelfEmployed,
+                isPersonalIncomeTax = property.isPersonalIncomeTax,
+                isCompanyIncomeTax = property.isCompanyIncomeTax,
+                utilitiesIncluded = property.utilitiesIncluded,
+                utilitiesCost = property.utilitiesCost?.toString() ?: "",
+                minRentPeriod = property.minRentPeriod ?: "",
+                maxRentPeriod = property.maxRentPeriod?.toString() ?: "",
+                depositCustomAmount = property.depositCustomAmount?.toString() ?: "",
+                securityDeposit = property.securityDeposit?.toString() ?: "",
+                additionalExpenses = property.additionalExpenses ?: "",
+                longTermRules = property.longTermRules ?: "",
+                
+                // Для посуточной аренды
+                dailyPrice = property.dailyPrice?.toString() ?: "",
+                minStayDays = property.minStayDays?.toString() ?: "",
+                maxStayDays = property.maxStayDays?.toString() ?: "",
+                maxGuests = property.maxGuests?.toString() ?: "",
+                checkInTime = property.checkInTime ?: "",
+                checkOutTime = property.checkOutTime ?: "",
+                shortTermDeposit = property.shortTermDeposit?.toString() ?: "",
+                shortTermDepositCustomAmount = property.shortTermDepositCustomAmount?.toString() ?: "",
+                seasonalPrices = property.seasonalPrices,
+                weekdayPrice = property.weekdayPrice?.toString() ?: "",
+                weekendPrice = property.weekendPrice?.toString() ?: "",
+                weeklyDiscount = property.weeklyDiscount?.toString() ?: "",
+                monthlyDiscount = property.monthlyDiscount?.toString() ?: "",
+                additionalServices = property.additionalServices ?: "",
+                shortTermRules = property.shortTermRules ?: "",
+                cleaningService = property.cleaningService,
+                cleaningDetails = property.cleaningDetails ?: "",
+                hasExtraBed = property.hasExtraBed,
+                extraBedPrice = property.extraBedPrice?.toString() ?: "",
+                partiesAllowed = property.partiesAllowed,
+                specialOffers = property.specialOffers ?: "",
+                additionalComments = property.additionalComments ?: "",
+                
+                // Фото и документы
+                photos = property.photos,
+                documents = property.documents
+            )
+        }
     }
 } 

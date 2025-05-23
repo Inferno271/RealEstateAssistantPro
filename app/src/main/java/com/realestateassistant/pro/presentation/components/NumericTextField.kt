@@ -16,7 +16,8 @@ fun NumericTextField(
     modifier: Modifier = Modifier,
     allowDecimal: Boolean = true,
     maxValue: Double? = null,
-    suffix: String = ""
+    suffix: String = "",
+    isRequired: Boolean = false
 ) {
     val pattern = if (allowDecimal) {
         Regex("^\\d*\\.?\\d*$") // Разрешает десятичные числа
@@ -34,7 +35,11 @@ fun NumericTextField(
                 }
             }
         },
-        label = { Text(label) },
+        label = { 
+            Text(
+                if (isRequired) "$label *" else label
+            ) 
+        },
         modifier = modifier.fillMaxWidth(),
         keyboardOptions = KeyboardOptions(
             keyboardType = if (allowDecimal) KeyboardType.Decimal else KeyboardType.Number

@@ -90,6 +90,8 @@ data class Property(
     // Общая информация
     val propertyType: String = "",
     val address: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val district: String = "",
     val nearbyObjects: List<String> = emptyList(),
     val views: List<String> = emptyList(),
@@ -102,6 +104,15 @@ data class Property(
     val description: String? = null,
     val management: List<String> = emptyList(),
 
+    // Новые поля для разных типов недвижимости
+    val levelsCount: Int = 0,
+    val landArea: Double = 0.0,
+    val hasGarage: Boolean = false,
+    val garageSpaces: Int = 0,
+    val hasBathhouse: Boolean = false,
+    val hasPool: Boolean = false,
+    val poolType: String = "",
+    
     // Характеристики объекта
     val repairState: String = "",
     val bedsCount: Int? = null,
@@ -128,6 +139,8 @@ data class Property(
 
     // Для длительной аренды
     val monthlyRent: Double? = null,
+    val winterMonthlyRent: Double? = null,
+    val summerMonthlyRent: Double? = null,
     val hasCompensationContract: Boolean = false,
     val isSelfEmployed: Boolean = false,
     val isPersonalIncomeTax: Boolean = false,
@@ -136,7 +149,6 @@ data class Property(
     val utilitiesCost: Double? = null,
     val minRentPeriod: String? = null,
     val maxRentPeriod: Int? = null,
-    val depositMonths: String? = null,
     val depositCustomAmount: Double? = null,
     val securityDeposit: Double? = null,
     val additionalExpenses: String? = null,
@@ -168,11 +180,9 @@ data class Property(
 
     // Фото и документы
     val photos: List<String> = emptyList(),
-    val documents: List<String> = emptyList()
-)
-
-data class SeasonalPrice(
-    val startDate: Long = 0L,
-    val endDate: Long = 0L,
-    val price: Double = 0.0
+    val documents: List<String> = emptyList(),
+    
+    // Служебные поля
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
 ) 

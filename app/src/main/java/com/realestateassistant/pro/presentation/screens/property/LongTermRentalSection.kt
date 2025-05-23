@@ -31,7 +31,23 @@ fun LongTermRentalSection(
         NumericTextField(
             value = formState.monthlyRent,
             onValueChange = { onFormStateChange(formState.copy(monthlyRent = it)) },
-            label = "Стоимость аренды в месяц",
+            label = "Круглогодичная стоимость аренды",
+            allowDecimal = true,
+            suffix = " ₽"
+        )
+        
+        NumericTextField(
+            value = formState.winterMonthlyRent,
+            onValueChange = { onFormStateChange(formState.copy(winterMonthlyRent = it)) },
+            label = "Стоимость аренды зимой",
+            allowDecimal = true,
+            suffix = " ₽"
+        )
+        
+        NumericTextField(
+            value = formState.summerMonthlyRent,
+            onValueChange = { onFormStateChange(formState.copy(summerMonthlyRent = it)) },
+            label = "Стоимость аренды летом",
             allowDecimal = true,
             suffix = " ₽"
         )
@@ -124,26 +140,13 @@ fun LongTermRentalSection(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            NumericTextField(
-                value = formState.depositMonths,
-                onValueChange = { onFormStateChange(formState.copy(depositMonths = it)) },
-                label = "Депозит (месяцев)",
-                modifier = Modifier.weight(1f),
-                allowDecimal = true
-            )
-            NumericTextField(
-                value = formState.depositCustomAmount,
-                onValueChange = { onFormStateChange(formState.copy(depositCustomAmount = it)) },
-                label = "Сумма депозита",
-                modifier = Modifier.weight(1f),
-                allowDecimal = true,
-                suffix = " ₽"
-            )
-        }
+        NumericTextField(
+            value = formState.depositCustomAmount,
+            onValueChange = { onFormStateChange(formState.copy(depositCustomAmount = it)) },
+            label = "Залог",
+            allowDecimal = true,
+            suffix = " ₽"
+        )
 
         NumericTextField(
             value = formState.securityDeposit,
