@@ -18,7 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import android.util.Log
 import com.realestateassistant.pro.network.YandexSuggestService
@@ -47,7 +50,10 @@ fun AddressTextField(
     value: GeocodedAddress,
     onValueChange: (GeocodedAddress) -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "Адрес"
+    label: String = "Адрес",
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    isRequired: Boolean = false
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -55,7 +61,7 @@ fun AddressTextField(
     var showDropdown by remember { mutableStateOf(false) }
     var suggestions by remember { mutableStateOf<List<AddressSuggestion>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var apiError by remember { mutableStateOf<String?>(null) }
     
     // Создаем состояние для дебаунсинга ввода
     val inputFlow = remember { MutableStateFlow("") }
@@ -70,7 +76,7 @@ fun AddressTextField(
                 .collect { input ->
                     if (input.length >= 3) {
                         isLoading = true
-                        error = null
+                        apiError = null
                         try {
                             val result = withContext(Dispatchers.IO) {
                                 val apiSuggestions = YandexSuggestService.getSuggestions(input, context)
@@ -86,7 +92,7 @@ fun AddressTextField(
                             suggestions = result
                             showDropdown = suggestions.isNotEmpty()
                         } catch (e: Exception) {
-                            error = "Ошибка загрузки подсказок: ${e.message}"
+                            apiError = "Ошибка загрузки подсказок: ${e.message}"
                             Log.e("AddressTextField", "Error loading address suggestions", e)
                         } finally {
                             isLoading = false
@@ -106,6 +112,17 @@ fun AddressTextField(
         }
     }
     
+    // Создаем текст с меткой и звездочкой для обязательных полей
+    val labelText = buildAnnotatedString {
+        append(label)
+        if (isRequired) {
+            append(" ")
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.error)) {
+                append("*")
+            }
+        }
+    }
+    
     Column(modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(
             value = value.address,
@@ -113,7 +130,7 @@ fun AddressTextField(
                 onValueChange(GeocodedAddress(address = newValue))
                 inputFlow.value = newValue
             },
-            label = { Text(label) },
+            label = { Text(labelText) },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
@@ -149,8 +166,12 @@ fun AddressTextField(
                 focusManager.clearFocus()
                 showDropdown = false
             }),
-            isError = error != null,
-            supportingText = error?.let { { Text(it) } }
+            isError = isError || apiError != null,
+            supportingText = when {
+                isError && errorMessage != null -> { { Text(errorMessage) } }
+                apiError != null -> { { Text(apiError ?: "") } }
+                else -> null
+            }
         )
         
         // Отображаем координаты (опционально, для отладки)

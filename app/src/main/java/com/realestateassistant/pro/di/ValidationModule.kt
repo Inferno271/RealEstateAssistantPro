@@ -9,9 +9,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/**
- * Модуль Dagger Hilt для предоставления валидаторов
- */
 @Module
 @InstallIn(SingletonComponent::class)
 object ValidationModule {

@@ -53,12 +53,14 @@ import com.realestateassistant.pro.util.PhoneUtils
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.widget.Toast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CallLogSelector(
     onPhoneSelected: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    existingPhones: List<String> = emptyList()
 ) {
     val context = LocalContext.current
     var callLogEntries by remember { mutableStateOf<List<CallLogEntry>>(emptyList()) }
@@ -154,8 +156,19 @@ fun CallLogSelector(
                                         onClick = {
                                             // Нормализуем номер в международный формат E.164 перед возвратом
                                             val normalizedNumber = PhoneUtils.normalizeInternationalPhoneNumber(entry.number)
-                                            onPhoneSelected(normalizedNumber)
-                                            onDismiss()
+                                            
+                                            // Проверяем, не существует ли уже такой номер
+                                            if (existingPhones.contains(normalizedNumber)) {
+                                                // Показываем сообщение о дубликате
+                                                Toast.makeText(
+                                                    context,
+                                                    "Этот номер уже добавлен",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                onPhoneSelected(normalizedNumber)
+                                                onDismiss()
+                                            }
                                         }
                                     )
                                 }

@@ -11,12 +11,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.realestateassistant.pro.util.CallLogHelper
 import com.realestateassistant.pro.util.PhoneUtils
@@ -25,7 +29,10 @@ import com.realestateassistant.pro.util.PhoneUtils
 fun PhoneListField(
     phones: List<String>,
     onPhonesChange: (List<String>) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    isRequired: Boolean = false,
+    errorMessage: String? = null
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var showCallLogDialog by remember { mutableStateOf(false) }
@@ -50,20 +57,60 @@ fun PhoneListField(
     )
     
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = "Контактные телефоны",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Создаем аннотированную строку с звездочкой для обязательного поля
+            val labelText = buildAnnotatedString {
+                append("Контактные телефоны")
+                if (isRequired) {
+                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.error)) {
+                        append(" *")
+                    }
+                }
+            }
+            
+            Text(
+                text = labelText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            if (isError) {
+                Icon(
+                    Icons.Default.Error,
+                    contentDescription = "Ошибка",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+        
+        if (isError && errorMessage != null) {
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+        
         Spacer(modifier = Modifier.height(4.dp))
         
         if (phones.isEmpty()) {
             Text(
                 text = "Не добавлено ни одного номера",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                color = if (isError) 
+                    MaterialTheme.colorScheme.error.copy(alpha = 0.8f) 
+                else 
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
         } else {
+            // Создаем список с явными уникальными ключами, чтобы избежать дублирования
+            val uniquePhones = phones.distinctBy { it }
+            
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -72,8 +119,9 @@ fun PhoneListField(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(
-                    items = phones,
-                    key = { it } // Используем сам номер телефона как ключ
+                    items = uniquePhones,
+                    // Создаем гарантированно уникальный ключ, добавляя индекс к номеру
+                    key = { phone -> "${uniquePhones.indexOf(phone)}_$phone" }
                 ) { phone ->
                     Column {
                         Row(
@@ -122,7 +170,10 @@ fun PhoneListField(
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                )
             ) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -267,14 +318,13 @@ fun PhoneListField(
     if (showCallLogDialog) {
         CallLogSelector(
             onPhoneSelected = { phoneNumber ->
-                // Нормализуем номер через PhoneUtils
-                val internationalNumber = PhoneUtils.normalizeInternationalPhoneNumber(phoneNumber)
-                onPhonesChange(phones + internationalNumber)
-                showCallLogDialog = false
+                // Проверка дубликатов перенесена в CallLogSelector
+                onPhonesChange(phones + phoneNumber)
             },
             onDismiss = {
                 showCallLogDialog = false
-            }
+            },
+            existingPhones = phones // Передаем существующие номера для проверки в CallLogSelector
         )
     }
 }

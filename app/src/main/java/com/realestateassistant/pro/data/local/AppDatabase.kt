@@ -39,7 +39,7 @@ import java.io.File
         AppointmentEntity::class,
         UserEntity::class
     ],
-    version = 6,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(
@@ -229,15 +229,6 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
         
-        // Миграция с версии 5 на версию 6 (добавление полей клиента)
-        private val MIGRATION_5_6 = object : Migration(5, 6) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE clients ADD COLUMN childrenAge TEXT DEFAULT NULL")
-                database.execSQL("ALTER TABLE clients ADD COLUMN moveInDeadline INTEGER DEFAULT NULL")
-                database.execSQL("ALTER TABLE clients ADD COLUMN familyComposition TEXT DEFAULT NULL")
-            }
-        }
-        
         // Синглтон для базы данных
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -257,7 +248,7 @@ abstract class AppDatabase : RoomDatabase() {
                         DATABASE_NAME
                     )
                     .openHelperFactory(factory)
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .build()
                     
                     // Проверка базы данных на целостность

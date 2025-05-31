@@ -132,7 +132,25 @@ private fun PropertyCardMainContent(
                         Text(
                             text = "${formatPrice(price)} ₽/мес",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.secondary,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    
+                    property.winterMonthlyRent?.let { price ->
+                        Text(
+                            text = "${formatPrice(price)} ₽/мес (зима)",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    
+                    property.summerMonthlyRent?.let { price ->
+                        Text(
+                            text = "${formatPrice(price)} ₽/мес (лето)",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -141,7 +159,7 @@ private fun PropertyCardMainContent(
                         Text(
                             text = "${formatPrice(price)} ₽/сутки",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.secondary,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                     }

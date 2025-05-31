@@ -1,0 +1,1222 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 12,
+    "identityHash": "44f1ea47dce065e8ae6280ef2845ec06",
+    "entities": [
+      {
+        "tableName": "properties",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `contactName` TEXT NOT NULL, `contactPhone` TEXT NOT NULL, `additionalContactInfo` TEXT, `propertyType` TEXT NOT NULL, `address` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `district` TEXT NOT NULL, `nearbyObjects` TEXT NOT NULL, `views` TEXT NOT NULL, `area` REAL NOT NULL, `roomsCount` INTEGER NOT NULL, `isStudio` INTEGER NOT NULL, `layout` TEXT NOT NULL, `floor` INTEGER NOT NULL, `totalFloors` INTEGER NOT NULL, `description` TEXT, `management` TEXT NOT NULL, `levelsCount` INTEGER NOT NULL, `landArea` REAL NOT NULL, `hasGarage` INTEGER NOT NULL, `garageSpaces` INTEGER NOT NULL, `hasBathhouse` INTEGER NOT NULL, `hasPool` INTEGER NOT NULL, `poolType` TEXT NOT NULL, `repairState` TEXT NOT NULL, `bedsCount` INTEGER, `bathroomsCount` INTEGER, `bathroomType` TEXT NOT NULL, `noFurniture` INTEGER NOT NULL, `hasAppliances` INTEGER NOT NULL, `heatingType` TEXT NOT NULL, `balconiesCount` INTEGER NOT NULL, `elevatorsCount` INTEGER, `hasParking` INTEGER NOT NULL, `parkingType` TEXT, `parkingSpaces` INTEGER, `amenities` TEXT NOT NULL, `smokingAllowed` INTEGER NOT NULL, `childrenAllowed` INTEGER NOT NULL, `minChildAge` TEXT, `maxChildrenCount` TEXT, `petsAllowed` INTEGER NOT NULL, `maxPetsCount` TEXT, `allowedPetTypes` TEXT NOT NULL, `monthlyRent` REAL, `winterMonthlyRent` REAL, `summerMonthlyRent` REAL, `hasCompensationContract` INTEGER NOT NULL, `isSelfEmployed` INTEGER NOT NULL, `isPersonalIncomeTax` INTEGER NOT NULL, `isCompanyIncomeTax` INTEGER NOT NULL, `utilitiesIncluded` INTEGER NOT NULL, `utilitiesCost` REAL, `minRentPeriod` TEXT, `maxRentPeriod` INTEGER, `depositCustomAmount` REAL, `securityDeposit` REAL, `additionalExpenses` TEXT, `longTermRules` TEXT, `dailyPrice` REAL, `minStayDays` INTEGER, `maxStayDays` INTEGER, `maxGuests` INTEGER, `checkInTime` TEXT, `checkOutTime` TEXT, `shortTermDeposit` REAL, `shortTermDepositCustomAmount` REAL, `seasonalPrices` TEXT NOT NULL, `weekdayPrice` REAL, `weekendPrice` REAL, `weeklyDiscount` REAL, `monthlyDiscount` REAL, `additionalServices` TEXT, `shortTermRules` TEXT, `cleaningService` INTEGER NOT NULL, `cleaningDetails` TEXT, `hasExtraBed` INTEGER NOT NULL, `extraBedPrice` REAL, `partiesAllowed` INTEGER NOT NULL, `specialOffers` TEXT, `additionalComments` TEXT, `photos` TEXT NOT NULL, `documents` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contactName",
+            "columnName": "contactName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contactPhone",
+            "columnName": "contactPhone",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "additionalContactInfo",
+            "columnName": "additionalContactInfo",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "propertyType",
+            "columnName": "propertyType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "address",
+            "columnName": "address",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "district",
+            "columnName": "district",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nearbyObjects",
+            "columnName": "nearbyObjects",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "views",
+            "columnName": "views",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "area",
+            "columnName": "area",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "roomsCount",
+            "columnName": "roomsCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isStudio",
+            "columnName": "isStudio",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "layout",
+            "columnName": "layout",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "floor",
+            "columnName": "floor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalFloors",
+            "columnName": "totalFloors",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "management",
+            "columnName": "management",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "levelsCount",
+            "columnName": "levelsCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "landArea",
+            "columnName": "landArea",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasGarage",
+            "columnName": "hasGarage",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "garageSpaces",
+            "columnName": "garageSpaces",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasBathhouse",
+            "columnName": "hasBathhouse",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasPool",
+            "columnName": "hasPool",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "poolType",
+            "columnName": "poolType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "repairState",
+            "columnName": "repairState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bedsCount",
+            "columnName": "bedsCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "bathroomsCount",
+            "columnName": "bathroomsCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "bathroomType",
+            "columnName": "bathroomType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "noFurniture",
+            "columnName": "noFurniture",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasAppliances",
+            "columnName": "hasAppliances",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "heatingType",
+            "columnName": "heatingType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "balconiesCount",
+            "columnName": "balconiesCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "elevatorsCount",
+            "columnName": "elevatorsCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hasParking",
+            "columnName": "hasParking",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parkingType",
+            "columnName": "parkingType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "parkingSpaces",
+            "columnName": "parkingSpaces",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "amenities",
+            "columnName": "amenities",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "smokingAllowed",
+            "columnName": "smokingAllowed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "childrenAllowed",
+            "columnName": "childrenAllowed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minChildAge",
+            "columnName": "minChildAge",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maxChildrenCount",
+            "columnName": "maxChildrenCount",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "petsAllowed",
+            "columnName": "petsAllowed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxPetsCount",
+            "columnName": "maxPetsCount",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "allowedPetTypes",
+            "columnName": "allowedPetTypes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monthlyRent",
+            "columnName": "monthlyRent",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "winterMonthlyRent",
+            "columnName": "winterMonthlyRent",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "summerMonthlyRent",
+            "columnName": "summerMonthlyRent",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hasCompensationContract",
+            "columnName": "hasCompensationContract",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSelfEmployed",
+            "columnName": "isSelfEmployed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPersonalIncomeTax",
+            "columnName": "isPersonalIncomeTax",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCompanyIncomeTax",
+            "columnName": "isCompanyIncomeTax",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "utilitiesIncluded",
+            "columnName": "utilitiesIncluded",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "utilitiesCost",
+            "columnName": "utilitiesCost",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "minRentPeriod",
+            "columnName": "minRentPeriod",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maxRentPeriod",
+            "columnName": "maxRentPeriod",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "depositCustomAmount",
+            "columnName": "depositCustomAmount",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "securityDeposit",
+            "columnName": "securityDeposit",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "additionalExpenses",
+            "columnName": "additionalExpenses",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "longTermRules",
+            "columnName": "longTermRules",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "dailyPrice",
+            "columnName": "dailyPrice",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "minStayDays",
+            "columnName": "minStayDays",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maxStayDays",
+            "columnName": "maxStayDays",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maxGuests",
+            "columnName": "maxGuests",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "checkInTime",
+            "columnName": "checkInTime",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "checkOutTime",
+            "columnName": "checkOutTime",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "shortTermDeposit",
+            "columnName": "shortTermDeposit",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "shortTermDepositCustomAmount",
+            "columnName": "shortTermDepositCustomAmount",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "seasonalPrices",
+            "columnName": "seasonalPrices",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weekdayPrice",
+            "columnName": "weekdayPrice",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "weekendPrice",
+            "columnName": "weekendPrice",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "weeklyDiscount",
+            "columnName": "weeklyDiscount",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "monthlyDiscount",
+            "columnName": "monthlyDiscount",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "additionalServices",
+            "columnName": "additionalServices",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "shortTermRules",
+            "columnName": "shortTermRules",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "cleaningService",
+            "columnName": "cleaningService",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cleaningDetails",
+            "columnName": "cleaningDetails",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hasExtraBed",
+            "columnName": "hasExtraBed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "extraBedPrice",
+            "columnName": "extraBedPrice",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "partiesAllowed",
+            "columnName": "partiesAllowed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "specialOffers",
+            "columnName": "specialOffers",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "additionalComments",
+            "columnName": "additionalComments",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "photos",
+            "columnName": "photos",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "documents",
+            "columnName": "documents",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSynced",
+            "columnName": "isSynced",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "clients",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `fullName` TEXT NOT NULL, `phone` TEXT NOT NULL, `rentalType` TEXT NOT NULL, `comment` TEXT NOT NULL, `familyComposition` TEXT, `peopleCount` INTEGER, `childrenCount` INTEGER, `childrenAges` TEXT NOT NULL, `hasPets` INTEGER NOT NULL, `petTypes` TEXT NOT NULL, `petCount` INTEGER, `occupation` TEXT, `isSmokingClient` INTEGER NOT NULL, `preferredDistrict` TEXT, `preferredAddress` TEXT, `additionalComments` TEXT, `urgencyLevel` TEXT, `budgetFlexibility` INTEGER NOT NULL, `maxBudgetIncrease` REAL, `requirementFlexibility` TEXT NOT NULL, `priorityCriteria` TEXT NOT NULL, `preferredAmenities` TEXT NOT NULL, `preferredViews` TEXT NOT NULL, `preferredNearbyObjects` TEXT NOT NULL, `preferredRepairState` TEXT, `preferredFloorMin` INTEGER, `preferredFloorMax` INTEGER, `needsElevator` INTEGER NOT NULL, `preferredBalconiesCount` INTEGER, `preferredBathroomsCount` INTEGER, `preferredBathroomType` TEXT, `needsFurniture` INTEGER NOT NULL, `needsAppliances` INTEGER NOT NULL, `preferredHeatingType` TEXT, `needsParking` INTEGER NOT NULL, `preferredParkingType` TEXT, `needsYard` INTEGER NOT NULL, `preferredYardArea` REAL, `needsGarage` INTEGER NOT NULL, `preferredGarageSpaces` INTEGER, `needsBathhouse` INTEGER NOT NULL, `needsPool` INTEGER NOT NULL, `needsOfficialAgreement` INTEGER NOT NULL, `preferredTaxOption` TEXT, `longTermBudgetMin` REAL, `longTermBudgetMax` REAL, `desiredPropertyType` TEXT, `desiredRoomsCount` INTEGER, `desiredArea` REAL, `additionalRequirements` TEXT, `legalPreferences` TEXT, `moveInDeadline` INTEGER, `shortTermBudgetMin` REAL, `shortTermBudgetMax` REAL, `shortTermCheckInDate` INTEGER, `shortTermCheckOutDate` INTEGER, `hasAdditionalGuests` INTEGER NOT NULL, `shortTermGuests` INTEGER, `dailyBudget` REAL, `preferredShortTermDistrict` TEXT, `checkInOutConditions` TEXT, `additionalServices` TEXT, `additionalShortTermRequirements` TEXT, `minRooms` INTEGER, `maxRooms` INTEGER, `minArea` REAL, `maxArea` REAL, `preferredLayout` TEXT, `minBudget` INTEGER, `maxBudget` INTEGER, `housingNotes` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fullName",
+            "columnName": "fullName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "phone",
+            "columnName": "phone",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rentalType",
+            "columnName": "rentalType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "comment",
+            "columnName": "comment",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "familyComposition",
+            "columnName": "familyComposition",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "peopleCount",
+            "columnName": "peopleCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "childrenCount",
+            "columnName": "childrenCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "childrenAges",
+            "columnName": "childrenAges",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasPets",
+            "columnName": "hasPets",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "petTypes",
+            "columnName": "petTypes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "petCount",
+            "columnName": "petCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "occupation",
+            "columnName": "occupation",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isSmokingClient",
+            "columnName": "isSmokingClient",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredDistrict",
+            "columnName": "preferredDistrict",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "preferredAddress",
+            "columnName": "preferredAddress",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "additionalComments",
+            "columnName": "additionalComments",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "urgencyLevel",
+            "columnName": "urgencyLevel",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "budgetFlexibility",
+            "columnName": "budgetFlexibility",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxBudgetIncrease",
+            "columnName": "maxBudgetIncrease",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "requirementFlexibility",
+            "columnName": "requirementFlexibility",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "priorityCriteria",
+            "columnName": "priorityCriteria",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredAmenities",
+            "columnName": "preferredAmenities",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredViews",
+            "columnName": "preferredViews",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredNearbyObjects",
+            "columnName": "preferredNearbyObjects",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredRepairState",
+            "columnName": "preferredRepairState",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "preferredFloorMin",
+            "columnName": "preferredFloorMin",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "preferredFloorMax",
+            "columnName": "preferredFloorMax",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "needsElevator",
+            "columnName": "needsElevator",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredBalconiesCount",
+            "columnName": "preferredBalconiesCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "preferredBathroomsCount",
+            "columnName": "preferredBathroomsCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "preferredBathroomType",
+            "columnName": "preferredBathroomType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "needsFurniture",
+            "columnName": "needsFurniture",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsAppliances",
+            "columnName": "needsAppliances",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredHeatingType",
+            "columnName": "preferredHeatingType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "needsParking",
+            "columnName": "needsParking",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredParkingType",
+            "columnName": "preferredParkingType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "needsYard",
+            "columnName": "needsYard",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredYardArea",
+            "columnName": "preferredYardArea",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "needsGarage",
+            "columnName": "needsGarage",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredGarageSpaces",
+            "columnName": "preferredGarageSpaces",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "needsBathhouse",
+            "columnName": "needsBathhouse",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsPool",
+            "columnName": "needsPool",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsOfficialAgreement",
+            "columnName": "needsOfficialAgreement",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredTaxOption",
+            "columnName": "preferredTaxOption",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "longTermBudgetMin",
+            "columnName": "longTermBudgetMin",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "longTermBudgetMax",
+            "columnName": "longTermBudgetMax",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "desiredPropertyType",
+            "columnName": "desiredPropertyType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "desiredRoomsCount",
+            "columnName": "desiredRoomsCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "desiredArea",
+            "columnName": "desiredArea",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "additionalRequirements",
+            "columnName": "additionalRequirements",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "legalPreferences",
+            "columnName": "legalPreferences",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "moveInDeadline",
+            "columnName": "moveInDeadline",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "shortTermBudgetMin",
+            "columnName": "shortTermBudgetMin",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "shortTermBudgetMax",
+            "columnName": "shortTermBudgetMax",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "shortTermCheckInDate",
+            "columnName": "shortTermCheckInDate",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "shortTermCheckOutDate",
+            "columnName": "shortTermCheckOutDate",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hasAdditionalGuests",
+            "columnName": "hasAdditionalGuests",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "shortTermGuests",
+            "columnName": "shortTermGuests",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "dailyBudget",
+            "columnName": "dailyBudget",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "preferredShortTermDistrict",
+            "columnName": "preferredShortTermDistrict",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "checkInOutConditions",
+            "columnName": "checkInOutConditions",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "additionalServices",
+            "columnName": "additionalServices",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "additionalShortTermRequirements",
+            "columnName": "additionalShortTermRequirements",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "minRooms",
+            "columnName": "minRooms",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maxRooms",
+            "columnName": "maxRooms",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "minArea",
+            "columnName": "minArea",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maxArea",
+            "columnName": "maxArea",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "preferredLayout",
+            "columnName": "preferredLayout",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "minBudget",
+            "columnName": "minBudget",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maxBudget",
+            "columnName": "maxBudget",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "housingNotes",
+            "columnName": "housingNotes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSynced",
+            "columnName": "isSynced",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "appointments",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `propertyId` TEXT NOT NULL, `clientId` TEXT NOT NULL, `agentId` TEXT NOT NULL, `appointmentTime` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `status` TEXT NOT NULL, `type` TEXT NOT NULL, `notes` TEXT NOT NULL, `reminderTime` INTEGER, `location` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`propertyId`) REFERENCES `properties`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`clientId`) REFERENCES `clients`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "propertyId",
+            "columnName": "propertyId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clientId",
+            "columnName": "clientId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "agentId",
+            "columnName": "agentId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appointmentTime",
+            "columnName": "appointmentTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "duration",
+            "columnName": "duration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reminderTime",
+            "columnName": "reminderTime",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "location",
+            "columnName": "location",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSynced",
+            "columnName": "isSynced",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_appointments_propertyId",
+            "unique": false,
+            "columnNames": [
+              "propertyId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_appointments_propertyId` ON `${TABLE_NAME}` (`propertyId`)"
+          },
+          {
+            "name": "index_appointments_clientId",
+            "unique": false,
+            "columnNames": [
+              "clientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_appointments_clientId` ON `${TABLE_NAME}` (`clientId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "properties",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "propertyId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "clients",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "clientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "users",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `email` TEXT NOT NULL, `name` TEXT NOT NULL, `phone` TEXT NOT NULL, `photoUrl` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "phone",
+            "columnName": "phone",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "photoUrl",
+            "columnName": "photoUrl",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSynced",
+            "columnName": "isSynced",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '44f1ea47dce065e8ae6280ef2845ec06')"
+    ]
+  }
+}

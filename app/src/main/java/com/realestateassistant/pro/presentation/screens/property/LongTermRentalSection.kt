@@ -14,7 +14,9 @@ import com.realestateassistant.pro.presentation.model.PropertySection
 fun LongTermRentalSection(
     formState: PropertyFormState,
     onFormStateChange: (PropertyFormState) -> Unit,
-    expandedSections: MutableMap<PropertySection, Boolean>
+    expandedSections: MutableMap<PropertySection, Boolean>,
+    isFieldInvalid: (String) -> Boolean,
+    showOnlyRequiredFields: Boolean = false
 ) {
     // Кэшируем локальные переменные
     val hasCompensationContract = formState.hasCompensationContract
@@ -23,153 +25,189 @@ fun LongTermRentalSection(
     val isCompanyIncomeTax = formState.isCompanyIncomeTax
     val utilitiesIncluded = formState.utilitiesIncluded
 
+    // Проверяем наличие ошибок в секции
+    val hasMonthlyRentError = isFieldInvalid("monthlyRent")
+    val hasWinterMonthlyRentError = isFieldInvalid("winterMonthlyRent")
+    val hasSummerMonthlyRentError = isFieldInvalid("summerMonthlyRent")
+    val hasDepositCustomAmountError = isFieldInvalid("depositCustomAmount")
+    
+    // Проверяем наличие хотя бы одной ошибки с арендной платой
+    val hasRentError = hasMonthlyRentError || hasWinterMonthlyRentError || hasSummerMonthlyRentError
+    
+    val hasSectionError = hasRentError || hasDepositCustomAmountError
+    
+    // Формируем сообщение об ошибке для секции
+    val errorMessage = when {
+        hasRentError -> "Необходимо указать хотя бы один тип стоимости аренды"
+        hasDepositCustomAmountError -> "Необходимо указать залог"
+        else -> null
+    }
+
     ExpandablePropertyCard(
         title = "Условия долгосрочной аренды",
         sectionKey = PropertySection.LONG_TERM_RENTAL,
-        expandedSections = expandedSections
+        expandedSections = expandedSections,
+        hasError = hasSectionError,
+        errorMessage = errorMessage
     ) {
+        // Обязательные поля всегда отображаются
         NumericTextField(
             value = formState.monthlyRent,
             onValueChange = { onFormStateChange(formState.copy(monthlyRent = it)) },
             label = "Круглогодичная стоимость аренды",
             allowDecimal = true,
-            suffix = " ₽"
+            suffix = " ₽",
+            isError = hasMonthlyRentError,
+            errorMessage = if (hasRentError) "Укажите хотя бы один тип стоимости аренды" else null,
+            isRequired = true
         )
         
-        NumericTextField(
-            value = formState.winterMonthlyRent,
-            onValueChange = { onFormStateChange(formState.copy(winterMonthlyRent = it)) },
-            label = "Стоимость аренды зимой",
-            allowDecimal = true,
-            suffix = " ₽"
-        )
-        
-        NumericTextField(
-            value = formState.summerMonthlyRent,
-            onValueChange = { onFormStateChange(formState.copy(summerMonthlyRent = it)) },
-            label = "Стоимость аренды летом",
-            allowDecimal = true,
-            suffix = " ₽"
-        )
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Договор с компенсацией",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        // Отображаем необязательные поля только если не включен режим только обязательных полей
+        if (!showOnlyRequiredFields) {
+            NumericTextField(
+                value = formState.winterMonthlyRent,
+                onValueChange = { onFormStateChange(formState.copy(winterMonthlyRent = it)) },
+                label = "Стоимость аренды зимой",
+                allowDecimal = true,
+                suffix = " ₽",
+                isError = hasWinterMonthlyRentError
             )
             
-            // Используем оптимизированный компонент
-            RadioGroupRow(
-                options = listOf("Да", "Нет"),
-                selectedOption = if (hasCompensationContract) "Да" else "Нет",
-                onOptionSelected = { option ->
-                    onFormStateChange(formState.copy(hasCompensationContract = option == "Да"))
-                }
+            NumericTextField(
+                value = formState.summerMonthlyRent,
+                onValueChange = { onFormStateChange(formState.copy(summerMonthlyRent = it)) },
+                label = "Стоимость аренды летом",
+                allowDecimal = true,
+                suffix = " ₽",
+                isError = hasSummerMonthlyRentError
             )
-        }
 
-        if (hasCompensationContract) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Тип регистрации",
+                    text = "Договор с компенсацией",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
-                // Используем checkboxes с оптимизированной перерисовкой
-                CheckboxWithText(
-                    checked = isSelfEmployed,
-                    onCheckedChange = { onFormStateChange(formState.copy(isSelfEmployed = it)) },
-                    text = "Самозанятый"
+                // Используем оптимизированный компонент
+                RadioGroupRow(
+                    options = listOf("Да", "Нет"),
+                    selectedOption = if (hasCompensationContract) "Да" else "Нет",
+                    onOptionSelected = { option ->
+                        onFormStateChange(formState.copy(hasCompensationContract = option == "Да"))
+                    }
                 )
-                
-                CheckboxWithText(
-                    checked = isPersonalIncomeTax,
-                    onCheckedChange = { onFormStateChange(formState.copy(isPersonalIncomeTax = it)) },
-                    text = "НДФЛ"
+            }
+
+            if (hasCompensationContract) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Тип регистрации",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    // Используем checkboxes с оптимизированной перерисовкой
+                    CheckboxWithText(
+                        checked = isSelfEmployed,
+                        onCheckedChange = { onFormStateChange(formState.copy(isSelfEmployed = it)) },
+                        text = "Самозанятый"
+                    )
+                    
+                    CheckboxWithText(
+                        checked = isPersonalIncomeTax,
+                        onCheckedChange = { onFormStateChange(formState.copy(isPersonalIncomeTax = it)) },
+                        text = "НДФЛ"
+                    )
+                    
+                    CheckboxWithText(
+                        checked = isCompanyIncomeTax,
+                        onCheckedChange = { onFormStateChange(formState.copy(isCompanyIncomeTax = it)) },
+                        text = "НДФЛ для юрлиц"
+                    )
+                }
+            }
+
+            CheckboxWithText(
+                checked = utilitiesIncluded,
+                onCheckedChange = { onFormStateChange(formState.copy(utilitiesIncluded = it)) },
+                text = "Коммунальные включены"
+            )
+
+            if (!utilitiesIncluded) {
+                NumericTextField(
+                    value = formState.utilitiesCost,
+                    onValueChange = { onFormStateChange(formState.copy(utilitiesCost = it)) },
+                    label = "Стоимость коммунальных",
+                    allowDecimal = true,
+                    suffix = " ₽"
                 )
-                
-                CheckboxWithText(
-                    checked = isCompanyIncomeTax,
-                    onCheckedChange = { onFormStateChange(formState.copy(isCompanyIncomeTax = it)) },
-                    text = "НДФЛ для юрлиц"
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                NumericTextField(
+                    value = formState.minRentPeriod,
+                    onValueChange = { onFormStateChange(formState.copy(minRentPeriod = it)) },
+                    label = "Минимальный срок",
+                    modifier = Modifier.weight(1f),
+                    allowDecimal = false
+                )
+                NumericTextField(
+                    value = formState.maxRentPeriod,
+                    onValueChange = { onFormStateChange(formState.copy(maxRentPeriod = it)) },
+                    label = "Максимальный срок",
+                    modifier = Modifier.weight(1f),
+                    allowDecimal = false
                 )
             }
         }
 
-        CheckboxWithText(
-            checked = utilitiesIncluded,
-            onCheckedChange = { onFormStateChange(formState.copy(utilitiesIncluded = it)) },
-            text = "Коммунальные включены"
-        )
-
-        if (!utilitiesIncluded) {
-            NumericTextField(
-                value = formState.utilitiesCost,
-                onValueChange = { onFormStateChange(formState.copy(utilitiesCost = it)) },
-                label = "Стоимость коммунальных",
-                allowDecimal = true,
-                suffix = " ₽"
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            NumericTextField(
-                value = formState.minRentPeriod,
-                onValueChange = { onFormStateChange(formState.copy(minRentPeriod = it)) },
-                label = "Минимальный срок",
-                modifier = Modifier.weight(1f),
-                allowDecimal = false
-            )
-            NumericTextField(
-                value = formState.maxRentPeriod,
-                onValueChange = { onFormStateChange(formState.copy(maxRentPeriod = it)) },
-                label = "Максимальный срок",
-                modifier = Modifier.weight(1f),
-                allowDecimal = false
-            )
-        }
-
+        // Обязательное поле залога всегда отображается
         NumericTextField(
             value = formState.depositCustomAmount,
             onValueChange = { onFormStateChange(formState.copy(depositCustomAmount = it)) },
             label = "Залог",
             allowDecimal = true,
-            suffix = " ₽"
+            suffix = " ₽",
+            isError = hasDepositCustomAmountError,
+            errorMessage = if (hasDepositCustomAmountError) "Обязательное поле" else null,
+            isRequired = true
         )
 
-        NumericTextField(
-            value = formState.securityDeposit,
-            onValueChange = { onFormStateChange(formState.copy(securityDeposit = it)) },
-            label = "Страховой депозит",
-            allowDecimal = true,
-            suffix = " ₽"
-        )
+        // Отображаем необязательные поля только если не включен режим только обязательных полей
+        if (!showOnlyRequiredFields) {
+            NumericTextField(
+                value = formState.securityDeposit,
+                onValueChange = { onFormStateChange(formState.copy(securityDeposit = it)) },
+                label = "Страховой депозит",
+                allowDecimal = true,
+                suffix = " ₽"
+            )
 
-        OutlinedTextFieldWithColors(
-            value = formState.additionalExpenses,
-            onValueChange = { onFormStateChange(formState.copy(additionalExpenses = it)) },
-            label = "Дополнительные расходы",
-            minLines = 3,
-            maxLines = 5
-        )
+            OutlinedTextFieldWithColors(
+                value = formState.additionalExpenses,
+                onValueChange = { onFormStateChange(formState.copy(additionalExpenses = it)) },
+                label = "Дополнительные расходы",
+                minLines = 3,
+                maxLines = 5
+            )
 
-        OutlinedTextFieldWithColors(
-            value = formState.longTermRules,
-            onValueChange = { onFormStateChange(formState.copy(longTermRules = it)) },
-            label = "Правила проживания",
-            minLines = 3,
-            maxLines = 5
-        )
+            OutlinedTextFieldWithColors(
+                value = formState.longTermRules,
+                onValueChange = { onFormStateChange(formState.copy(longTermRules = it)) },
+                label = "Правила проживания",
+                minLines = 3,
+                maxLines = 5
+            )
+        }
     }
 } 

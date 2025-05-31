@@ -8,12 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.realestateassistant.pro.navigation.routes.AppRoutes
-import com.realestateassistant.pro.presentation.screens.AddPropertyScreen
-import com.realestateassistant.pro.presentation.screens.AppointmentListScreen
-import com.realestateassistant.pro.presentation.screens.ClientListScreen
-import com.realestateassistant.pro.presentation.screens.EditPropertyScreen
-import com.realestateassistant.pro.presentation.screens.PropertyDetailScreen
-import com.realestateassistant.pro.presentation.screens.PropertyListScreen
+import com.realestateassistant.pro.presentation.screens.*
 import com.realestateassistant.pro.presentation.screens.about.AboutScreen
 import com.realestateassistant.pro.presentation.screens.help.HelpScreen
 import com.realestateassistant.pro.presentation.screens.profile.ProfileScreen
@@ -37,7 +32,7 @@ fun AppNavHost(
         startDestination = startDestination,
         modifier = modifier
     ) {
-        // Основные экраны
+        // Основные экраны объектов недвижимости
         composable(route = AppRoutes.PROPERTIES) {
             PropertyListScreen(
                 onNavigateToAddProperty = {
@@ -96,8 +91,63 @@ fun AppNavHost(
             )
         }
         
+        // Экраны для работы с клиентами
         composable(route = AppRoutes.CLIENTS) {
-            ClientListScreen()
+            ClientListScreen(
+                onNavigateToAddClient = {
+                    navController.navigate(AppRoutes.ADD_CLIENT)
+                },
+                onNavigateToClientDetail = { clientId ->
+                    navController.navigate(AppRoutes.clientDetail(clientId))
+                }
+            )
+        }
+        
+        composable(route = AppRoutes.ADD_CLIENT) {
+            AddClientScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        
+        // Детальный просмотр клиента
+        composable(
+            route = AppRoutes.CLIENT_DETAIL,
+            arguments = listOf(
+                navArgument("clientId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val clientId = backStackEntry.arguments?.getString("clientId") ?: ""
+            ClientDetailScreen(
+                clientId = clientId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToEdit = { clientId ->
+                    navController.navigate(AppRoutes.editClient(clientId))
+                }
+            )
+        }
+        
+        // Редактирование клиента
+        composable(
+            route = AppRoutes.EDIT_CLIENT,
+            arguments = listOf(
+                navArgument("clientId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val clientId = backStackEntry.arguments?.getString("clientId") ?: ""
+            EditClientScreen(
+                clientId = clientId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
         
         composable(route = AppRoutes.APPOINTMENTS) {

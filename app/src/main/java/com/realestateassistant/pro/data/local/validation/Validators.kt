@@ -21,6 +21,17 @@ object Validators {
     }
 
     /**
+     * Проверяет, что список не пустой
+     */
+    fun validateRequired(value: List<*>?, fieldName: String): ValidationResult {
+        return if (value.isNullOrEmpty()) {
+            ValidationResult.Error("Поле '$fieldName' обязательно для заполнения", fieldName)
+        } else {
+            ValidationResult.Success
+        }
+    }
+
+    /**
      * Проверяет, что число положительное
      */
     fun validatePositiveNumber(value: Double?, fieldName: String): ValidationResult {
@@ -55,15 +66,20 @@ object Validators {
     }
 
     /**
-     * Проверяет корректность номера телефона (российский формат)
+     * Проверяет корректность списка телефонов
      */
-    fun validatePhone(phone: String?, fieldName: String = "Телефон"): ValidationResult {
-        return when {
-            phone.isNullOrBlank() -> ValidationResult.Success
-            !PHONE_PATTERN.matcher(phone).matches() -> 
-                ValidationResult.Error("Некорректный формат номера телефона", fieldName)
-            else -> ValidationResult.Success
+    fun validatePhone(phones: List<String>?, fieldName: String = "Телефон"): ValidationResult {
+        if (phones.isNullOrEmpty()) {
+            return ValidationResult.Success
         }
+        
+        phones.forEach { phone ->
+            if (!PHONE_PATTERN.matcher(phone).matches()) {
+                return ValidationResult.Error("Некорректный формат номера телефона: $phone", fieldName)
+            }
+        }
+        
+        return ValidationResult.Success
     }
 
     /**
@@ -142,6 +158,18 @@ object Validators {
                 "Список '$fieldName' не должен быть пустым",
                 fieldName
             )
+            else -> ValidationResult.Success
+        }
+    }
+
+    /**
+     * Проверяет корректность номера телефона (российский формат)
+     */
+    fun validatePhone(phone: String?, fieldName: String = "Телефон"): ValidationResult {
+        return when {
+            phone.isNullOrBlank() -> ValidationResult.Success
+            !PHONE_PATTERN.matcher(phone).matches() -> 
+                ValidationResult.Error("Некорректный формат номера телефона", fieldName)
             else -> ValidationResult.Success
         }
     }

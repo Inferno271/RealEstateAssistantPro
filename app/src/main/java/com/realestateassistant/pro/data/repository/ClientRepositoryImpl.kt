@@ -2,6 +2,7 @@ package com.realestateassistant.pro.data.repository
 
 import com.realestateassistant.pro.data.local.dao.ClientDao
 import com.realestateassistant.pro.data.local.entity.ClientEntity
+import com.realestateassistant.pro.data.local.mapper.ClientMapper
 import com.realestateassistant.pro.domain.model.Client
 import com.realestateassistant.pro.domain.repository.ClientRepository
 import kotlinx.coroutines.flow.first
@@ -17,8 +18,13 @@ class ClientRepositoryImpl @Inject constructor(
     override suspend fun addClient(client: Client): Result<Client> {
         return try {
             val newId = client.id.ifEmpty { UUID.randomUUID().toString() }
-            val updatedClient = client.copy(id = newId)
-            val clientEntity = mapToEntity(updatedClient)
+            val currentTime = System.currentTimeMillis()
+            val updatedClient = client.copy(
+                id = newId,
+                createdAt = currentTime,
+                updatedAt = currentTime
+            )
+            val clientEntity = ClientMapper.mapToEntity(updatedClient)
             clientDao.insertClient(clientEntity)
             Result.success(updatedClient)
         } catch (e: Exception) {
@@ -31,9 +37,21 @@ class ClientRepositoryImpl @Inject constructor(
             if (client.id.isEmpty()) {
                 return Result.failure(Exception("ID клиента пустой."))
             }
-            val clientEntity = mapToEntity(client)
-            clientDao.updateClient(clientEntity)
-            Result.success(Unit)
+            
+            // Получаем текущего клиента для сохранения createdAt
+            val existingClient = clientDao.getClient(client.id)
+            if (existingClient != null) {
+                // Создаем новую сущность с обновленными данными, сохраняя createdAt
+                val updatedClient = client.copy(
+                    createdAt = existingClient.createdAt,
+                    updatedAt = System.currentTimeMillis()
+                )
+                val clientEntity = ClientMapper.mapToEntity(updatedClient)
+                clientDao.updateClient(clientEntity)
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Клиент не найден."))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -52,7 +70,7 @@ class ClientRepositoryImpl @Inject constructor(
         return try {
             val clientEntity = clientDao.getClient(clientId)
             if (clientEntity != null) {
-                Result.success(mapFromEntity(clientEntity))
+                Result.success(ClientMapper.mapToDomain(clientEntity))
             } else {
                 Result.failure(Exception("Клиент не найден."))
             }
@@ -63,10 +81,22 @@ class ClientRepositoryImpl @Inject constructor(
 
     override suspend fun getAllClients(): Result<List<Client>> {
         return try {
+            println("DEBUG: ClientRepositoryImpl.getAllClients - начало запроса")
             val clientEntities = clientDao.getAllClients().first()
-            val clients = clientEntities.map { mapFromEntity(it) }
+            println("DEBUG: ClientRepositoryImpl.getAllClients - получено сущностей: ${clientEntities.size}")
+            println("DEBUG: ClientRepositoryImpl.getAllClients - типы аренды: ${clientEntities.map { it.rentalType }}")
+            
+            val clients = clientEntities.map { 
+                val client = ClientMapper.mapToDomain(it)
+                println("DEBUG: ClientRepositoryImpl.getAllClients - маппинг: ${it.id}, тип: ${it.rentalType} -> ${client.rentalType}")
+                client 
+            }
+            
+            println("DEBUG: ClientRepositoryImpl.getAllClients - итоговое количество: ${clients.size}")
             Result.success(clients)
         } catch (e: Exception) {
+            println("DEBUG: ClientRepositoryImpl.getAllClients - ошибка: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }
@@ -74,72 +104,29 @@ class ClientRepositoryImpl @Inject constructor(
     override suspend fun getClientsByRentalType(rentalType: String): Result<List<Client>> {
         return try {
             val clientEntities = clientDao.getClientsByRentalType(rentalType).first()
-            val clients = clientEntities.map { mapFromEntity(it) }
+            val clients = clientEntities.map { ClientMapper.mapToDomain(it) }
             Result.success(clients)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    private fun mapToEntity(client: Client): ClientEntity {
-        return ClientEntity(
-            id = client.id,
-            fullName = client.fullName,
-            phone = client.phone,
-            email = client.email,
-            rentalType = client.rentalType,
-            comment = client.comment,
-            preferredAddress = client.preferredAddress,
-            longTermBudgetMin = client.longTermBudgetMin,
-            longTermBudgetMax = client.longTermBudgetMax,
-            desiredPropertyType = client.desiredPropertyType,
-            desiredRoomsCount = client.desiredRoomsCount,
-            peopleCount = client.peopleCount,
-            childrenCount = client.childrenCount,
-            petsInfo = client.petsInfo,
-            desiredArea = client.desiredArea,
-            additionalRequirements = client.additionalRequirements,
-            legalPreferences = client.legalPreferences,
-            shortTermCheckInDate = client.shortTermCheckInDate,
-            shortTermCheckOutDate = client.shortTermCheckOutDate,
-            shortTermGuests = client.shortTermGuests,
-            dailyBudget = client.dailyBudget,
-            preferredShortTermDistrict = client.preferredShortTermDistrict,
-            checkInOutConditions = client.checkInOutConditions,
-            additionalServices = client.additionalServices,
-            additionalShortTermRequirements = client.additionalShortTermRequirements,
-            createdAt = System.currentTimeMillis(),
-            isSynced = false
-        )
-    }
-
-    private fun mapFromEntity(entity: ClientEntity): Client {
-        return Client(
-            id = entity.id,
-            fullName = entity.fullName,
-            phone = entity.phone,
-            email = entity.email,
-            rentalType = entity.rentalType,
-            comment = entity.comment,
-            preferredAddress = entity.preferredAddress,
-            longTermBudgetMin = entity.longTermBudgetMin,
-            longTermBudgetMax = entity.longTermBudgetMax,
-            desiredPropertyType = entity.desiredPropertyType,
-            desiredRoomsCount = entity.desiredRoomsCount,
-            peopleCount = entity.peopleCount,
-            childrenCount = entity.childrenCount,
-            petsInfo = entity.petsInfo,
-            desiredArea = entity.desiredArea,
-            additionalRequirements = entity.additionalRequirements,
-            legalPreferences = entity.legalPreferences,
-            shortTermCheckInDate = entity.shortTermCheckInDate,
-            shortTermCheckOutDate = entity.shortTermCheckOutDate,
-            shortTermGuests = entity.shortTermGuests,
-            dailyBudget = entity.dailyBudget,
-            preferredShortTermDistrict = entity.preferredShortTermDistrict,
-            checkInOutConditions = entity.checkInOutConditions,
-            additionalServices = entity.additionalServices,
-            additionalShortTermRequirements = entity.additionalShortTermRequirements
-        )
+    /**
+     * Метод для отладки - получает список всех клиентов напрямую (без Flow)
+     */
+    suspend fun checkClientsInDatabase() {
+        try {
+            println("DEBUG: ClientRepositoryImpl.checkClientsInDatabase - начало проверки")
+            val clientEntities = clientDao.getAllClientsDirectly()
+            println("DEBUG: ClientRepositoryImpl.checkClientsInDatabase - напрямую получено: ${clientEntities.size}")
+            println("DEBUG: ClientRepositoryImpl.checkClientsInDatabase - типы аренды: ${clientEntities.map { it.rentalType }}")
+            
+            for (entity in clientEntities) {
+                println("DEBUG: ClientRepository - клиент: id=${entity.id}, имя=${entity.fullName}, тип=${entity.rentalType}")
+            }
+        } catch (e: Exception) {
+            println("DEBUG: ClientRepositoryImpl.checkClientsInDatabase - ошибка: ${e.message}")
+            e.printStackTrace()
+        }
     }
 } 

@@ -58,7 +58,11 @@ class PropertyViewModel @Inject constructor(
     val propertyFormState: StateFlow<PropertyFormState> get() = _propertyFormState
 
     init {
-        startObservingProperties()
+        // Отложенный старт наблюдения за объектами, чтобы не блокировать UI при запуске
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(500) // Задержка 500мс для запуска UI
+            startObservingProperties()
+        }
     }
     
     // Метод для начала наблюдения за объектами из базы данных
@@ -87,7 +91,9 @@ class PropertyViewModel @Inject constructor(
     // Применение фильтра к списку объектов
     private fun applyFilter(filter: RentalFilter) {
         _filteredProperties.value = when (filter) {
-            RentalFilter.LONG_TERM -> _properties.value.filter { it.monthlyRent != null }
+            RentalFilter.LONG_TERM -> _properties.value.filter { 
+                it.monthlyRent != null || it.winterMonthlyRent != null || it.summerMonthlyRent != null 
+            }
             RentalFilter.SHORT_TERM -> _properties.value.filter { it.dailyPrice != null }
         }
     }

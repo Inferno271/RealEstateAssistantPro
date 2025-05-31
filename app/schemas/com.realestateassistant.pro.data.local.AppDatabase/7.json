@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 7,
-    "identityHash": "e8a8151a470825abe9089440aabea127",
+    "identityHash": "63d15be17cd7a23ed53cce505206506d",
     "entities": [
       {
         "tableName": "properties",
@@ -548,7 +548,7 @@
       },
       {
         "tableName": "clients",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `fullName` TEXT NOT NULL, `phone` TEXT NOT NULL, `email` TEXT NOT NULL, `rentalType` TEXT NOT NULL, `comment` TEXT NOT NULL, `preferredAddress` TEXT, `longTermBudgetMin` REAL, `longTermBudgetMax` REAL, `desiredPropertyType` TEXT, `desiredRoomsCount` INTEGER, `peopleCount` INTEGER, `childrenCount` INTEGER, `childrenAge` TEXT, `petsInfo` TEXT, `desiredArea` REAL, `additionalRequirements` TEXT, `legalPreferences` TEXT, `moveInDeadline` INTEGER, `familyComposition` TEXT, `shortTermCheckInDate` INTEGER, `shortTermCheckOutDate` INTEGER, `shortTermGuests` INTEGER, `dailyBudget` REAL, `dailyBudgetMax` REAL, `preferredShortTermDistrict` TEXT, `checkInOutConditions` TEXT, `additionalServices` TEXT, `additionalShortTermRequirements` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `fullName` TEXT NOT NULL, `phone` TEXT NOT NULL, `rentalType` TEXT NOT NULL, `comment` TEXT NOT NULL, `familyComposition` TEXT, `peopleCount` INTEGER, `childrenCount` INTEGER, `childrenAges` TEXT NOT NULL, `hasPets` INTEGER NOT NULL, `petTypes` TEXT NOT NULL, `petCount` INTEGER, `occupation` TEXT, `preferredAddress` TEXT, `longTermBudgetMin` REAL, `longTermBudgetMax` REAL, `desiredPropertyType` TEXT, `desiredRoomsCount` INTEGER, `desiredArea` REAL, `additionalRequirements` TEXT, `legalPreferences` TEXT, `moveInDeadline` INTEGER, `shortTermCheckInDate` INTEGER, `shortTermCheckOutDate` INTEGER, `shortTermGuests` INTEGER, `dailyBudget` REAL, `preferredShortTermDistrict` TEXT, `checkInOutConditions` TEXT, `additionalServices` TEXT, `additionalShortTermRequirements` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -569,12 +569,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "email",
-            "columnName": "email",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
             "fieldPath": "rentalType",
             "columnName": "rentalType",
             "affinity": "TEXT",
@@ -585,6 +579,54 @@
             "columnName": "comment",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "familyComposition",
+            "columnName": "familyComposition",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "peopleCount",
+            "columnName": "peopleCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "childrenCount",
+            "columnName": "childrenCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "childrenAges",
+            "columnName": "childrenAges",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasPets",
+            "columnName": "hasPets",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "petTypes",
+            "columnName": "petTypes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "petCount",
+            "columnName": "petCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "occupation",
+            "columnName": "occupation",
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "preferredAddress",
@@ -617,30 +659,6 @@
             "notNull": false
           },
           {
-            "fieldPath": "peopleCount",
-            "columnName": "peopleCount",
-            "affinity": "INTEGER",
-            "notNull": false
-          },
-          {
-            "fieldPath": "childrenCount",
-            "columnName": "childrenCount",
-            "affinity": "INTEGER",
-            "notNull": false
-          },
-          {
-            "fieldPath": "childrenAge",
-            "columnName": "childrenAge",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "petsInfo",
-            "columnName": "petsInfo",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
             "fieldPath": "desiredArea",
             "columnName": "desiredArea",
             "affinity": "REAL",
@@ -665,12 +683,6 @@
             "notNull": false
           },
           {
-            "fieldPath": "familyComposition",
-            "columnName": "familyComposition",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
             "fieldPath": "shortTermCheckInDate",
             "columnName": "shortTermCheckInDate",
             "affinity": "INTEGER",
@@ -691,12 +703,6 @@
           {
             "fieldPath": "dailyBudget",
             "columnName": "dailyBudget",
-            "affinity": "REAL",
-            "notNull": false
-          },
-          {
-            "fieldPath": "dailyBudgetMax",
-            "columnName": "dailyBudgetMax",
             "affinity": "REAL",
             "notNull": false
           },
@@ -958,7 +964,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e8a8151a470825abe9089440aabea127')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '63d15be17cd7a23ed53cce505206506d')"
     ]
   }
 }

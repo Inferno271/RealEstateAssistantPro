@@ -36,7 +36,9 @@ fun MediaSection(
     onFormStateChange: (PropertyFormState) -> Unit,
     expandedSections: MutableMap<PropertySection, Boolean>,
     imageViewModel: ImageViewModel = hiltViewModel(),
-    documentViewModel: DocumentViewModel = hiltViewModel()
+    documentViewModel: DocumentViewModel = hiltViewModel(),
+    isFieldInvalid: (String) -> Boolean,
+    showOnlyRequiredFields: Boolean = false
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -54,6 +56,12 @@ fun MediaSection(
     
     // Состояние для отображения прогресса загрузки документов
     var isDocumentLoading by remember { mutableStateOf(false) }
+    
+    // Проверяем наличие ошибок в секции
+    val hasPhotosError = isFieldInvalid("photos")
+    
+    // Формируем сообщение об ошибке для секции
+    val sectionErrorMessage = if (hasPhotosError) "Необходимо добавить хотя бы одну фотографию" else null
     
     // Эффект для отображения ошибок из ViewModel
     LaunchedEffect(error) {
@@ -160,7 +168,9 @@ fun MediaSection(
     ExpandablePropertyCard(
         title = "Медиафайлы",
         sectionKey = PropertySection.MEDIA,
-        expandedSections = expandedSections
+        expandedSections = expandedSections,
+        hasError = hasPhotosError,
+        errorMessage = sectionErrorMessage
     ) {
         Column(
             modifier = Modifier
@@ -169,10 +179,25 @@ fun MediaSection(
                 .heightIn(min = 0.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Фотографии",
-                style = MaterialTheme.typography.bodyLarge
-            )
+            // Раздел с фотографиями - обязательный, отображаем всегда
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Фотографии",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                
+                if (hasPhotosError) {
+                    Text(
+                        text = "Добавьте хотя бы одну фотографию",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
             
             // Отображение выбранных фотографий, если они есть
             if (formState.photos.isNotEmpty()) {
@@ -221,81 +246,66 @@ fun MediaSection(
                 Text("Добавить фото")
             }
             
-            Text(
-                text = "Документы",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            
-            // Отображение выбранных документов, если они есть
-            if (formState.documents.isNotEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .heightIn(min = 0.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    formState.documents.forEachIndexed { index, documentPath ->
-                        DocumentItem(
-                            documentUri = documentPath,
-                            onDeleteClick = {
-                                // Удаляем документ из хранилища и из списка
-                                coroutineScope.launch {
-                                    documentViewModel.deleteDocument(documentPath)
-                                    onFormStateChange(formState.copy(documents = formState.documents - documentPath))
-                                }
-                            },
-                            index = index
-                        )
+            // Раздел с документами отображается только если не включен режим только обязательных полей
+            if (!showOnlyRequiredFields) {
+                Text(
+                    text = "Документы",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                
+                // Отображение выбранных документов, если они есть
+                if (formState.documents.isNotEmpty()) {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .heightIn(min = 100.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(formState.documents) { documentUri ->
+                            DocumentItem(
+                                documentUri = documentUri,
+                                onDeleteClick = {
+                                    onFormStateChange(formState.copy(documents = formState.documents - documentUri))
+                                },
+                                index = formState.documents.indexOf(documentUri)
+                            )
+                        }
                     }
                 }
-            }
-            
-            Button(
-                onClick = { 
-                    // Запускаем выбор документов
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                        // Для Android 13+ проверяем разрешение на чтение медиа
-                        requestDocumentPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
-                    } else {
-                        // Для старых версий используем READ_EXTERNAL_STORAGE
-                        requestDocumentPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                
+                Button(
+                    onClick = { 
+                        // Проверяем разрешение на доступ к файлам в зависимости от версии Android
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                            // Для Android 13+ используем READ_MEDIA_IMAGES
+                            requestDocumentPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
+                        } else {
+                            // Для старых версий используем READ_EXTERNAL_STORAGE
+                            requestDocumentPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                        }
                     }
-                }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Добавить документ")
-            }
-            
-            // Добавляем отображение индикатора прогресса
-            if (isLoading || isDocumentLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Добавить документ")
                 }
             }
         }
-    }
-    
-    // Отображение полноэкранной галереи
-    if (showGallery) {
-        PhotoGalleryViewer(
-            photos = formState.photos,
-            initialPhoto = initialPhotoUri,
-            onDismiss = { showGallery = false }
-        )
-    }
-    
-    // Отображение диалога с ошибкой
-    if (errorMessage != null) {
-        ErrorDialog(
-            message = errorMessage ?: "Неизвестная ошибка",
-            onDismiss = { errorMessage = null }
-        )
+        
+        if (showGallery) {
+            PhotoGalleryViewer(
+                photos = formState.photos,
+                initialPhoto = initialPhotoUri,
+                onDismiss = { showGallery = false }
+            )
+        }
+        
+        if (errorMessage != null) {
+            ErrorDialog(
+                message = errorMessage ?: "Произошла ошибка",
+                onDismiss = { errorMessage = null }
+            )
+        }
     }
 } 

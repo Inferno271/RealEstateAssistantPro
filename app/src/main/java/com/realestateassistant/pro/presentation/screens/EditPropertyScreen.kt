@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -50,6 +51,9 @@ fun EditPropertyScreen(
     
     // Состояние для отслеживания, какие секции развернуты
     val expandedSections = remember { createInitialSectionState() }
+    
+    // Состояние для отображения только обязательных полей
+    var showOnlyRequiredFields by remember { mutableStateOf(false) }
 
     // Собираем состояния списков опций
     val propertyTypes by optionsViewModel.propertyTypes.collectAsState()
@@ -73,28 +77,52 @@ fun EditPropertyScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        "Редактировать объект",
-                        style = MaterialTheme.typography.titleLarge
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack, 
-                            contentDescription = "Назад",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.primary
+            Column {
+                TopAppBar(
+                    title = { 
+                        Text(
+                            "Редактировать объект",
+                            style = MaterialTheme.typography.titleLarge
+                        ) 
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack, 
+                                contentDescription = "Назад",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    },
+                    actions = {
+                        // Кнопка для переключения режима отображения полей
+                        TextButton(
+                            onClick = { showOnlyRequiredFields = !showOnlyRequiredFields },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = if (showOnlyRequiredFields) 
+                                    MaterialTheme.colorScheme.primary 
+                                else 
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        ) {
+                            Text(
+                                text = if (showOnlyRequiredFields) "Все поля" else "Обязательные поля",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground
+                    )
                 )
-            )
+                
+                Divider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
         }
     ) { paddingValues ->
         Box(
@@ -133,12 +161,10 @@ fun EditPropertyScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(16.dp),
+                            .padding(16.dp)
+                            .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Основное содержимое формы
-                        // Новый селектор типа аренды вместо сворачиваемого раздела
                         RentalTypeSelector(
                             isLongTerm = formState.isLongTerm,
                             onIsLongTermChange = { formState = formState.copy(isLongTerm = it) }
@@ -147,7 +173,9 @@ fun EditPropertyScreen(
                         ContactInfoSection(
                             formState = formState,
                             onFormStateChange = { formState = it },
-                            expandedSections = expandedSections
+                            expandedSections = expandedSections,
+                            isFieldInvalid = { false },
+                            showOnlyRequiredFields = showOnlyRequiredFields
                         )
                         
                         PropertyInfoSection(
@@ -158,7 +186,9 @@ fun EditPropertyScreen(
                             districts = districts,
                             layouts = layouts,
                             expandedSections = expandedSections,
-                            characteristicsConfig = currentCharacteristicsConfig
+                            characteristicsConfig = currentCharacteristicsConfig,
+                            isFieldInvalid = { false },
+                            showOnlyRequiredFields = showOnlyRequiredFields
                         )
                         
                         PropertyCharacteristicsSection(
@@ -169,34 +199,44 @@ fun EditPropertyScreen(
                             bathroomTypes = bathroomTypes,
                             heatingTypes = heatingTypes,
                             parkingTypes = parkingTypes,
-                            expandedSections = expandedSections
+                            expandedSections = expandedSections,
+                            isFieldInvalid = { false },
+                            showOnlyRequiredFields = showOnlyRequiredFields
                         )
                         
                         LivingConditionsSection(
                             formState = formState,
                             onFormStateChange = { formState = it },
                             optionsViewModel = optionsViewModel,
-                            expandedSections = expandedSections
+                            expandedSections = expandedSections,
+                            isFieldInvalid = { false },
+                            showOnlyRequiredFields = showOnlyRequiredFields
                         )
                         
                         if (formState.isLongTerm) {
                             LongTermRentalSection(
                                 formState = formState,
                                 onFormStateChange = { formState = it },
-                                expandedSections = expandedSections
+                                expandedSections = expandedSections,
+                                isFieldInvalid = { false },
+                                showOnlyRequiredFields = showOnlyRequiredFields
                             )
                         } else {
                             ShortTermRentalSection(
                                 formState = formState,
                                 onFormStateChange = { formState = it },
-                                expandedSections = expandedSections
+                                expandedSections = expandedSections,
+                                isFieldInvalid = { false },
+                                showOnlyRequiredFields = showOnlyRequiredFields
                             )
                         }
                         
                         MediaSection(
                             formState = formState,
                             onFormStateChange = { formState = it },
-                            expandedSections = expandedSections
+                            expandedSections = expandedSections,
+                            isFieldInvalid = { false },
+                            showOnlyRequiredFields = showOnlyRequiredFields
                         )
                         
                         // Добавляем кнопки сохранения внизу формы

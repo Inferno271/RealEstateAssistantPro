@@ -5,22 +5,32 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.realestateassistant.pro.presentation.model.PropertySection
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun RentalTypeSelector(
@@ -119,6 +129,7 @@ fun ExpandablePropertyCard(
     sectionKey: PropertySection,
     expandedSections: MutableMap<PropertySection, Boolean>,
     modifier: Modifier = Modifier,
+    hasError: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val isExpanded = expandedSections[sectionKey] ?: false
@@ -128,64 +139,91 @@ fun ExpandablePropertyCard(
         label = "Rotation animation"
     )
     
-    ElevatedCard(
+    // Определяем цвета в зависимости от наличия ошибки
+    val borderColor = if (hasError) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.outlineVariant
+    }
+    
+    val backgroundColor = if (hasError) {
+        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    }
+    
+    val contentColor = if (hasError) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+    
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .wrapContentHeight()
-            .heightIn(min = 0.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            .padding(vertical = 4.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .border(
+                width = if (hasError) 2.dp else 1.dp, 
+                color = borderColor,
+                shape = RoundedCornerShape(12.dp)
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = backgroundColor,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        elevation = CardDefaults.elevatedCardElevation(
-            defaultElevation = 2.dp
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (hasError) 4.dp else 0.dp
         )
     ) {
-        Column(
+        // Заголовок с иконкой разворачивания
+        Row(
             modifier = Modifier
-                .padding(16.dp)
-                .wrapContentHeight()
+                .fillMaxWidth()
+                .clickable { expandedSections[sectionKey] = !isExpanded }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Заголовок с иконкой разворачивания
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .clickable { expandedSections[sectionKey] = !isExpanded },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            if (hasError) {
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (isExpanded) "Свернуть" else "Развернуть",
-                    modifier = Modifier.rotate(rotationState),
-                    tint = MaterialTheme.colorScheme.primary
+                    Icons.Default.Error,
+                    contentDescription = "Ошибка",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(24.dp)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
             }
             
-            // Анимированное содержимое
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = expandVertically(),
-                exit = shrinkVertically(),
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                color = contentColor
+            )
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = if (isExpanded) "Свернуть" else "Развернуть",
+                modifier = Modifier.rotate(rotationState),
+                tint = contentColor
+            )
+        }
+        
+        // Анимированное содержимое
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    content()
-                }
+                content()
             }
         }
     }
@@ -213,32 +251,8 @@ fun PropertyCard(
     }
 }
 
-@Composable
-fun OutlinedTextFieldWithColors(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    modifier: Modifier = Modifier,
-    minLines: Int = 1,
-    maxLines: Int = 1,
-    readOnly: Boolean = false,
-    placeholder: @Composable (() -> Unit)? = null
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        modifier = modifier.fillMaxWidth(),
-        minLines = minLines,
-        maxLines = maxLines,
-        readOnly = readOnly,
-        placeholder = placeholder,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline
-        )
-    )
-}
+// OutlinedTextFieldWithColors должен быть импортирован из соответствующего файла
+// Эти реализации удалены для избежания конфликтов перегрузки функций
 
 @Composable
 fun RadioButtonWithText(

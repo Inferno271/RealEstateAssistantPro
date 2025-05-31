@@ -66,6 +66,12 @@ interface ClientDao {
     fun searchClientsByName(name: String): Flow<List<ClientEntity>>
     
     /**
+     * Поиск клиентов по роду занятий (частичное совпадение)
+     */
+    @Query("SELECT * FROM clients WHERE occupation LIKE '%' || :occupation || '%'")
+    fun searchClientsByOccupation(occupation: String): Flow<List<ClientEntity>>
+    
+    /**
      * Получает список клиентов, которые не синхронизированы
      */
     @Query("SELECT * FROM clients WHERE isSynced = 0")
@@ -76,4 +82,11 @@ interface ClientDao {
      */
     @Query("UPDATE clients SET isSynced = :isSynced WHERE id = :clientId")
     suspend fun updateSyncStatus(clientId: String, isSynced: Boolean)
+
+    /**
+     * Получает список всех клиентов напрямую (без Flow)
+     * Используется для отладки
+     */
+    @Query("SELECT * FROM clients")
+    suspend fun getAllClientsDirectly(): List<ClientEntity>
 } 

@@ -24,7 +24,6 @@ class ClientValidator @Inject constructor() {
 
         // Валидация контактных данных
         validations.add(Validators.validatePhone(client.phone, "Телефон"))
-        validations.add(Validators.validateEmail(client.email, "Email"))
 
         // Валидация бюджета для длительной аренды
         client.longTermBudgetMin?.let { min ->
