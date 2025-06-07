@@ -49,6 +49,18 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        
+        <!-- Настройка App Startup -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="com.realestateassistant.pro.di.ApplicationInitializer"
+                android:value="androidx.startup"
+                tools:node="merge" />
+        </provider>
     </application>
 
 </manifest>

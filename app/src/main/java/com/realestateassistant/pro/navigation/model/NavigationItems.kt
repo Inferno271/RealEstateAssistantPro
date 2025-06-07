@@ -1,9 +1,12 @@
 package com.realestateassistant.pro.navigation.model
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import com.realestateassistant.pro.navigation.routes.AppRoutes
@@ -14,6 +17,12 @@ import com.realestateassistant.pro.navigation.routes.AppRoutes
 object NavigationItems {
     // Основные пункты меню
     val mainItems = listOf(
+        NavigationItem(
+            route = AppRoutes.DASHBOARD,
+            title = "Панель управления",
+            icon = Icons.Default.Dashboard,
+            contentDescription = "Панель управления"
+        ),
         NavigationItem(
             route = AppRoutes.PROPERTIES,
             title = "Объекты",
@@ -31,6 +40,13 @@ object NavigationItems {
             title = "Встречи",
             icon = Icons.Default.DateRange,
             contentDescription = "Список встреч"
+        ),
+        NavigationItem(
+            route = AppRoutes.NOTIFICATIONS,
+            title = "Уведомления",
+            icon = Icons.Default.Notifications,
+            contentDescription = "Уведомления",
+            badgeCount = 5 // Пример отображения количества уведомлений
         )
     )
     
@@ -45,7 +61,7 @@ object NavigationItems {
         NavigationItem(
             route = AppRoutes.HELP,
             title = "Помощь",
-            icon = Icons.Default.Info,
+            icon = Icons.Default.Help,
             contentDescription = "Помощь и инструкции"
         ),
         NavigationItem(

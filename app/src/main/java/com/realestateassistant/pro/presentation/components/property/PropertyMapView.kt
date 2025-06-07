@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -35,6 +36,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.charset.StandardCharsets
 
 private var isMapKitInitialized = false
@@ -59,17 +63,25 @@ fun PropertyMapView(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Создаем изображение маркера заранее в фоновом потоке
+    val coloredMarker = remember(markerColor) {
+        var bitmap: Bitmap? = null
+        coroutineScope.launch(Dispatchers.Default) {
+            bitmap = createColoredMarker(context, android.R.drawable.ic_menu_mylocation, markerColor)
+        }
+        bitmap
+    }
 
     // Инициализируем MapKit только один раз при первом создании компонента
-    LaunchedEffect(Unit) {
+    if (!isMapKitInitialized) {
         try {
-            if (!isMapKitInitialized) {
-                MapKitFactory.initialize(context)
-                isMapKitInitialized = true
-                Log.d(TAG, "MapKit initialized")
-            }
+            MapKitFactory.initialize(context)
+            isMapKitInitialized = true
+            Log.d(TAG, "MapKit успешно инициализирован в основном потоке")
         } catch (e: Exception) {
-            Log.e(TAG, "Ошибка инициализации MapKit: ${e.message}")
+            Log.e(TAG, "Ошибка инициализации MapKit в основном потоке: ${e.message}")
         }
     }
     
@@ -134,7 +146,7 @@ fun PropertyMapView(
             lifecycleOwner.lifecycle.removeObserver(observer)
             
             try {
-                // Явно очищаем карту при удалении из композиции
+                // Очищаем карту при удалении из композиции
                 mapView.map.mapObjects.clear()
                 
                 // Отключаем карту
@@ -148,91 +160,102 @@ fun PropertyMapView(
         }
     }
     
-    // Функция для создания цветной иконки маркера
-    fun getColoredDrawable(context: Context, drawableResId: Int, color: Color): Bitmap {
+    // Этот DisposableEffect будет вызван при каждом изменении параметров композиции
+    DisposableEffect(latitude, longitude, markerColor, coloredMarker) {
+        // Добавляем маркер на карту при изменении координат
+        val point = Point(latitude, longitude)
+        coroutineScope.launch(Dispatchers.Main) {
+            try {
+                // Очищаем предыдущие маркеры
+                mapView.map.mapObjects.clear()
+                
+                // Добавляем новый маркер
+                val placemark = mapView.map.mapObjects.addPlacemark(point)
+                
+                // Устанавливаем иконку маркера
+                coloredMarker?.let { bitmap ->
+                    val iconStyle = IconStyle().apply {
+                        scale = 1.0f
+                    }
+                    
+                    placemark.setIcon(
+                        ImageProvider.fromBitmap(bitmap),
+                        iconStyle
+                    )
+                }
+                
+                // Устанавливаем текст маркера
+                try {
+                    // Создаем стиль текста для лучшей видимости
+                    val textStyle = TextStyle().apply {
+                        size = 10.0f
+                        placement = TextStyle.Placement.BOTTOM
+                        offset = 3.0f
+                    }
+                    
+                    placemark.setText(address, textStyle)
+                    Log.d(TAG, "Установлен текст маркера: $address")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Ошибка при установке текста маркера: ${e.message}")
+                }
+                
+                // Устанавливаем положение камеры
+                mapView.map.move(
+                    CameraPosition(
+                        point,
+                        14.0f, // Уровень масштабирования
+                        0.0f, // Угол наклона
+                        0.0f // Угол поворота
+                    ),
+                    Animation(Animation.Type.SMOOTH, 0.3f),
+                    null
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Ошибка при обновлении маркера: ${e.message}")
+            }
+        }
+        
+        onDispose {
+            Log.d(TAG, "onDispose координат: очистка маркеров")
+            mapView.map.mapObjects.clear()
+        }
+    }
+    
+    // Отображаем карту
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(200.dp),
+        shape = RoundedCornerShape(8.dp),
+        shadowElevation = 4.dp
+    ) {
+        AndroidView(
+            factory = { mapView },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+/**
+ * Создает цветную иконку маркера в фоновом потоке
+ */
+private suspend fun createColoredMarker(context: Context, drawableResId: Int, color: Color): Bitmap = 
+    withContext(Dispatchers.Default) {
         val drawable = ContextCompat.getDrawable(context, drawableResId)
-            ?: return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+            ?: return@withContext Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
         
         val wrappedDrawable = DrawableCompat.wrap(drawable).mutate()
         DrawableCompat.setTint(wrappedDrawable, color.toArgb())
         DrawableCompat.setTintMode(wrappedDrawable, PorterDuff.Mode.SRC_IN)
         
-        val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(
+            drawable.intrinsicWidth, 
+            drawable.intrinsicHeight, 
+            Bitmap.Config.ARGB_8888
+        )
         val canvas = Canvas(bitmap)
         wrappedDrawable.setBounds(0, 0, canvas.width, canvas.height)
         wrappedDrawable.draw(canvas)
         
-        return bitmap
-    }
-    
-    // Этот DisposableEffect будет вызван при каждом изменении параметров композиции
-    DisposableEffect(latitude, longitude, markerColor) {
-        // При изменении координат обновляем положение маркера
-        val point = Point(latitude, longitude)
-        try {
-            mapView.map.mapObjects.clear()
-            val placemark = mapView.map.mapObjects.addPlacemark(point)
-            
-            // Создаем окрашенную иконку
-            val coloredMarker = getColoredDrawable(context, android.R.drawable.ic_menu_mylocation, markerColor)
-            
-            // Устанавливаем иконку маркера с настройкой размера
-            val iconStyle = IconStyle().apply {
-                scale = 1.0f
-            }
-            
-            placemark.setIcon(
-                ImageProvider.fromBitmap(coloredMarker),
-                iconStyle
-            )
-            
-            // Устанавливаем текст с учетом кодировки
-            try {
-                // Создаем стиль текста для лучшей видимости
-                val textStyle = TextStyle().apply {
-                    size = 10.0f
-                    placement = TextStyle.Placement.BOTTOM
-                    offset = 3.0f
-                }
-                
-                placemark.setText(address, textStyle)
-                Log.d(TAG, "Установлен текст маркера: $address")
-            } catch (e: Exception) {
-                Log.e(TAG, "Ошибка при установке текста маркера: ${e.message}")
-            }
-            
-            // Перемещаем камеру к маркеру
-            mapView.map.move(
-                CameraPosition(point, 15.0f, 0.0f, 0.0f),
-                Animation(Animation.Type.SMOOTH, 0.3f),
-                null
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Ошибка при обновлении маркера: ${e.message}")
-        }
-        
-        onDispose {
-            // Очищаем объекты карты при изменении координат или удалении компонента
-            try {
-                mapView.map.mapObjects.clear()
-                Log.d(TAG, "onDispose координат: очистка маркеров")
-            } catch (e: Exception) {
-                Log.e(TAG, "Ошибка при очистке маркеров: ${e.message}")
-            }
-        }
-    }
-    
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(250.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        AndroidView(
-            factory = { mapView },
-            update = { /* Обновление происходит в DisposableEffect выше */ }
-        )
-    }
-} 
+        bitmap
+    } 

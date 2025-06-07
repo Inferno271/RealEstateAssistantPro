@@ -38,7 +38,12 @@ import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import coil.request.ImageRequest
+import coil.Coil
+import coil.ImageLoader
 import com.realestateassistant.pro.utils.CoilUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import android.util.Log
 
 @Composable
 fun PropertyCard(
@@ -309,14 +314,37 @@ fun PropertyThumbnail(property: Property) {
         // Если есть фото, загружаем первое
         if (property.photos.isNotEmpty()) {
             val context = LocalContext.current
-            // Создаем оптимизированный ImageLoader
-            val imageLoader = remember { CoilUtils.createImageLoader(context) }
+            val scope = rememberCoroutineScope()
+            
+            // Используем глобальный ImageLoader вместо создания нового
+            val imageLoader = remember { Coil.imageLoader(context) }
+            
+            // Получаем первое фото
+            val photoUri = property.photos.first()
+            
+            // Создаем запрос специально для миниатюры с точным размером
+            val thumbnailRequest = remember(photoUri) {
+                CoilUtils.createThumbnailRequest(
+                    context = context,
+                    data = photoUri,
+                    thumbnailSize = 160 // в два раза больше размера контейнера для HiDPI экранов
+                ).dispatcher(Dispatchers.IO).build()
+            }
+            
+            // Предзагружаем изображение при первом рендеринге в фоновом потоке
+            LaunchedEffect(photoUri) {
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        val preloadRequest = CoilUtils.createPreloadRequest(context, photoUri)
+                        imageLoader.enqueue(preloadRequest)
+                    } catch (e: Exception) {
+                        Log.e("PropertyCard", "Ошибка при предзагрузке изображения: ${e.message}")
+                    }
+                }
+            }
             
             SubcomposeAsyncImage(
-                model = CoilUtils.createImageRequest(
-                    context,
-                    property.photos.first()
-                ).build(),
+                model = thumbnailRequest,
                 contentDescription = "Фото объекта",
                 contentScale = ContentScale.Crop,
                 imageLoader = imageLoader,
@@ -342,13 +370,13 @@ fun PropertyThumbnail(property: Property) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                                .background(MaterialTheme.colorScheme.errorContainer),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.BrokenImage,
                                 contentDescription = "Ошибка загрузки",
-                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(24.dp)
                             )
                         }

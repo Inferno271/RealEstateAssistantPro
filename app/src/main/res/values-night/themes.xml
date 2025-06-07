@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.RealEstateAssistantPro" parent="android:Theme.Material.NoActionBar">
+        <!-- Основные цвета Material Design -->
+        <item name="android:colorPrimary">@color/dark_primary</item>
+        <item name="android:colorPrimaryDark">@color/dark_tertiary</item>
+        <item name="android:colorAccent">@color/dark_secondary</item>
+        <!-- Системные цвета -->
+        <item name="android:statusBarColor">@color/dark_tertiary</item>
+        <item name="android:navigationBarColor">@color/dark_tertiary</item>
+        <item name="android:windowBackground">@color/dark_background</item>
+        <!-- Другие настройки темы -->
+        <item name="android:windowContentTransitions">true</item>
+        <item name="android:windowActivityTransitions">true</item>
+    </style>
+</resources> 

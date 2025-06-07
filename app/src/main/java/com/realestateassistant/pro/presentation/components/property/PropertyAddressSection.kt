@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +19,9 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.realestateassistant.pro.domain.model.Property
 import com.realestateassistant.pro.network.YandexGeocoderService
 import androidx.compose.ui.graphics.Color
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 
 private const val TAG = "PropertyAddressSection"
 
@@ -29,6 +33,7 @@ fun PropertyAddressSection(
     val address = property.address
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState = lifecycleOwner.lifecycle.currentState
+    val context = LocalContext.current
     
     // Используем координаты из свойства, если они есть, иначе применяем геокодирование
     var latitude by remember { mutableStateOf(property.latitude ?: 55.751225) } // Москва по умолчанию
@@ -107,11 +112,35 @@ fun PropertyAddressSection(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text(
                 text = "Адрес",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
+                
+                // Кнопка "Открыть карту" для навигации
+                if (property.latitude != null && property.longitude != null) {
+                    IconButton(
+                        onClick = { 
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse("geo:${property.latitude},${property.longitude}?q=${property.latitude},${property.longitude}(${property.address})")
+                            }
+                            context.startActivity(intent)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Map,
+                            contentDescription = "Открыть карту",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
             
             Spacer(modifier = Modifier.height(8.dp))
             

@@ -64,4 +64,10 @@ interface UserDao {
      */
     @Query("UPDATE users SET isSynced = :isSynced WHERE id = :userId")
     suspend fun updateSyncStatus(userId: String, isSynced: Boolean)
+    
+    /**
+     * Получает количество пользователей в базе данных
+     */
+    @Query("SELECT COUNT(*) FROM users")
+    suspend fun getUserCount(): Int
 } 

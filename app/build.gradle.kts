@@ -78,6 +78,10 @@ dependencies {
     kapt(libs.room.compiler)
     testImplementation(libs.room.testing)
     
+    // DataStore Preferences
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore-preferences-core:1.0.0")
+    
     // SQLCipher для шифрования базы данных
     implementation("net.zetetic:android-database-sqlcipher:4.5.4")
     implementation("androidx.sqlite:sqlite-ktx:2.4.0")
@@ -87,6 +91,9 @@ dependencies {
     
     // Extended иконки для Material Design
     implementation("androidx.compose.material:material-icons-extended:1.7.5")
+    
+    // Timber для логирования
+    implementation("com.jakewharton.timber:timber:4.7.1")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

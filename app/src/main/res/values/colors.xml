@@ -1,10 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Основные цвета Material Design 3 -->
+    <color name="primary">#1A56DB</color>              <!-- Основной синий -->
+    <color name="on_primary">#FFFFFF</color>           <!-- Белый текст на основном цвете -->
+    <color name="primary_container">#D1E0FF</color>    <!-- Светло-синий контейнер -->
+    <color name="on_primary_container">#001944</color> <!-- Темно-синий текст на контейнере -->
+    
+    <color name="secondary">#3F4DB0</color>            <!-- Вторичный синий -->
+    <color name="on_secondary">#FFFFFF</color>         <!-- Белый текст на вторичном цвете -->
+    <color name="secondary_container">#DDE1FF</color>  <!-- Светло-синий вторичный контейнер -->
+    <color name="on_secondary_container">#00105C</color> <!-- Темно-синий текст на вторичном контейнере -->
+    
+    <color name="tertiary">#00639D</color>             <!-- Третичный синий -->
+    <color name="on_tertiary">#FFFFFF</color>          <!-- Белый текст на третичном цвете -->
+    <color name="tertiary_container">#CFE5FF</color>   <!-- Светло-синий третичный контейнер -->
+    <color name="on_tertiary_container">#001D34</color> <!-- Темно-синий текст на третичном контейнере -->
+    
+    <!-- Нейтральные цвета -->
+    <color name="background">#F8F9FF</color>           <!-- Фон с легким синим оттенком -->
+    <color name="on_background">#1A1C1E</color>        <!-- Темный текст на фоне -->
+    <color name="surface">#F8F9FF</color>              <!-- Поверхность с легким синим оттенком -->
+    <color name="on_surface">#1A1C1E</color>           <!-- Темный текст на поверхности -->
+    <color name="surface_variant">#E1E2EC</color>      <!-- Вариант поверхности -->
+    <color name="on_surface_variant">#44474E</color>   <!-- Текст на варианте поверхности -->
+    <color name="outline">#74777F</color>              <!-- Цвет контура -->
+    
+    <!-- Семантические цвета -->
+    <color name="error">#BA1B1B</color>                <!-- Цвет ошибки -->
+    <color name="on_error">#FFFFFF</color>             <!-- Текст на цвете ошибки -->
+    <color name="error_container">#FFDAD4</color>      <!-- Контейнер ошибки -->
+    <color name="on_error_container">#410001</color>   <!-- Текст на контейнере ошибки -->
+    
+    <!-- Цвета для темной темы -->
+    <color name="dark_primary">#A1C6FF</color>         <!-- Светло-синий для темной темы -->
+    <color name="dark_on_primary">#002D6E</color>      <!-- Темно-синий текст для темной темы -->
+    <color name="dark_primary_container">#0041A0</color> <!-- Синий контейнер для темной темы -->
+    <color name="dark_on_primary_container">#D1E0FF</color> <!-- Светло-синий текст для темной темы -->
+    
+    <color name="dark_secondary">#BAC3FF</color>       <!-- Светло-синий для темной темы -->
+    <color name="dark_on_secondary">#00218F</color>    <!-- Темно-синий текст для темной темы -->
+    <color name="dark_secondary_container">#293596</color> <!-- Синий контейнер для темной темы -->
+    <color name="dark_on_secondary_container">#DDE1FF</color> <!-- Светло-синий текст для темной темы -->
+    
+    <color name="dark_tertiary">#94CCFF</color>        <!-- Светло-синий для темной темы -->
+    <color name="dark_on_tertiary">#003355</color>     <!-- Темно-синий текст для темной темы -->
+    <color name="dark_tertiary_container">#004A77</color> <!-- Синий контейнер для темной темы -->
+    <color name="dark_on_tertiary_container">#CFE5FF</color> <!-- Светло-синий текст для темной темы -->
+    
+    <color name="dark_background">#1A1C1E</color>      <!-- Темный фон -->
+    <color name="dark_on_background">#E2E2E6</color>   <!-- Светлый текст на темном фоне -->
+    <color name="dark_surface">#1A1C1E</color>         <!-- Темная поверхность -->
+    <color name="dark_on_surface">#E2E2E6</color>      <!-- Светлый текст на темной поверхности -->
+    <color name="dark_surface_variant">#44474E</color> <!-- Вариант темной поверхности -->
+    <color name="dark_on_surface_variant">#C5C6D0</color> <!-- Текст на варианте темной поверхности -->
+    <color name="dark_outline">#8E9099</color>         <!-- Цвет контура для темной темы -->
+    
+    <!-- Стандартные цвета -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    
+    <!-- Цвета для статусов встреч -->
+    <color name="appointment_scheduled">#1A56DB</color>    <!-- Основной синий -->
+    <color name="appointment_confirmed">#4CAF50</color>    <!-- Зеленый -->
+    <color name="appointment_in_progress">#3F4DB0</color>  <!-- Вторичный синий -->
+    <color name="appointment_completed">#673AB7</color>    <!-- Фиолетовый -->
+    <color name="appointment_cancelled">#F44336</color>    <!-- Красный -->
+    <color name="appointment_rescheduled">#FF9800</color>  <!-- Оранжевый -->
+    <color name="appointment_no_show">#00639D</color>      <!-- Третичный синий -->
 </resources>

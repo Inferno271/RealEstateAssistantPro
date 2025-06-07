@@ -6,6 +6,7 @@ import com.realestateassistant.pro.domain.model.Property
 import com.realestateassistant.pro.domain.model.PropertyCharacteristicsConfig
 import com.realestateassistant.pro.domain.model.PropertyTypeCharacteristics
 import com.realestateassistant.pro.domain.model.RentalFilter
+import com.realestateassistant.pro.domain.model.PropertyFilter
 import com.realestateassistant.pro.domain.usecase.PropertyUseCases
 import com.realestateassistant.pro.presentation.model.PropertyFormState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,9 +31,13 @@ class PropertyViewModel @Inject constructor(
     private val _filteredProperties = MutableStateFlow<List<Property>>(emptyList())
     val filteredProperties: StateFlow<List<Property>> get() = _filteredProperties
     
-    // Текущий выбранный фильтр
+    // Текущий выбранный фильтр типа аренды
     private val _currentFilter = MutableStateFlow(RentalFilter.LONG_TERM)
     val currentFilter: StateFlow<RentalFilter> get() = _currentFilter
+    
+    // Текущий фильтр для объектов недвижимости
+    private val _propertyFilter = MutableStateFlow(PropertyFilter())
+    val propertyFilter: StateFlow<PropertyFilter> get() = _propertyFilter
     
     // Состояние для текущего просматриваемого объекта
     private val _selectedProperty = MutableStateFlow<Property?>(null)
@@ -71,7 +76,7 @@ class PropertyViewModel @Inject constructor(
         observePropertiesJob = viewModelScope.launch {
             propertyUseCases.observeAllProperties().collectLatest { propertiesList ->
                 _properties.value = propertiesList
-                applyFilter(_currentFilter.value)
+                applyFilters()
             }
         }
     }
@@ -79,23 +84,159 @@ class PropertyViewModel @Inject constructor(
     // Метод для загрузки объектов при необходимости
     fun loadProperties() {
         // Если наблюдение активно, просто применим текущий фильтр снова
-        applyFilter(_currentFilter.value)
+        applyFilters()
     }
     
     // Метод для изменения текущего фильтра
     fun setFilter(filter: RentalFilter) {
         _currentFilter.value = filter
-        applyFilter(filter)
+        applyFilters()
     }
     
-    // Применение фильтра к списку объектов
-    private fun applyFilter(filter: RentalFilter) {
-        _filteredProperties.value = when (filter) {
+    // Применение фильтров к списку объектов
+    private fun applyFilters() {
+        val filter = _currentFilter.value
+        val currentPropertyFilter = _propertyFilter.value
+        
+        // Проверяем, что у нас есть объекты для фильтрации
+        if (_properties.value.isEmpty()) {
+            _filteredProperties.value = emptyList()
+            return
+        }
+        
+        // Логируем начало фильтрации для отладки
+        println("DEBUG: Начинаем фильтрацию. Всего объектов: ${_properties.value.size}")
+        println("DEBUG: Текущий тип аренды: $filter")
+        println("DEBUG: Активные фильтры: ${currentPropertyFilter.hasActiveFilters()}")
+        
+        // Сначала фильтруем по типу аренды
+        var filtered = when (filter) {
             RentalFilter.LONG_TERM -> _properties.value.filter { 
                 it.monthlyRent != null || it.winterMonthlyRent != null || it.summerMonthlyRent != null 
             }
             RentalFilter.SHORT_TERM -> _properties.value.filter { it.dailyPrice != null }
         }
+        
+        println("DEBUG: После фильтрации по типу аренды: ${filtered.size} объектов")
+        
+        // Применяем дополнительные фильтры объектов
+        
+        // Фильтр по типу недвижимости
+        if (currentPropertyFilter.propertyTypes.isNotEmpty()) {
+            filtered = filtered.filter { property ->
+                currentPropertyFilter.propertyTypes.contains(property.propertyType)
+            }
+            println("DEBUG: После фильтрации по типу недвижимости: ${filtered.size} объектов")
+        }
+        
+        // Фильтр по количеству комнат
+        if (currentPropertyFilter.minRooms != null) {
+            filtered = filtered.filter { property ->
+                property.roomsCount >= currentPropertyFilter.minRooms
+            }
+            println("DEBUG: После фильтрации по мин. кол-ву комнат: ${filtered.size} объектов")
+        }
+        
+        if (currentPropertyFilter.maxRooms != null) {
+            filtered = filtered.filter { property ->
+                property.roomsCount <= currentPropertyFilter.maxRooms
+            }
+            println("DEBUG: После фильтрации по макс. кол-ву комнат: ${filtered.size} объектов")
+        }
+        
+        // Фильтр по цене
+        if (currentPropertyFilter.minPrice != null) {
+            filtered = filtered.filter { property ->
+                val price = when (filter) {
+                    RentalFilter.LONG_TERM -> property.monthlyRent ?: 0.0
+                    RentalFilter.SHORT_TERM -> property.dailyPrice ?: 0.0
+                }
+                price >= currentPropertyFilter.minPrice
+            }
+            println("DEBUG: После фильтрации по мин. цене: ${filtered.size} объектов")
+        }
+        
+        if (currentPropertyFilter.maxPrice != null) {
+            filtered = filtered.filter { property ->
+                val price = when (filter) {
+                    RentalFilter.LONG_TERM -> property.monthlyRent ?: Double.MAX_VALUE
+                    RentalFilter.SHORT_TERM -> property.dailyPrice ?: Double.MAX_VALUE
+                }
+                price <= currentPropertyFilter.maxPrice
+            }
+            println("DEBUG: После фильтрации по макс. цене: ${filtered.size} объектов")
+        }
+        
+        // Фильтр по району
+        if (currentPropertyFilter.districts.isNotEmpty()) {
+            filtered = filtered.filter { property ->
+                currentPropertyFilter.districts.contains(property.district)
+            }
+            println("DEBUG: После фильтрации по району: ${filtered.size} объектов")
+        }
+        
+        // Поиск по запросу
+        if (currentPropertyFilter.searchQuery.isNotEmpty()) {
+            val query = currentPropertyFilter.searchQuery.lowercase()
+            filtered = filtered.filter { property ->
+                property.address.lowercase().contains(query) ||
+                property.description?.lowercase()?.contains(query) == true ||
+                property.contactName.lowercase().contains(query) ||
+                property.district.lowercase().contains(query) ||
+                property.propertyType.lowercase().contains(query) ||
+                // Расширенные поля поиска
+                (property.nearbyObjects.any { it.lowercase().contains(query) }) ||
+                (property.views.any { it.lowercase().contains(query) }) ||
+                (property.layout.lowercase().contains(query)) ||
+                (property.repairState.lowercase().contains(query)) ||
+                (property.bathroomType.lowercase().contains(query)) ||
+                (property.heatingType.lowercase().contains(query)) ||
+                (property.parkingType?.lowercase()?.contains(query) == true) ||
+                (property.amenities.any { it.lowercase().contains(query) }) ||
+                (property.allowedPetTypes.any { it.lowercase().contains(query) }) ||
+                (property.minRentPeriod?.lowercase()?.contains(query) == true) ||
+                (property.additionalExpenses?.lowercase()?.contains(query) == true) ||
+                (property.longTermRules?.lowercase()?.contains(query) == true) ||
+                (property.shortTermRules?.lowercase()?.contains(query) == true) ||
+                (property.additionalServices?.lowercase()?.contains(query) == true) ||
+                (property.cleaningDetails?.lowercase()?.contains(query) == true) ||
+                (property.additionalComments?.lowercase()?.contains(query) == true) ||
+                (property.additionalContactInfo?.lowercase()?.contains(query) == true) ||
+                (property.poolType.lowercase().contains(query) && property.poolType.isNotEmpty())
+            }
+            println("DEBUG: После поиска по запросу: ${filtered.size} объектов")
+        }
+        
+        // Обновляем список отфильтрованных объектов
+        _filteredProperties.value = filtered
+    }
+
+    /**
+     * Обновляет фильтр объектов
+     */
+    fun updatePropertyFilter(filter: PropertyFilter) {
+        println("DEBUG: Обновляем фильтр объектов: $filter")
+        _propertyFilter.value = filter
+        // Применяем обновленные фильтры
+        applyFilters()
+    }
+    
+    /**
+     * Очищает все фильтры объектов
+     */
+    fun clearPropertyFilters() {
+        println("DEBUG: Очищаем все фильтры объектов")
+        _propertyFilter.value = PropertyFilter()
+        applyFilters()
+    }
+    
+    /**
+     * Обновляет поисковый запрос для объектов
+     */
+    fun updateSearchQuery(query: String) {
+        println("DEBUG: Обновляем поисковый запрос: $query")
+        _propertyFilter.value = _propertyFilter.value.copy(searchQuery = query)
+        applyFilters()
     }
 
     fun addProperty(property: Property) {
@@ -113,7 +254,7 @@ class PropertyViewModel @Inject constructor(
                 if (!currentList.any { it.id == addedProperty.id }) {
                     currentList.add(addedProperty)
                     _properties.value = currentList
-                    applyFilter(_currentFilter.value)
+                    applyFilters()
                 }
             }.onFailure { exception ->
                 _error.value = exception.message ?: "Не удалось добавить объект недвижимости"

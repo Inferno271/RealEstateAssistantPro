@@ -20,6 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.realestateassistant.pro.domain.model.Appointment
 import com.realestateassistant.pro.presentation.viewmodel.AppointmentViewModel
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
 fun AppointmentListScreen(
@@ -48,14 +52,24 @@ fun AppointmentItem(appointment: Appointment) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = "Тип встречи: ${appointment.type}", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Время: ${appointment.appointmentTime}", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = "Время: ${
+                    Instant.ofEpochMilli(appointment.startTime)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime()
+                        .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT))
+                }",
+                style = MaterialTheme.typography.bodyMedium
+            )
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = "ID клиента: ${appointment.clientId}", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = "Статус: ${appointment.status}", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(4.dp))
-            if(appointment.notes.isNotEmpty()) {
-                Text(text = "Примечания: ${appointment.notes}", style = MaterialTheme.typography.bodyMedium)
+            appointment.notes?.let { notes ->
+                if(notes.isNotEmpty()) {
+                    Text(text = "Примечания: $notes", style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
     }

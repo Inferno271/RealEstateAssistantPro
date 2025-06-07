@@ -1,5 +1,6 @@
 package com.realestateassistant.pro.presentation.components.property
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,21 +23,58 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import coil.request.ImageRequest
+import coil.size.Precision
+import coil.size.Size
+import coil.Coil
+import coil.ImageLoader
 import com.realestateassistant.pro.utils.CoilUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+private const val TAG = "PhotoGallery"
+
+/**
+ * Максимальное количество изображений для предварительной загрузки
+ */
+private const val MAX_PRELOAD_IMAGES = 3
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotoGallery(photos: List<String>, modifier: Modifier = Modifier) {
+    if (photos.isEmpty()) {
+        EmptyGalleryPlaceholder(modifier)
+        return
+    }
+
     val pagerState = rememberPagerState(pageCount = { photos.size })
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     
-    // Создаем оптимизированный ImageLoader для загрузки изображений
-    val imageLoader = remember {
-        CoilUtils.createImageLoader(context)
+    // Используем общий ImageLoader
+    val imageLoader = remember { 
+        Coil.imageLoader(context)
+    }
+    
+    // Предварительно загружаем только первые несколько изображений с ограничением размера
+    LaunchedEffect(photos) {
+        withContext(Dispatchers.IO) {
+            photos.take(MAX_PRELOAD_IMAGES).forEach { photoUri ->
+                try {
+                    val preloadRequest = CoilUtils.createPreloadRequest(context, photoUri)
+                    imageLoader.enqueue(preloadRequest)
+                    Log.d(TAG, "Предзагрузка изображения: $photoUri")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Ошибка при предзагрузке изображения: ${e.message}")
+                }
+            }
+        }
     }
     
     // Состояние для отслеживания, показывать ли полноэкранный режим
@@ -52,13 +90,35 @@ fun PhotoGallery(photos: List<String>, modifier: Modifier = Modifier) {
         ) {
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                key = { index -> "photo_${photos[index]}_$index" }, // Уникальный ключ с учетом содержимого и позиции
+                pageSpacing = 2.dp
             ) { page ->
+                // Загружаем текущую и следующую страницу для плавного просмотра
+                LaunchedEffect(page) {
+                    val nextPage = (page + 1) % photos.size
+                    withContext(Dispatchers.IO) {
+                        try {
+                            val preloadRequest = CoilUtils.createPreloadRequest(context, photos[nextPage])
+                            imageLoader.enqueue(preloadRequest)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Ошибка при подгрузке следующего изображения: ${e.message}")
+                        }
+                    }
+                }
+                
+                // Создаем запрос на загрузку изображения с указанным размером и кэшированием
+                val imageRequest = remember(photos[page]) {
+                    CoilUtils.createImageRequest(
+                        context = context,
+                        data = photos[page],
+                        precision = Precision.INEXACT, // Допускаем неточное масштабирование для производительности
+                        size = Size(800, 600)  // Ограничиваем размер для экономии памяти
+                    ).build()
+                }
+                
                 SubcomposeAsyncImage(
-                    model = CoilUtils.createImageRequest(
-                            context,
-                            photos[page]
-                        ).build(),
+                    model = imageRequest,
                     contentDescription = "Фото объекта",
                     contentScale = ContentScale.Crop,
                     imageLoader = imageLoader,
@@ -79,18 +139,22 @@ fun PhotoGallery(photos: List<String>, modifier: Modifier = Modifier) {
                             ) {
                                 CircularProgressIndicator(
                                     color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(48.dp)
+                                    modifier = Modifier.size(48.dp),
+                                    strokeWidth = 3.dp
                                 )
                             }
                         }
                         // Обработка ошибки загрузки
                         state is AsyncImagePainter.State.Error -> {
                             Box(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.errorContainer),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.BrokenImage,
@@ -100,22 +164,20 @@ fun PhotoGallery(photos: List<String>, modifier: Modifier = Modifier) {
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "Не удалось загрузить изображение",
+                                        text = "Ошибка загрузки",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.error
                                     )
                                 }
                             }
                         }
-                        // Успешно загруженное изображение
-                        else -> {
-                            SubcomposeAsyncImageContent()
-                        }
+                        // Успешная загрузка - контент отображается автоматически
+                        else -> SubcomposeAsyncImageContent()
                     }
                 }
             }
             
-            // Градиентная подложка внизу
+            // Градиент в нижней части для лучшей видимости индикаторов
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -140,44 +202,84 @@ fun PhotoGallery(photos: List<String>, modifier: Modifier = Modifier) {
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    repeat(photos.size) { index ->
-                        val size = if (pagerState.currentPage == index) 8.dp else 6.dp
-                        val color = if (pagerState.currentPage == index) {
-                            Color.White
+                    // Ограничиваем количество видимых точек для экономии ресурсов
+                    val visibleCount = minOf(7, photos.size)
+                    
+                    if (photos.size <= visibleCount) {
+                        // Если изображений мало, показываем все точки
+                        photos.forEachIndexed { index, _ ->
+                            val isSelected = index == pagerState.currentPage
+                            PageIndicator(
+                                isSelected = isSelected,
+                                onClick = {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                }
+                            )
+                            
+                            if (index < photos.size - 1) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
+                    } else {
+                        // Если точек много, показываем только часть
+                        val currentPage = pagerState.currentPage
+                        val halfVisible = visibleCount / 2
+                        
+                        // Определяем диапазон видимых точек
+                        val startIndex = if (currentPage <= halfVisible) {
+                            0
+                        } else if (currentPage >= photos.size - halfVisible) {
+                            photos.size - visibleCount
                         } else {
-                            Color.White.copy(alpha = 0.4f)
+                            currentPage - halfVisible
                         }
                         
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 3.dp)
-                                .size(size)
-                                .clip(CircleShape)
-                                .background(color)
-                        )
+                        val endIndex = (startIndex + visibleCount).coerceAtMost(photos.size)
+                        
+                        // Показываем троеточие в начале, если нужно
+                        if (startIndex > 0) {
+                            Text(
+                                text = "...",
+                                color = Color.White.copy(alpha = 0.5f),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        
+                        // Показываем видимые индикаторы
+                        for (i in startIndex until endIndex) {
+                            val isSelected = i == pagerState.currentPage
+                            PageIndicator(
+                                isSelected = isSelected,
+                                onClick = {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(i)
+                                    }
+                                }
+                            )
+                            
+                            if (i < endIndex - 1) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
+                        
+                        // Показываем троеточие в конце, если нужно
+                        if (endIndex < photos.size) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "...",
+                                color = Color.White.copy(alpha = 0.5f),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                 }
-            }
-            
-            // Индикатор количества фото
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .clip(RoundedCornerShape(50.dp))
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = "${pagerState.currentPage + 1}/${photos.size}",
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall
-                )
             }
         }
     }
     
-    // Полноэкранный просмотр фото
     if (showFullscreen) {
         FullscreenPhotoViewer(
             photos = photos,
@@ -186,7 +288,59 @@ fun PhotoGallery(photos: List<String>, modifier: Modifier = Modifier) {
             imageLoader = imageLoader
         )
     }
-} 
+}
+
+@Composable
+private fun EmptyGalleryPlaceholder(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(300.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Image,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Нет фотографий",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
+
+/**
+ * Компонент для отображения индикатора страницы
+ */
+@Composable
+private fun PageIndicator(
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(if (isSelected) 10.dp else 8.dp)
+            .clip(CircleShape)
+            .background(
+                if (isSelected) 
+                    MaterialTheme.colorScheme.primary
+                else 
+                    Color.White.copy(alpha = 0.5f)
+            )
+            .clickable(onClick = onClick)
+    )
+}
 
 /**
  * Компонент для полноэкранного просмотра изображений с возможностью листания
@@ -197,21 +351,46 @@ fun FullscreenPhotoViewer(
     photos: List<String>,
     initialIndex: Int,
     onDismiss: () -> Unit,
-    imageLoader: coil.ImageLoader? = null
+    imageLoader: ImageLoader? = null
 ) {
     val pagerState = rememberPagerState(
         initialPage = initialIndex,
         pageCount = { photos.size }
     )
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     
-    // Создаем оптимизированный ImageLoader, если он не был передан
-    val finalImageLoader = imageLoader ?: remember {
-        CoilUtils.createImageLoader(context)
+    // Используем глобальный ImageLoader, если он не был передан
+    val finalImageLoader = imageLoader ?: remember { Coil.imageLoader(context) }
+    
+    // Предварительно загружаем только соседние изображения для текущей страницы
+    LaunchedEffect(pagerState.currentPage) {
+        withContext(Dispatchers.IO) {
+            val pagesToPreload = listOf(
+                (pagerState.currentPage - 1).coerceAtLeast(0),
+                pagerState.currentPage,
+                (pagerState.currentPage + 1).coerceAtMost(photos.size - 1)
+            ).distinct().filter { it != pagerState.currentPage }
+            
+            pagesToPreload.forEach { index ->
+                try {
+                    // Используем меньший размер для предзагрузки
+                    val preloadRequest = CoilUtils.createPreloadRequest(context, photos[index])
+                    finalImageLoader.enqueue(preloadRequest)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Ошибка при предзагрузке изображения в полноэкранном режиме: ${e.message}")
+                }
+            }
+        }
     }
     
     Dialog(
-        onDismissRequest = onDismiss
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )
     ) {
         Box(
             modifier = Modifier
@@ -221,13 +400,21 @@ fun FullscreenPhotoViewer(
             // Пейджер для изображений
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                key = { index -> "fullscreen_${photos[index]}_$index" }
             ) { page ->
+                // Оптимизированный запрос для полноэкранного просмотра
+                val imageRequest = remember(photos[page]) {
+                    CoilUtils.createImageRequest(
+                        context = context,
+                        data = photos[page],
+                        size = Size.ORIGINAL,
+                        precision = Precision.AUTOMATIC
+                    ).build()
+                }
+                
                 SubcomposeAsyncImage(
-                    model = CoilUtils.createImageRequest(
-                            context,
-                            photos[page]
-                        ).build(),
+                    model = imageRequest,
                     contentDescription = "Фото объекта",
                     contentScale = ContentScale.Fit,
                     imageLoader = finalImageLoader,
@@ -254,27 +441,26 @@ fun FullscreenPhotoViewer(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.BrokenImage,
                                         contentDescription = "Ошибка загрузки",
-                                        tint = Color.White,
+                                        tint = Color.Red,
                                         modifier = Modifier.size(48.dp)
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "Не удалось загрузить изображение",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White
+                                        text = "Ошибка загрузки изображения",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
                             }
                         }
-                        // Успешно загруженное изображение
-                        else -> {
-                            SubcomposeAsyncImageContent()
-                        }
+                        // Успешная загрузка - контент отображается автоматически
+                        else -> SubcomposeAsyncImageContent()
                     }
                 }
             }
@@ -283,144 +469,38 @@ fun FullscreenPhotoViewer(
             IconButton(
                 onClick = onDismiss,
                 modifier = Modifier
-                    .align(Alignment.TopStart)
+                    .align(Alignment.TopEnd)
                     .padding(16.dp)
-                    .size(36.dp)
-                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                    .size(48.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.5f),
+                        shape = CircleShape
+                    )
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Закрыть",
-                    tint = Color.White
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
                 )
             }
             
-            // Индикатор страниц
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .wrapContentSize()
-            ) {
-                Surface(
+            // Индикатор текущей страницы
+            if (photos.size > 1) {
+                Text(
+                    text = "${pagerState.currentPage + 1} / ${photos.size}",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
-                        .padding(8.dp)
-                        .wrapContentSize(),
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color.Black.copy(alpha = 0.7f)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .wrapContentSize()
-                    ) {
-                        Text(
-                            text = "${pagerState.currentPage + 1}/${photos.size}",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(16.dp)
                         )
-                        
-                        Spacer(modifier = Modifier.height(4.dp))
-                        
-                        // Создаем свой индикатор
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .wrapContentSize()
-                        ) {
-                            val maxVisibleDots = 9
-                            val visibleCount = minOf(photos.size, maxVisibleDots)
-                            
-                            if (photos.size <= maxVisibleDots) {
-                                // Показываем все индикаторы
-                                repeat(photos.size) { index ->
-                                    PageIndicator(
-                                        isSelected = index == pagerState.currentPage,
-                                        activeColor = MaterialTheme.colorScheme.primary,
-                                        inactiveColor = Color.White.copy(alpha = 0.3f)
-                                    )
-                                }
-                            } else {
-                                // Если точек много, показываем только часть
-                                val currentPage = pagerState.currentPage
-                                val halfVisible = visibleCount / 2
-                                
-                                // Определяем диапазон видимых точек
-                                val startIndex = if (currentPage <= halfVisible) {
-                                    0
-                                } else if (currentPage >= photos.size - halfVisible) {
-                                    photos.size - visibleCount
-                                } else {
-                                    currentPage - halfVisible
-                                }
-                                
-                                val endIndex = (startIndex + visibleCount).coerceAtMost(photos.size)
-                                
-                                // Показываем троеточие в начале, если нужно
-                                if (startIndex > 0) {
-                                    Text(
-                                        text = "...",
-                                        color = Color.White.copy(alpha = 0.5f),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                                
-                                // Показываем видимые индикаторы
-                                for (i in startIndex until endIndex) {
-                                    PageIndicator(
-                                        isSelected = i == pagerState.currentPage,
-                                        activeColor = MaterialTheme.colorScheme.primary,
-                                        inactiveColor = Color.White.copy(alpha = 0.3f)
-                                    )
-                                }
-                                
-                                // Показываем троеточие в конце, если нужно
-                                if (endIndex < photos.size) {
-                                    Text(
-                                        text = "...",
-                                        color = Color.White.copy(alpha = 0.5f),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                )
             }
         }
     }
-}
-
-@Composable
-fun Dialog(
-    onDismissRequest: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    androidx.compose.ui.window.Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = androidx.compose.ui.window.DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        content()
-    }
-}
-
-@Composable
-fun PageIndicator(
-    isSelected: Boolean,
-    activeColor: Color = MaterialTheme.colorScheme.primary,
-    inactiveColor: Color = Color.White.copy(alpha = 0.3f)
-) {
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 2.dp)
-            .size(if (isSelected) 8.dp else 6.dp)
-            .clip(CircleShape)
-            .background(if (isSelected) activeColor else inactiveColor)
-    )
 } 

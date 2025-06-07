@@ -21,27 +21,28 @@ class AppointmentValidator @Inject constructor() {
         validations.add(Validators.validateRequired(appointment.propertyId, "ID объекта"))
         validations.add(Validators.validateRequired(appointment.clientId, "ID клиента"))
         validations.add(Validators.validateRequired(appointment.agentId, "ID агента"))
+        validations.add(Validators.validateRequired(appointment.title, "Заголовок"))
         validations.add(Validators.validateRequired(appointment.location, "Место встречи"))
 
         // Валидация времени
-        if (appointment.appointmentTime <= System.currentTimeMillis()) {
+        if (appointment.startTime <= System.currentTimeMillis()) {
             validations.add(ValidationResult.Error(
-                "Время встречи не может быть в прошлом",
-                "appointmentTime"
+                "Время начала встречи не может быть в прошлом",
+                "startTime"
             ))
         }
 
         // Валидация продолжительности
-        validations.add(Validators.validateRange(
-            appointment.duration,
-            15, // минимум 15 минут
-            240, // максимум 4 часа
-            "Продолжительность"
-        ))
+        if (appointment.endTime <= appointment.startTime) {
+            validations.add(ValidationResult.Error(
+                "Время окончания должно быть позже времени начала",
+                "endTime"
+            ))
+        }
 
         // Валидация напоминания
         appointment.reminderTime?.let { reminderTime ->
-            if (reminderTime >= appointment.appointmentTime) {
+            if (reminderTime >= appointment.startTime) {
                 validations.add(ValidationResult.Error(
                     "Время напоминания должно быть раньше времени встречи",
                     "reminderTime"

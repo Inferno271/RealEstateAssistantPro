@@ -16,15 +16,23 @@ import com.realestateassistant.pro.data.local.dao.AppointmentDao
 import com.realestateassistant.pro.data.local.dao.ClientDao
 import com.realestateassistant.pro.data.local.dao.PropertyDao
 import com.realestateassistant.pro.data.local.dao.UserDao
+import com.realestateassistant.pro.data.local.entity.AppointmentConverters
 import com.realestateassistant.pro.data.local.entity.AppointmentEntity
 import com.realestateassistant.pro.data.local.entity.ClientEntity
 import com.realestateassistant.pro.data.local.entity.PropertyEntity
 import com.realestateassistant.pro.data.local.entity.UserEntity
 import com.realestateassistant.pro.data.local.security.DatabaseEncryption
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import net.sqlcipher.database.SQLiteDatabase
 import net.sqlcipher.database.SupportFactory
 import javax.inject.Inject
 import java.io.File
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Класс базы данных Room для приложения
@@ -46,7 +54,8 @@ import java.io.File
     ListStringConverter::class,
     SeasonalPriceListConverter::class,
     AppointmentStatusConverter::class,
-    AppointmentTypeConverter::class
+    AppointmentTypeConverter::class,
+    AppointmentConverters::class
 )
 abstract class AppDatabase : RoomDatabase() {
     
@@ -72,6 +81,10 @@ abstract class AppDatabase : RoomDatabase() {
     
     companion object {
         private const val DATABASE_NAME = "realestate_database"
+        private const val TAG = "AppDatabase"
+        
+        // Корутин скоуп для асинхронной инициализации
+        private val initializerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         
         // Миграция с версии 1 на версию 2 (добавление сезонных цен)
         private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -234,11 +247,57 @@ abstract class AppDatabase : RoomDatabase() {
         private var INSTANCE: AppDatabase? = null
         
         /**
-         * Получение экземпляра базы данных
+         * Получение экземпляра базы данных синхронно (для обратной совместимости).
+         * Рекомендуется использовать getInstanceAsync для асинхронной инициализации.
          */
         fun getInstance(context: Context, databaseEncryption: DatabaseEncryption): AppDatabase {
             return INSTANCE ?: synchronized(this) {
+                val instance = createDatabase(context, databaseEncryption)
+                INSTANCE = instance
+                instance
+            }
+        }
+        
+        /**
+         * Получение экземпляра базы данных асинхронно.
+         * Инициализация базы данных происходит в фоновом потоке.
+         */
+        fun getInstanceAsync(context: Context, databaseEncryption: DatabaseEncryption): Deferred<AppDatabase> {
+            // Сначала проверяем, есть ли уже инициализированный экземпляр
+            val existingInstance = INSTANCE
+            if (existingInstance != null) {
+                return initializerScope.async { existingInstance }
+            }
+            
+            // Если нет, создаем новый экземпляр вне synchronized блока
+            return initializerScope.async {
+                // Двойная проверка для избежания race condition
+                val currentInstance = INSTANCE
+                if (currentInstance != null) {
+                    return@async currentInstance
+                }
+                
+                // Создаем новый экземпляр
+                val instance = createDatabaseAsync(context, databaseEncryption)
+                
+                // Синхронизированно обновляем INSTANCE
+                synchronized(this@Companion) {
+                    val tempInstance = INSTANCE
+                    if (tempInstance == null) {
+                        INSTANCE = instance
+                    }
+                    INSTANCE ?: instance
+                }
+            }
+        }
+        
+        /**
+         * Создание базы данных асинхронно
+         */
+        private suspend fun createDatabaseAsync(context: Context, databaseEncryption: DatabaseEncryption): AppDatabase {
+            return withContext(Dispatchers.IO) {
                 try {
+                    Log.d(TAG, "Асинхронная инициализация базы данных...")
                     val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
                     val factory = SupportFactory(passphrase)
                     
@@ -251,13 +310,15 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .build()
                     
-                    // Проверка базы данных на целостность
+                    // Проверка базы данных на целостность (асинхронно)
                     try {
-                        // Эта операция вызовет исключение, если база повреждена
+                        // Проверяем базу данных на целостность
                         instance.openHelper.readableDatabase
                         instance.openHelper.writableDatabase
+                        Log.d(TAG, "Асинхронная инициализация базы данных завершена успешно")
                     } catch (e: Exception) {
-                        Log.e("AppDatabase", "База данных повреждена, создаем новую", e)
+                        Log.e(TAG, "База данных повреждена, создаем новую", e)
+                        
                         // Закрываем поврежденную базу
                         instance.close()
                         
@@ -278,7 +339,7 @@ abstract class AppDatabase : RoomDatabase() {
                         }
                         
                         // Создаем новую базу с режимом fallbackToDestructiveMigration
-                        return@synchronized Room.databaseBuilder(
+                        return@withContext Room.databaseBuilder(
                             context.applicationContext,
                             AppDatabase::class.java,
                             DATABASE_NAME
@@ -288,10 +349,9 @@ abstract class AppDatabase : RoomDatabase() {
                         .build()
                     }
                     
-                    INSTANCE = instance
                     instance
                 } catch (e: Exception) {
-                    Log.e("AppDatabase", "Ошибка при создании базы данных", e)
+                    Log.e(TAG, "Ошибка при асинхронном создании базы данных", e)
                     
                     // В случае любых других ошибок создаем новую базу
                     val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
@@ -314,7 +374,7 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                     
                     // Создаем новую базу
-                    val instance = Room.databaseBuilder(
+                    Room.databaseBuilder(
                         context.applicationContext,
                         AppDatabase::class.java,
                         DATABASE_NAME
@@ -322,10 +382,97 @@ abstract class AppDatabase : RoomDatabase() {
                     .openHelperFactory(factory)
                     .fallbackToDestructiveMigration() // Разрешаем пересоздание базы
                     .build()
-                    
-                    INSTANCE = instance
-                    instance
                 }
+            }
+        }
+        
+        /**
+         * Создание базы данных синхронно (для обратной совместимости)
+         */
+        private fun createDatabase(context: Context, databaseEncryption: DatabaseEncryption): AppDatabase {
+            try {
+                val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+                val factory = SupportFactory(passphrase)
+                
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    DATABASE_NAME
+                )
+                .openHelperFactory(factory)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .build()
+                
+                // Проверка базы данных на целостность
+                try {
+                    // Эта операция вызовет исключение, если база повреждена
+                    instance.openHelper.readableDatabase
+                    instance.openHelper.writableDatabase
+                } catch (e: Exception) {
+                    Log.e(TAG, "База данных повреждена, создаем новую", e)
+                    // Закрываем поврежденную базу
+                    instance.close()
+                    
+                    // Удаляем файл базы данных
+                    val dbFile = context.getDatabasePath(DATABASE_NAME)
+                    if (dbFile.exists()) {
+                        dbFile.delete()
+                        
+                        // Удаляем также файлы журнала и шему
+                        val journalFile = File(dbFile.path + "-journal")
+                        if (journalFile.exists()) journalFile.delete()
+                        
+                        val shmFile = File(dbFile.path + "-shm")
+                        if (shmFile.exists()) shmFile.delete()
+                        
+                        val walFile = File(dbFile.path + "-wal")
+                        if (walFile.exists()) walFile.delete()
+                    }
+                    
+                    // Создаем новую базу с режимом fallbackToDestructiveMigration
+                    return Room.databaseBuilder(
+                        context.applicationContext,
+                        AppDatabase::class.java,
+                        DATABASE_NAME
+                    )
+                    .openHelperFactory(factory)
+                    .fallbackToDestructiveMigration() // Разрешаем пересоздание базы
+                    .build()
+                }
+                
+                return instance
+            } catch (e: Exception) {
+                Log.e(TAG, "Ошибка при создании базы данных", e)
+                
+                // В случае любых других ошибок создаем новую базу
+                val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+                val factory = SupportFactory(passphrase)
+                
+                // Удаляем существующую базу данных
+                val dbFile = context.getDatabasePath(DATABASE_NAME)
+                if (dbFile.exists()) {
+                    dbFile.delete()
+                    
+                    // Удаляем также файлы журнала и шему
+                    val journalFile = File(dbFile.path + "-journal")
+                    if (journalFile.exists()) journalFile.delete()
+                    
+                    val shmFile = File(dbFile.path + "-shm")
+                    if (shmFile.exists()) shmFile.delete()
+                    
+                    val walFile = File(dbFile.path + "-wal")
+                    if (walFile.exists()) walFile.delete()
+                }
+                
+                // Создаем новую базу
+                return Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    DATABASE_NAME
+                )
+                .openHelperFactory(factory)
+                .fallbackToDestructiveMigration() // Разрешаем пересоздание базы
+                .build()
             }
         }
     }

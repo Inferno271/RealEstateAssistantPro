@@ -44,7 +44,28 @@ fun PhotoThumbnail(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val imageLoader = remember { CoilUtils.createImageLoader(context) }
+    // Используем оптимизированный ImageLoader для миниатюр
+    val imageLoader = remember { 
+        CoilUtils.createImageLoader(
+            context, 
+            diskCacheSize = 50 * 1024 * 1024, // 50 МБ для миниатюр
+            memoryCacheSize = 20 * 1024 * 1024 // 20 МБ для кэша в памяти
+        )
+    }
+    
+    // Создаем запрос оптимизированный для миниатюр
+    val thumbnailRequest = remember(photoUri) {
+        CoilUtils.createThumbnailRequest(
+            context = context,
+            data = photoUri,
+            thumbnailSize = 200 // в два раза больше размера контейнера для HiDPI экранов
+        ).build()
+    }
+    
+    // Предзагружаем миниатюру при появлении компонента
+    LaunchedEffect(photoUri) {
+        imageLoader.enqueue(CoilUtils.createPreloadRequest(context, photoUri))
+    }
     
     Box(
         modifier = modifier
@@ -53,10 +74,7 @@ fun PhotoThumbnail(
             .clickable { onShowFullscreen(photoUri, allPhotos) }
     ) {
         SubcomposeAsyncImage(
-            model = CoilUtils.createImageRequest(
-                    context,
-                    photoUri
-                ).build(),
+            model = thumbnailRequest,
             contentDescription = "Фото объекта",
             contentScale = ContentScale.Crop,
             imageLoader = imageLoader,
@@ -82,13 +100,13 @@ fun PhotoThumbnail(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                            .background(MaterialTheme.colorScheme.errorContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.BrokenImage,
                             contentDescription = "Ошибка загрузки",
-                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                            tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(32.dp)
                         )
                     }

@@ -13,6 +13,10 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import javax.inject.Singleton
 
@@ -24,6 +28,9 @@ import javax.inject.Singleton
 object DatabaseModule {
     private const val TAG = "DatabaseModule"
     private const val DATABASE_NAME = "realestate_database"
+    
+    // CoroutineScope для асинхронных операций с базой данных
+    private val databaseScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     
     /**
      * Предоставляет экземпляр класса DatabaseEncryption
@@ -105,6 +112,9 @@ object DatabaseModule {
     
     /**
      * Предоставляет экземпляр базы данных Room
+     * 
+     * Метод будет использовать синхронную инициализацию, но для большинства операций
+     * рекомендуется использовать асинхронный запуск через ApplicationInitializer
      */
     @Provides
     @Singleton
@@ -112,7 +122,31 @@ object DatabaseModule {
         @ApplicationContext context: Context,
         databaseEncryption: DatabaseEncryption
     ): AppDatabase {
+        Log.d(TAG, "Запрошен экземпляр базы данных через провайдер")
+        
         try {
+            // Проверяем, был ли уже инициализирован экземпляр базы данных асинхронно
+            val existingInstance = runBlocking {
+                try {
+                    // Пытаемся получить асинхронно инициализированный экземпляр с минимальным ожиданием
+                    val deferred = AppDatabase.getInstanceAsync(context, databaseEncryption)
+                    if (deferred.isCompleted) {
+                        Log.d(TAG, "Найден уже инициализированный экземпляр базы данных")
+                        deferred.await()
+                    } else {
+                        null
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Ошибка при попытке получить асинхронный экземпляр", e)
+                    null
+                }
+            }
+            
+            if (existingInstance != null) {
+                return existingInstance
+            }
+            
+            Log.d(TAG, "Инициализация базы данных синхронным методом")
             return AppDatabase.getInstance(context, databaseEncryption)
         } catch (e: Exception) {
             Log.e(TAG, "Критическая ошибка при инициализации базы данных", e)

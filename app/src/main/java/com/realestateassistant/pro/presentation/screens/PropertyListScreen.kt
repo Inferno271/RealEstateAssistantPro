@@ -1,5 +1,8 @@
 package com.realestateassistant.pro.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,11 +15,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -26,6 +31,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,27 +51,46 @@ import com.realestateassistant.pro.R
 import com.realestateassistant.pro.domain.model.Property
 import com.realestateassistant.pro.domain.model.RentalFilter
 import com.realestateassistant.pro.presentation.viewmodel.PropertyViewModel
+import com.realestateassistant.pro.presentation.viewmodel.OptionsViewModel
 import com.realestateassistant.pro.presentation.utils.PropertyDisplayUtils.getRoomsText
 import com.realestateassistant.pro.presentation.utils.PropertyDisplayUtils.formatPrice
 import com.realestateassistant.pro.presentation.utils.PropertyDisplayUtils.formatPhoneForDisplay
 import com.realestateassistant.pro.presentation.utils.PropertyDisplayUtils.formatUpdatedDate
 import com.realestateassistant.pro.presentation.utils.PropertyDisplayUtils.getLevelsText
+import com.realestateassistant.pro.presentation.components.common.SearchBar
+import com.realestateassistant.pro.domain.model.PropertyFilter
+import kotlinx.coroutines.launch
+import com.realestateassistant.pro.presentation.components.property.ActiveFiltersRow
+import com.realestateassistant.pro.presentation.components.property.PropertyFilterPanel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun PropertyListScreen(
     onNavigateToAddProperty: () -> Unit,
     onNavigateToPropertyDetail: (String) -> Unit,
-    propertyViewModel: PropertyViewModel = hiltViewModel()
+    propertyViewModel: PropertyViewModel = hiltViewModel(),
+    optionsViewModel: OptionsViewModel = hiltViewModel(),
+    drawerState: DrawerState? = null
 ) {
     val filteredProperties by propertyViewModel.filteredProperties.collectAsState()
     val currentFilter by propertyViewModel.currentFilter.collectAsState()
+    val propertyFilter by propertyViewModel.propertyFilter.collectAsState()
+    val scope = rememberCoroutineScope()
+    
+    var showFiltersPanel by remember { mutableStateOf(false) }
+    var showSearchBar by remember { mutableStateOf(false) }
     
     // Создаем состояние пейджера, которое будет синхронизировано с текущим фильтром
     val pagerState = rememberPagerState(
         initialPage = currentFilter.ordinal,
         pageCount = { RentalFilter.values().size }
     )
+    
+    // Загружаем объекты при каждом переходе на экран
+    LaunchedEffect(Unit) {
+        println("DEBUG: PropertyListScreen - запрос на загрузку объектов")
+        propertyViewModel.loadProperties()
+    }
 
     // Эффект для синхронизации пейджера с фильтром только при изменении currentFilter
     LaunchedEffect(currentFilter) {
@@ -92,8 +117,31 @@ fun PropertyListScreen(
                             style = MaterialTheme.typography.titleLarge
                         ) 
                     },
+                    navigationIcon = {
+                        // Добавляем кнопку меню только если drawerState не null
+                        drawerState?.let {
+                            IconButton(onClick = {
+                                scope.launch {
+                                    drawerState.open()
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Menu,
+                                    contentDescription = "Меню"
+                                )
+                            }
+                        }
+                    },
                     actions = {
-                        IconButton(onClick = { /* TODO: Реализовать поиск */ }) {
+                        IconButton(onClick = { 
+                            showSearchBar = !showSearchBar 
+                            if (!showSearchBar) {
+                                // Если закрываем строку поиска, то очищаем поисковый запрос
+                                val updatedFilter = propertyFilter.copy(searchQuery = "")
+                                propertyViewModel.updatePropertyFilter(updatedFilter)
+                                showFiltersPanel = false
+                            }
+                        }) {
                             Icon(
                                 Icons.Default.Search,
                                 contentDescription = "Поиск",
@@ -106,6 +154,58 @@ fun PropertyListScreen(
                         titleContentColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
+                
+                // Поисковая строка
+                AnimatedVisibility(
+                    visible = showSearchBar || propertyFilter.searchQuery.isNotEmpty(),
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    Column {
+                        SearchBar(
+                            query = propertyFilter.searchQuery,
+                            onQueryChange = { query ->
+                                propertyViewModel.updateSearchQuery(query)
+                            },
+                            onSearch = { query ->
+                                propertyViewModel.updateSearchQuery(query)
+                            },
+                            onFilterClick = {
+                                showFiltersPanel = !showFiltersPanel
+                            },
+                            placeholder = "Поиск по адресу, району, типу объекта, удобствам...",
+                            showFilterButton = true
+                        )
+                        
+                        // Отображаем выбранные фильтры, если есть
+                        if (propertyFilter.hasActiveFiltersBesideSearch() && !showFiltersPanel) {
+                            // Показываем индикатор активных фильтров
+                            ActiveFiltersRow(
+                                propertyFilter = propertyFilter,
+                                onFilterChange = { propertyViewModel.updatePropertyFilter(it) },
+                                onClearFilters = { 
+                                    // Сохраняем поисковый запрос при сбросе других фильтров
+                                    propertyViewModel.updatePropertyFilter(propertyFilter.clearFiltersKeepSearch())
+                                }
+                            )
+                        }
+                        
+                        // Отображаем панель фильтров, если открыта
+                        AnimatedVisibility(
+                            visible = showFiltersPanel,
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            PropertyFilterPanel(
+                                propertyFilter = propertyFilter,
+                                onFilterChange = { propertyViewModel.updatePropertyFilter(it) },
+                                onClearFilters = { propertyViewModel.clearPropertyFilters() },
+                                onClose = { showFiltersPanel = false },
+                                optionsViewModel = optionsViewModel
+                            )
+                        }
+                    }
+                }
                 
                 // Фильтры для типа аренды с возможностью свайпа
                 FilterTabs(
@@ -153,7 +253,7 @@ fun PropertyList(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         if (properties.isEmpty()) {
             Box(

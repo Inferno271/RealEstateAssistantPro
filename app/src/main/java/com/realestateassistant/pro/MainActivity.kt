@@ -7,34 +7,33 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.lifecycleScope
+import androidx.core.view.WindowCompat
 import com.realestateassistant.pro.navigation.components.AppScaffold
-import com.realestateassistant.pro.ui.theme.RealEstateAssistantProTheme
+import com.realestateassistant.pro.navigation.routes.AppRoutes
+import com.realestateassistant.pro.ui.theme.RealEstateAssistantTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
+/**
+ * Основная активность приложения
+ */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Устанавливаем UI как можно быстрее
+        // Включаем edge-to-edge UI
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        
         setContent {
-            RealEstateAssistantProTheme {
+            // Используем нашу тему с синими цветами
+            RealEstateAssistantTheme(dynamicColor = false) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppScaffold()
+                    AppScaffold(startDestination = AppRoutes.DASHBOARD)
                 }
             }
-        }
-        
-        // Откладываем тяжелые операции до после отображения UI
-        lifecycleScope.launch(Dispatchers.IO) {
-            // Здесь можно выполнить дополнительные инициализации,
-            // которые не критичны для отображения UI
         }
     }
 }

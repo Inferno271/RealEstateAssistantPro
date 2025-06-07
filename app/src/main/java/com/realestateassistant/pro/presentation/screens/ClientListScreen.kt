@@ -1,5 +1,8 @@
 package com.realestateassistant.pro.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,20 +11,32 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.realestateassistant.pro.domain.model.Client
 import com.realestateassistant.pro.domain.model.RentalFilter
+import com.realestateassistant.pro.domain.model.ClientFilter
 import com.realestateassistant.pro.presentation.components.client.ClientCard
+import com.realestateassistant.pro.presentation.components.client.ActiveClientFiltersRow
+import com.realestateassistant.pro.presentation.components.client.ClientFilterPanel
 import com.realestateassistant.pro.presentation.viewmodel.ClientViewModel
+import com.realestateassistant.pro.presentation.viewmodel.OptionsViewModel
+import com.realestateassistant.pro.presentation.components.common.SearchBar
+import kotlinx.coroutines.launch
 
 /**
  * Экран отображения списка клиентов.
@@ -31,11 +46,18 @@ import com.realestateassistant.pro.presentation.viewmodel.ClientViewModel
 fun ClientListScreen(
     onNavigateToAddClient: () -> Unit,
     onNavigateToClientDetail: (String) -> Unit,
-    clientViewModel: ClientViewModel = hiltViewModel()
+    clientViewModel: ClientViewModel = hiltViewModel(),
+    optionsViewModel: OptionsViewModel = hiltViewModel(),
+    drawerState: DrawerState? = null
 ) {
     val filteredClients by clientViewModel.filteredClients.collectAsState()
     val allClients by clientViewModel.clients.collectAsState() // Для отладки
     val currentFilter by clientViewModel.currentFilter.collectAsState()
+    val clientFilter by clientViewModel.clientFilter.collectAsState()
+    val scope = rememberCoroutineScope()
+    
+    var showSearchBar by remember { mutableStateOf(false) }
+    var showFilterPanel by remember { mutableStateOf(false) }
     
     // Отладочная информация
     LaunchedEffect(Unit) {
@@ -56,33 +78,66 @@ fun ClientListScreen(
         pageCount = { RentalFilter.values().size }
     )
 
-    // Эффект для синхронизации пейджера с фильтром только при изменении currentFilter
-    LaunchedEffect(currentFilter) {
-        if (pagerState.currentPage != currentFilter.ordinal) {
-            pagerState.animateScrollToPage(currentFilter.ordinal)
+    // Загружаем клиентов при каждом переходе на экран
+    LaunchedEffect(Unit) {
+        println("DEBUG: ClientListScreen - запрос на загрузку клиентов")
+        clientViewModel.loadClients()
+    }
+
+    // Синхронизируем состояние пейджера с фильтром и наоборот
+    LaunchedEffect(pagerState.currentPage) {
+        if (currentFilter.ordinal != pagerState.currentPage) {
+            clientViewModel.setFilter(RentalFilter.values()[pagerState.currentPage])
         }
     }
 
-    // Эффект для обновления фильтра при смене страницы пейджера
-    LaunchedEffect(pagerState.currentPage) {
-        val pageFilter = RentalFilter.values()[pagerState.currentPage]
-        if (currentFilter != pageFilter) {
-            clientViewModel.setFilter(pageFilter)
+    LaunchedEffect(currentFilter) {
+        if (pagerState.currentPage != currentFilter.ordinal) {
+            scope.launch {
+                pagerState.animateScrollToPage(currentFilter.ordinal)
+            }
         }
+    }
+    
+    // Отображаем фильтры, если активны
+    if (showFilterPanel) {
+        ClientFilterPanel(
+            clientFilter = clientFilter,
+            onFilterChange = { newFilter ->
+                clientViewModel.updateClientFilter(newFilter)
+            },
+            onClearFilters = {
+                clientViewModel.clearClientFilters()
+            },
+            onClose = { showFilterPanel = false },
+            optionsViewModel = optionsViewModel
+        )
     }
 
     Scaffold(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { 
-                        Text(
-                            "Клиенты",
-                            style = MaterialTheme.typography.titleLarge
-                        ) 
+                    title = { Text("Клиенты") },
+                    navigationIcon = {
+                        if (drawerState != null) {
+                            IconButton(
+                                onClick = {
+                                    scope.launch {
+                                        drawerState.open()
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.Menu,
+                                    contentDescription = "Открыть меню",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     },
                     actions = {
-                        IconButton(onClick = { /* TODO: Реализовать поиск */ }) {
+                        IconButton(onClick = { showSearchBar = !showSearchBar }) {
                             Icon(
                                 Icons.Default.Search,
                                 contentDescription = "Поиск",
@@ -95,6 +150,77 @@ fun ClientListScreen(
                         titleContentColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
+                
+                // Строка с активными фильтрами
+                if (clientFilter.hasActiveFilters()) {
+                    ActiveClientFiltersRow(
+                        clientFilter = clientFilter,
+                        onFilterChange = { newFilter -> 
+                            clientViewModel.updateClientFilter(newFilter)
+                        },
+                        onClearFilters = {
+                            clientViewModel.clearClientFilters()
+                        }
+                    )
+                }
+                
+                // Поисковая строка
+                AnimatedVisibility(
+                    visible = showSearchBar || clientFilter.searchQuery.isNotEmpty(),
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    Column {
+                        SearchBar(
+                            query = clientFilter.searchQuery,
+                            onQueryChange = { query ->
+                                clientViewModel.updateSearchQuery(query)
+                            },
+                            onSearch = { query ->
+                                clientViewModel.updateSearchQuery(query)
+                            },
+                            onFilterClick = {
+                                showFilterPanel = !showFilterPanel
+                            },
+                            placeholder = "Поиск по имени, телефону, району, профессии...",
+                            showFilterButton = true
+                        )
+                        
+                        // Отображаем выбранные фильтры, если есть
+                        if (clientFilter.hasActiveFiltersBesideSearch() && !showFilterPanel) {
+                            // Показываем индикатор активных фильтров
+                            ActiveClientFiltersRow(
+                                clientFilter = clientFilter,
+                                onFilterChange = { newFilter -> 
+                                    clientViewModel.updateClientFilter(newFilter)
+                                },
+                                onClearFilters = {
+                                    // Сохраняем поисковый запрос при сбросе других фильтров
+                                    clientViewModel.updateClientFilter(clientFilter.clearFiltersKeepSearch())
+                                }
+                            )
+                        }
+                        
+                        // Отображаем панель фильтров, если открыта
+                        AnimatedVisibility(
+                            visible = showFilterPanel,
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            ClientFilterPanel(
+                                clientFilter = clientFilter,
+                                onFilterChange = { newFilter ->
+                                    clientViewModel.updateClientFilter(newFilter)
+                                },
+                                onClearFilters = {
+                                    clientViewModel.clearClientFilters()
+                                },
+                                onClose = { showFilterPanel = false },
+                                optionsViewModel = optionsViewModel
+                            )
+                        }
+                    }
+                }
                 
                 // Фильтры для типа аренды с возможностью свайпа
                 ClientFilterTabs(
