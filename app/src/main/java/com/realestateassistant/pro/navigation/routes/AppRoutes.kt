@@ -21,6 +21,7 @@ object AppRoutes {
     const val NOTIFICATIONS = "notifications"
     const val BOOKING_CALENDAR = "booking_calendar/{propertyId}"
     const val BOOKINGS = "bookings"
+    const val PROPERTY_RECOMMENDATIONS = "property_recommendations/{clientId}"
     
     // Дополнительные экраны
     const val SETTINGS = "settings"
@@ -35,6 +36,7 @@ object AppRoutes {
     // Функции для создания маршрутов с параметрами для клиентов
     fun clientDetail(clientId: String) = "client_detail/$clientId"
     fun editClient(clientId: String) = "edit_client/$clientId"
+    fun propertyRecommendations(clientId: String) = "property_recommendations/$clientId"
     
     // Функции для создания маршрутов с параметрами для встреч
     fun appointmentDetail(appointmentId: String) = "appointment_detail/$appointmentId"

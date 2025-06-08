@@ -22,6 +22,7 @@ import com.realestateassistant.pro.presentation.screens.appointment.EditAppointm
 import com.realestateassistant.pro.presentation.screens.booking.BookingCalendarScreen
 import com.realestateassistant.pro.presentation.screens.dashboard.DashboardScreen
 import com.realestateassistant.pro.presentation.screens.help.HelpScreen
+import com.realestateassistant.pro.presentation.screens.recommendation.PropertyRecommendationsScreen
 import com.realestateassistant.pro.presentation.screens.settings.SettingsScreen
 import com.realestateassistant.pro.presentation.screens.booking.BookingListScreen
 
@@ -197,6 +198,9 @@ fun AppNavHost(
                 },
                 onNavigateToEdit = { clientId ->
                     navController.navigate(AppRoutes.editClient(clientId))
+                },
+                onNavigateToRecommendations = { clientId ->
+                    navController.navigate(AppRoutes.propertyRecommendations(clientId))
                 }
             )
         }
@@ -306,6 +310,25 @@ fun AppNavHost(
             AboutScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                }
+            )
+        }
+        
+        // Экран рекомендаций объектов недвижимости
+        composable(
+            route = AppRoutes.PROPERTY_RECOMMENDATIONS,
+            arguments = listOf(
+                navArgument("clientId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val clientId = backStackEntry.arguments?.getString("clientId") ?: ""
+            PropertyRecommendationsScreen(
+                clientId = clientId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToPropertyDetail = { propertyId ->
+                    navController.navigate(AppRoutes.propertyDetail(propertyId))
                 }
             )
         }

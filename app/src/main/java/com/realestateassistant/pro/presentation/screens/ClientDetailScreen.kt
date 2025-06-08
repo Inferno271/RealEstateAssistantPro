@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Recommend
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,6 +41,7 @@ fun ClientDetailScreen(
     clientId: String?,
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit,
+    onNavigateToRecommendations: (String) -> Unit,
     clientViewModel: ClientViewModel = hiltViewModel()
 ) {
     val clients by clientViewModel.clients.collectAsState()
@@ -70,6 +72,17 @@ fun ClientDetailScreen(
                     }
                 },
                 actions = {
+                    // Кнопка для рекомендаций
+                    IconButton(
+                        onClick = { onNavigateToRecommendations(clientId ?: "") }
+                    ) {
+                        Icon(
+                            Icons.Default.Recommend,
+                            contentDescription = "Рекомендации",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    
                     IconButton(
                         onClick = { onNavigateToEdit(clientId ?: "") }
                     ) {
@@ -92,6 +105,18 @@ fun ClientDetailScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { onNavigateToRecommendations(clientId ?: "") },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    Icons.Default.Recommend,
+                    contentDescription = "Показать рекомендации",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
         }
     ) { paddingValues ->
         ClientDetailContent(

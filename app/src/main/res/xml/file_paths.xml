@@ -2,5 +2,9 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <external-files-path name="images" path="Pictures/RealEstateAssistant/"/>
     <external-files-path name="documents" path="Documents/RealEstateAssistant/"/>
+    <external-files-path name="pdf_exports" path="Download/"/>
+    <files-path name="internal_pdf" path="pdf_exports/"/>
     <cache-path name="temp_files" path="temp/"/>
+    <external-path name="external_downloads" path="Download/RealEstateAssistant/"/>
+    <external-path name="downloads" path="Download/"/>
 </paths> 

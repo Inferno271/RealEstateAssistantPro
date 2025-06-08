@@ -7,6 +7,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.realestateassistant.pro.presentation.components.property.PropertyDetailContent
 import com.realestateassistant.pro.presentation.viewmodel.PropertyViewModel
+import com.realestateassistant.pro.presentation.viewmodel.PdfExportViewModel
 import com.realestateassistant.pro.domain.model.Booking
 import com.realestateassistant.pro.presentation.components.property.PropertyAvailabilityInfo
 import com.realestateassistant.pro.presentation.viewmodels.BookingCalendarViewModel
@@ -29,7 +32,8 @@ fun PropertyDetailScreen(
     onNavigateToEdit: (String) -> Unit,
     onNavigateToBookingCalendar: (String) -> Unit,
     viewModel: PropertyViewModel = hiltViewModel(),
-    bookingViewModel: BookingCalendarViewModel = hiltViewModel()
+    bookingViewModel: BookingCalendarViewModel = hiltViewModel(),
+    pdfExportViewModel: PdfExportViewModel = hiltViewModel()
 ) {
     val selectedProperty by viewModel.selectedProperty.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -41,6 +45,9 @@ fun PropertyDetailScreen(
     
     // Состояние диалога подтверждения удаления
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    
+    // Состояние экспорта PDF
+    val pdfExportState by pdfExportViewModel.exportState.collectAsState()
     
     // Загружаем детали объекта при входе на экран
     LaunchedEffect(propertyId) {
@@ -61,6 +68,26 @@ fun PropertyDetailScreen(
     DisposableEffect(Unit) {
         onDispose {
             viewModel.clearSelectedProperty()
+            pdfExportViewModel.resetState() // Сбрасываем состояние экспорта PDF
+        }
+    }
+    
+    // Обработка состояния экспорта PDF
+    LaunchedEffect(pdfExportState) {
+        when (pdfExportState) {
+            is PdfExportViewModel.ExportState.Success -> {
+                val uri = (pdfExportState as PdfExportViewModel.ExportState.Success).uri
+                
+                // Отображаем снэкбар с возможностью открыть или поделиться файлом
+                // (Этот блок будет реализован через SnackbarHost)
+            }
+            is PdfExportViewModel.ExportState.Error -> {
+                val errorMessage = (pdfExportState as PdfExportViewModel.ExportState.Error).message
+                Toast.makeText(context, "Ошибка при создании PDF: $errorMessage", Toast.LENGTH_LONG).show()
+            }
+            else -> {
+                // Не требуется действий
+            }
         }
     }
     
@@ -93,7 +120,32 @@ fun PropertyDetailScreen(
         )
     }
     
+    // Создаем SnackbarHostState для отображения сообщений
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    // Обработка состояния экспорта PDF для отображения снэкбара
+    LaunchedEffect(pdfExportState) {
+        if (pdfExportState is PdfExportViewModel.ExportState.Success) {
+            val uri = (pdfExportState as PdfExportViewModel.ExportState.Success).uri
+            val result = snackbarHostState.showSnackbar(
+                message = "PDF сохранен",
+                actionLabel = "Открыть",
+                duration = SnackbarDuration.Long
+            )
+            
+            when (result) {
+                SnackbarResult.ActionPerformed -> {
+                    selectedProperty?.let { property ->
+                        pdfExportViewModel.openPdf(context, uri)
+                    }
+                }
+                else -> { /* Игнорируем другие результаты */ }
+            }
+        }
+    }
+    
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { 
@@ -111,6 +163,30 @@ fun PropertyDetailScreen(
                     }
                 },
                 actions = {
+                    // Кнопка экспорта PDF
+                    IconButton(
+                        onClick = { 
+                            selectedProperty?.let { property ->
+                                pdfExportViewModel.exportPropertyToPdf(property)
+                            }
+                        },
+                        enabled = selectedProperty != null && pdfExportState !is PdfExportViewModel.ExportState.Loading
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PictureAsPdf,
+                            contentDescription = "Экспорт в PDF",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    
+                    // Индикатор загрузки PDF
+                    if (pdfExportState is PdfExportViewModel.ExportState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                    
                     // Кнопка календаря бронирований
                     IconButton(
                         onClick = { onNavigateToBookingCalendar(propertyId) }
@@ -186,7 +262,7 @@ fun PropertyDetailScreen(
                 selectedProperty != null -> {
                     // Отображаем детали объекта с информацией о доступности
                     Column {
-                    PropertyDetailContent(property = selectedProperty!!)
+                        PropertyDetailContent(property = selectedProperty!!)
                         
                         // Информация о доступности объекта
                         Spacer(modifier = Modifier.height(16.dp))
@@ -196,20 +272,75 @@ fun PropertyDetailScreen(
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                         
-                        // Кнопка для перехода к календарю бронирований
+                        // Кнопки действий с объектом
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { onNavigateToBookingCalendar(propertyId) },
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp)
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.CalendarMonth,
-                                contentDescription = null,
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                            Text("Просмотреть календарь бронирований")
+                            // Кнопка для календаря бронирований
+                            Button(
+                                onClick = { onNavigateToBookingCalendar(propertyId) },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarMonth,
+                                    contentDescription = null,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                                Text("Календарь бронирований")
+                            }
+                            
+                            // Кнопка для экспорта PDF
+                            Button(
+                                onClick = { 
+                                    selectedProperty?.let { property ->
+                                        pdfExportViewModel.exportPropertyToPdf(property)
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                enabled = selectedProperty != null && pdfExportState !is PdfExportViewModel.ExportState.Loading
+                            ) {
+                                if (pdfExportState is PdfExportViewModel.ExportState.Loading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.PictureAsPdf,
+                                        contentDescription = null,
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    )
+                                    Text("Экспорт в PDF")
+                                }
+                            }
+                        }
+                        
+                        // Кнопка для поделиться PDF (появляется только когда PDF уже создан)
+                        if (pdfExportState is PdfExportViewModel.ExportState.Success) {
+                            val uri = (pdfExportState as PdfExportViewModel.ExportState.Success).uri
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = { 
+                                    selectedProperty?.let { property ->
+                                        pdfExportViewModel.sharePdf(context, uri, property)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = null,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                                Text("Поделиться PDF")
+                            }
                         }
                     }
                 }

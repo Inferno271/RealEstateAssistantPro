@@ -14,6 +14,7 @@ import com.realestateassistant.pro.domain.usecase.ImageUseCases
 import com.realestateassistant.pro.data.repository.DocumentRepositoryImpl
 import com.realestateassistant.pro.domain.repository.DocumentRepository
 import com.realestateassistant.pro.domain.usecase.document.*
+import com.realestateassistant.pro.core.file.StorageHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -74,5 +75,16 @@ object AppModule {
             deleteDocument = DeleteDocument(repository),
             openDocument = OpenDocument(repository)
         )
+    }
+    
+    /**
+     * Предоставляет вспомогательный класс для работы с файловым хранилищем
+     */
+    @Provides
+    @Singleton
+    fun provideStorageHelper(
+        @ApplicationContext context: Context
+    ): StorageHelper {
+        return StorageHelper(context)
     }
 } 

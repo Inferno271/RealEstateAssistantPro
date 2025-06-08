@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.realestateassistant.pro.presentation.screens.PropertyDetailScreen
 import com.realestateassistant.pro.presentation.screens.booking.BookingCalendarScreen
+import com.realestateassistant.pro.presentation.screens.recommendation.PropertyRecommendationsScreen
 
 /**
  * Маршруты навигации в приложении
@@ -15,10 +16,12 @@ import com.realestateassistant.pro.presentation.screens.booking.BookingCalendarS
 object AppRoutes {
     const val PROPERTY_DETAILS = "property_details/{propertyId}"
     const val BOOKING_CALENDAR = "booking_calendar/{propertyId}"
+    const val PROPERTY_RECOMMENDATIONS = "property_recommendations/{clientId}"
     
     // Функции для создания маршрута с параметрами
     fun propertyDetails(propertyId: String) = "property_details/$propertyId"
     fun bookingCalendar(propertyId: String) = "booking_calendar/$propertyId"
+    fun propertyRecommendations(clientId: String) = "property_recommendations/$clientId"
 }
 
 /**
@@ -65,6 +68,23 @@ fun AppNavigation(
             BookingCalendarScreen(
                 propertyId = propertyId,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        // Экран рекомендаций объектов недвижимости
+        composable(
+            route = AppRoutes.PROPERTY_RECOMMENDATIONS,
+            arguments = listOf(
+                navArgument("clientId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val clientId = backStackEntry.arguments?.getString("clientId") ?: ""
+            PropertyRecommendationsScreen(
+                clientId = clientId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToPropertyDetail = { propertyId ->
+                    navController.navigate(AppRoutes.propertyDetails(propertyId))
+                }
             )
         }
     }
