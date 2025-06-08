@@ -19,9 +19,11 @@ import com.realestateassistant.pro.presentation.screens.appointment.AddAppointme
 import com.realestateassistant.pro.presentation.screens.appointment.AppointmentDetailScreen
 import com.realestateassistant.pro.presentation.screens.appointment.AppointmentScreen
 import com.realestateassistant.pro.presentation.screens.appointment.EditAppointmentScreen
+import com.realestateassistant.pro.presentation.screens.booking.BookingCalendarScreen
 import com.realestateassistant.pro.presentation.screens.dashboard.DashboardScreen
 import com.realestateassistant.pro.presentation.screens.help.HelpScreen
 import com.realestateassistant.pro.presentation.screens.settings.SettingsScreen
+import com.realestateassistant.pro.presentation.screens.booking.BookingListScreen
 
 /**
  * Основной компонент навигации приложения
@@ -89,6 +91,9 @@ fun AppNavHost(
                 },
                 onNavigateToEdit = { propertyId ->
                     navController.navigate(AppRoutes.editProperty(propertyId))
+                },
+                onNavigateToBookingCalendar = { propertyId ->
+                    navController.navigate(AppRoutes.bookingCalendar(propertyId))
                 }
             )
         }
@@ -107,6 +112,49 @@ fun AppNavHost(
                 propertyId = propertyId,
                 onNavigateBack = {
                     navController.popBackStack()
+                }
+            )
+        }
+        
+        // Экран календаря бронирований
+        composable(
+            route = AppRoutes.BOOKING_CALENDAR,
+            arguments = listOf(
+                navArgument("propertyId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val propertyId = backStackEntry.arguments?.getString("propertyId") ?: ""
+            BookingCalendarScreen(
+                propertyId = propertyId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        
+        // Экран списка всех бронирований
+        composable(route = AppRoutes.BOOKINGS) {
+            BookingListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToCreateBooking = { propertyId ->
+                    navController.navigate(AppRoutes.bookingCalendar(propertyId))
+                },
+                onNavigateToBookingDetails = { bookingId ->
+                    // В будущем можно добавить экран детального просмотра бронирования
+                    // navController.navigate(AppRoutes.bookingDetail(bookingId))
+                },
+                onNavigateToPropertyDetails = { propertyId ->
+                    navController.navigate(AppRoutes.propertyDetail(propertyId))
+                },
+                onNavigateToClientDetails = { clientId ->
+                    navController.navigate(AppRoutes.clientDetail(clientId))
+                },
+                onNavigateToCalendar = { propertyId ->
+                    navController.navigate(AppRoutes.bookingCalendar(propertyId))
                 }
             )
         }

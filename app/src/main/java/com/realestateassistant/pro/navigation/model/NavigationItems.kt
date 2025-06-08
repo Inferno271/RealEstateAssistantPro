@@ -1,6 +1,7 @@
 package com.realestateassistant.pro.navigation.model
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BookOnline
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Help
@@ -34,6 +35,12 @@ object NavigationItems {
             title = "Клиенты",
             icon = Icons.Default.Person,
             contentDescription = "Список клиентов"
+        ),
+        NavigationItem(
+            route = AppRoutes.BOOKINGS,
+            title = "Бронирования",
+            icon = Icons.Default.BookOnline,
+            contentDescription = "Список бронирований"
         ),
         NavigationItem(
             route = AppRoutes.APPOINTMENTS,

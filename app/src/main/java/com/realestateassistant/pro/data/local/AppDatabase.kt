@@ -12,12 +12,15 @@ import com.realestateassistant.pro.data.local.converters.AppointmentStatusConver
 import com.realestateassistant.pro.data.local.converters.AppointmentTypeConverter
 import com.realestateassistant.pro.data.local.converters.ListStringConverter
 import com.realestateassistant.pro.data.local.converters.SeasonalPriceListConverter
+import com.realestateassistant.pro.data.local.converter.BookingConverters
 import com.realestateassistant.pro.data.local.dao.AppointmentDao
+import com.realestateassistant.pro.data.local.dao.BookingDao
 import com.realestateassistant.pro.data.local.dao.ClientDao
 import com.realestateassistant.pro.data.local.dao.PropertyDao
 import com.realestateassistant.pro.data.local.dao.UserDao
 import com.realestateassistant.pro.data.local.entity.AppointmentConverters
 import com.realestateassistant.pro.data.local.entity.AppointmentEntity
+import com.realestateassistant.pro.data.local.entity.BookingEntity
 import com.realestateassistant.pro.data.local.entity.ClientEntity
 import com.realestateassistant.pro.data.local.entity.PropertyEntity
 import com.realestateassistant.pro.data.local.entity.UserEntity
@@ -45,9 +48,10 @@ import kotlinx.coroutines.SupervisorJob
         PropertyEntity::class,
         ClientEntity::class,
         AppointmentEntity::class,
-        UserEntity::class
+        UserEntity::class,
+        BookingEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 @TypeConverters(
@@ -55,7 +59,8 @@ import kotlinx.coroutines.SupervisorJob
     SeasonalPriceListConverter::class,
     AppointmentStatusConverter::class,
     AppointmentTypeConverter::class,
-    AppointmentConverters::class
+    AppointmentConverters::class,
+    BookingConverters::class
 )
 abstract class AppDatabase : RoomDatabase() {
     
@@ -78,6 +83,11 @@ abstract class AppDatabase : RoomDatabase() {
      * Получение DAO для пользователей
      */
     abstract fun userDao(): UserDao
+    
+    /**
+     * Получение DAO для бронирований
+     */
+    abstract fun bookingDao(): BookingDao
     
     companion object {
         private const val DATABASE_NAME = "realestate_database"
@@ -242,6 +252,47 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
         
+        // Миграция с версии 5 на версию 6 (добавление таблицы бронирований)
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Создаем таблицу бронирований
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS bookings (" +
+                    "id TEXT NOT NULL PRIMARY KEY, " +
+                    "propertyId TEXT NOT NULL, " +
+                    "clientId TEXT, " +
+                    "startDate INTEGER NOT NULL, " +
+                    "endDate INTEGER NOT NULL, " +
+                    "status TEXT NOT NULL, " +
+                    "paymentStatus TEXT NOT NULL, " +
+                    "totalAmount REAL NOT NULL, " +
+                    "depositAmount REAL, " +
+                    "notes TEXT, " +
+                    "guestsCount INTEGER, " +
+                    "checkInTime TEXT, " +
+                    "checkOutTime TEXT, " +
+                    "includedServices TEXT NOT NULL, " +
+                    "additionalServices TEXT NOT NULL, " +
+                    "rentPeriodMonths INTEGER, " +
+                    "monthlyPaymentAmount REAL, " +
+                    "utilityPayments INTEGER, " +
+                    "contractType TEXT, " +
+                    "createdAt INTEGER NOT NULL, " +
+                    "updatedAt INTEGER NOT NULL, " +
+                    "isSynced INTEGER NOT NULL DEFAULT 0, " +
+                    "FOREIGN KEY (propertyId) REFERENCES properties(id) ON DELETE CASCADE, " +
+                    "FOREIGN KEY (clientId) REFERENCES clients(id) ON DELETE SET NULL)"
+                )
+                
+                // Создаем индексы для таблицы бронирований
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_bookings_propertyId ON bookings(propertyId)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_bookings_clientId ON bookings(clientId)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_bookings_startDate ON bookings(startDate)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_bookings_endDate ON bookings(endDate)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_bookings_status ON bookings(status)")
+            }
+        }
+        
         // Синглтон для базы данных
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -307,7 +358,7 @@ abstract class AppDatabase : RoomDatabase() {
                         DATABASE_NAME
                     )
                     .openHelperFactory(factory)
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .build()
                     
                     // Проверка базы данных на целостность (асинхронно)
@@ -400,7 +451,7 @@ abstract class AppDatabase : RoomDatabase() {
                     DATABASE_NAME
                 )
                 .openHelperFactory(factory)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
                 
                 // Проверка базы данных на целостность

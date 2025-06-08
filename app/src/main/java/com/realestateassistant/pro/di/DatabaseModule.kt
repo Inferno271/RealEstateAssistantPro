@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.realestateassistant.pro.data.local.AppDatabase
 import com.realestateassistant.pro.data.local.dao.AppointmentDao
+import com.realestateassistant.pro.data.local.dao.BookingDao
 import com.realestateassistant.pro.data.local.dao.ClientDao
 import com.realestateassistant.pro.data.local.dao.PropertyDao
 import com.realestateassistant.pro.data.local.dao.UserDao
@@ -202,5 +203,14 @@ object DatabaseModule {
     @Singleton
     fun provideUserDao(database: AppDatabase): UserDao {
         return database.userDao()
+    }
+    
+    /**
+     * Предоставляет DAO для работы с бронированиями
+     */
+    @Provides
+    @Singleton
+    fun provideBookingDao(database: AppDatabase): BookingDao {
+        return database.bookingDao()
     }
 } 

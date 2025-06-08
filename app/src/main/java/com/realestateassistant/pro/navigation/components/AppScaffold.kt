@@ -46,6 +46,8 @@ fun AppScaffold(
         currentRoute?.startsWith("appointment_detail") == true -> "Детали встречи"
         currentRoute?.startsWith("appointment_edit") == true -> "Редактирование встречи"
         currentRoute == AppRoutes.NOTIFICATIONS -> "Уведомления"
+        currentRoute == AppRoutes.BOOKINGS -> "Бронирования"
+        currentRoute?.startsWith("booking_calendar") == true -> "Календарь бронирований"
         currentRoute == AppRoutes.SETTINGS -> "Настройки"
         currentRoute == AppRoutes.HELP -> "Помощь"
         currentRoute == AppRoutes.ABOUT -> "О приложении"

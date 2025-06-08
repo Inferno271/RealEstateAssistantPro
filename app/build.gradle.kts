@@ -95,6 +95,9 @@ dependencies {
     // Timber для логирования
     implementation("com.jakewharton.timber:timber:4.7.1")
     
+    // Библиотека календаря для Jetpack Compose
+    implementation("com.kizitonwose.calendar:compose:2.5.0")
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -106,6 +109,10 @@ dependencies {
     
     // Pager для реализации свайпа изображений
     implementation("androidx.compose.foundation:foundation:1.6.0")
+    // Добавим дополнительные модули Compose для поддержки snapping
+    implementation("androidx.compose.foundation:foundation-layout:1.6.0")
+    implementation("androidx.compose.animation:animation:1.6.0")
+    implementation("androidx.compose.animation:animation-core:1.6.0")
 
     // Yandex MapKit
     implementation("com.yandex.android:maps.mobile:4.15.0-lite")
