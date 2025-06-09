@@ -68,6 +68,13 @@ interface BookingRepository {
     suspend fun hasBookingConflicts(propertyId: String, fromDate: Long, toDate: Long): Result<Boolean>
     
     /**
+     * Проверяет, есть ли конфликты бронирований для указанного объекта в указанном диапазоне дат,
+     * исключая указанное бронирование (для редактирования)
+     * Возвращает true, если есть конфликты
+     */
+    suspend fun hasBookingConflictsExcludingBooking(propertyId: String, fromDate: Long, toDate: Long, excludeBookingId: String): Result<Boolean>
+    
+    /**
      * Обновляет статус бронирования
      */
     suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<Unit>

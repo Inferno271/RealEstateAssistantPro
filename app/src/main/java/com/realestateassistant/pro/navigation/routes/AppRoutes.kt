@@ -18,13 +18,11 @@ object AppRoutes {
     const val ADD_APPOINTMENT = "add_appointment"
     const val APPOINTMENT_DETAIL = "appointment_detail/{appointmentId}"
     const val APPOINTMENT_EDIT = "appointment_edit/{appointmentId}"
-    const val NOTIFICATIONS = "notifications"
     const val BOOKING_CALENDAR = "booking_calendar/{propertyId}"
     const val BOOKINGS = "bookings"
     const val PROPERTY_RECOMMENDATIONS = "property_recommendations/{clientId}"
     
     // Дополнительные экраны
-    const val SETTINGS = "settings"
     const val HELP = "help"
     const val ABOUT = "about"
     

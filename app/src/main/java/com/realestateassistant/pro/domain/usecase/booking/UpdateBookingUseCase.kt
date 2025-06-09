@@ -28,10 +28,11 @@ class UpdateBookingUseCase @Inject constructor(
         
         // Если даты изменились, проверяем наличие конфликтов
         if (currentBooking.startDate != booking.startDate || currentBooking.endDate != booking.endDate) {
-            val hasConflicts = bookingRepository.hasBookingConflicts(
+            val hasConflicts = bookingRepository.hasBookingConflictsExcludingBooking(
                 propertyId = booking.propertyId,
                 fromDate = booking.startDate,
-                toDate = booking.endDate
+                toDate = booking.endDate,
+                excludeBookingId = booking.id
             ).getOrNull() ?: false
             
             // Если есть конфликты, возвращаем ошибку

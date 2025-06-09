@@ -18,7 +18,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -184,7 +186,32 @@ class BookingCalendarViewModel @Inject constructor(
                 }
             }
             is BookingCalendarEvent.SwitchToEditMode -> {
-                _state.update { it.copy(isInfoMode = false) }
+                _state.update { currentState ->
+                    // Получаем текущее бронирование для редактирования
+                    val bookingToEdit = currentState.selectedBooking
+                    
+                    if (bookingToEdit != null) {
+                        // Конвертируем даты из timestamp в LocalDate
+                        val startDate = Instant.ofEpochMilli(bookingToEdit.startDate)
+                            .atZone(ZoneId.systemDefault()).toLocalDate()
+                        val endDate = Instant.ofEpochMilli(bookingToEdit.endDate)
+                            .atZone(ZoneId.systemDefault()).toLocalDate()
+                        
+                        // Находим клиента
+                        val client = currentState.clients.find { it.id == bookingToEdit.clientId }
+                        
+                        // Обновляем состояние с информацией из выбранного бронирования
+                        currentState.copy(
+                            isInfoMode = false,
+                            selectedStartDate = startDate,
+                            selectedEndDate = endDate,
+                            selectedClient = client
+                        )
+                    } else {
+                        // Если бронирование не выбрано, просто меняем режим
+                        currentState.copy(isInfoMode = false)
+                    }
+                }
             }
             is BookingCalendarEvent.LoadAllBookings -> {
                 loadAllBookings()
@@ -642,6 +669,10 @@ class BookingCalendarViewModel @Inject constructor(
                             selectedEndDate = null
                         ) 
                     }
+                    
+                    // Перезагружаем список бронирований, чтобы обновить календарь
+                    loadAllBookings()
+                    
                 }.onFailure { error ->
                     _state.update { 
                         it.copy(
@@ -696,6 +727,10 @@ class BookingCalendarViewModel @Inject constructor(
                             selectedBooking = null
                         ) 
                     }
+                    
+                    // Перезагружаем список бронирований, чтобы обновить календарь
+                    loadAllBookings()
+                    
                 }.onFailure { error ->
                     _state.update { 
                         it.copy(
@@ -730,6 +765,9 @@ class BookingCalendarViewModel @Inject constructor(
                             selectedBooking = null
                         ) 
                     }
+                    
+                    // Перезагружаем список бронирований, чтобы обновить календарь
+                    loadAllBookings()
                 }.onFailure { error ->
                     _state.update { 
                         it.copy(
@@ -764,6 +802,10 @@ class BookingCalendarViewModel @Inject constructor(
                             selectedBooking = null
                         ) 
                     }
+                    
+                    // Перезагружаем список бронирований, чтобы обновить календарь
+                    loadAllBookings()
+                    
                 }.onFailure { error ->
                     _state.update { 
                         it.copy(

@@ -255,7 +255,7 @@ fun BookingCalendarScreen(
                         onCancel = {
                             viewModel.onEvent(BookingCalendarEvent.HideBookingDialog)
                         },
-                        onSave = { amount ->
+                        onSave = { amount, guestsCount, notes ->
                             val booking = state.selectedBooking
                             if (booking != null) {
                                 // Редактирование существующего бронирования
@@ -265,7 +265,9 @@ fun BookingCalendarScreen(
                                         clientId = state.selectedClient?.id,
                                         startDate = state.selectedStartDate ?: LocalDate.now(),
                                         endDate = state.selectedEndDate ?: LocalDate.now(),
-                                        amount = amount
+                                        amount = amount,
+                                        guestsCount = guestsCount,
+                                        notes = notes
                                     )
                                 )
                             } else {
@@ -276,11 +278,17 @@ fun BookingCalendarScreen(
                                         clientId = state.selectedClient?.id,
                                         startDate = state.selectedStartDate ?: LocalDate.now(),
                                         endDate = state.selectedEndDate ?: LocalDate.now(),
-                                        amount = amount
+                                        amount = amount,
+                                        guestsCount = guestsCount,
+                                        notes = notes
                                     )
                                 )
                             }
-                        }
+                        },
+                        initialAmount = state.selectedBooking?.totalAmount,
+                        initialGuestsCount = state.selectedBooking?.guestsCount ?: 1,
+                        initialNotes = state.selectedBooking?.notes,
+                        isEditing = state.selectedBooking != null && !state.isInfoMode
                     )
                 }
             }

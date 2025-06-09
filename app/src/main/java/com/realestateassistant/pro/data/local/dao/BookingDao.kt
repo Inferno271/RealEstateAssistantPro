@@ -85,6 +85,14 @@ interface BookingDao {
     suspend fun countBookingConflicts(propertyId: String, fromDate: Long, toDate: Long): Int
     
     /**
+     * Проверяет, есть ли конфликты бронирований для указанного объекта в указанном диапазоне дат,
+     * исключая указанное бронирование по id (для редактирования)
+     * Возвращает количество конфликтующих бронирований
+     */
+    @Query("SELECT COUNT(*) FROM bookings WHERE propertyId = :propertyId AND id != :excludeBookingId AND status != 'CANCELLED' AND status != 'EXPIRED' AND ((startDate BETWEEN :fromDate AND :toDate) OR (endDate BETWEEN :fromDate AND :toDate) OR (:fromDate BETWEEN startDate AND endDate))")
+    suspend fun countBookingConflictsExcludingBooking(propertyId: String, fromDate: Long, toDate: Long, excludeBookingId: String): Int
+    
+    /**
      * Обновляет статус бронирования
      */
     @Query("UPDATE bookings SET status = :status, updatedAt = :updatedAt WHERE id = :bookingId")

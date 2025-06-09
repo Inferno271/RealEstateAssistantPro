@@ -117,12 +117,16 @@ fun BookingDialog(
     onClientSelect: (Client) -> Unit,
     onDateChange: (LocalDate, LocalDate) -> Unit,
     onCancel: () -> Unit,
-    onSave: (Double) -> Unit
+    onSave: (Double, Int, String?) -> Unit,
+    initialAmount: Double? = null,
+    initialGuestsCount: Int = 1,
+    initialNotes: String? = null,
+    isEditing: Boolean = false
 ) {
     // Состояния для формы
-    var amount by remember { mutableStateOf("") }
-    var guestsCount by remember { mutableStateOf("1") }
-    var notes by remember { mutableStateOf("") }
+    var amount by remember { mutableStateOf(initialAmount?.toString() ?: "") }
+    var guestsCount by remember { mutableStateOf(initialGuestsCount.toString()) }
+    var notes by remember { mutableStateOf(initialNotes ?: "") }
     
     // Локальные состояния для дат, чтобы не вызывать колбэк при каждом изменении
     var localStartDate by remember { mutableStateOf(startDate ?: LocalDate.now()) }
@@ -248,10 +252,16 @@ fun BookingDialog(
                     
                     Button(
                         onClick = {
-                            val amountValue = amount.toDoubleOrNull() ?: 0.0
-                            onSave(amountValue)
+                            try {
+                                val amountValue = if (amount.isBlank()) initialAmount ?: 0.0 else amount.toDouble()
+                                val guestsCountValue = if (guestsCount.isBlank()) 1 else guestsCount.toInt()
+                                onSave(amountValue, guestsCountValue, notes)
+                            } catch (e: NumberFormatException) {
+                                // Обработка ошибки преобразования
+                                onSave(initialAmount ?: 0.0, 1, "")
+                            }
                         },
-                        enabled = selectedClient != null && amount.isNotBlank() && amount.toDoubleOrNull() != null,
+                        enabled = selectedClient != null && (amount.isNotBlank() || initialAmount != null),
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(

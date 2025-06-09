@@ -7,9 +7,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import com.realestateassistant.pro.navigation.routes.AppRoutes
 
 /**
@@ -47,24 +45,11 @@ object NavigationItems {
             title = "Встречи",
             icon = Icons.Default.DateRange,
             contentDescription = "Список встреч"
-        ),
-        NavigationItem(
-            route = AppRoutes.NOTIFICATIONS,
-            title = "Уведомления",
-            icon = Icons.Default.Notifications,
-            contentDescription = "Уведомления",
-            badgeCount = 5 // Пример отображения количества уведомлений
         )
     )
     
     // Дополнительные пункты меню (нижняя часть drawer)
     val otherItems = listOf(
-        NavigationItem(
-            route = AppRoutes.SETTINGS,
-            title = "Настройки",
-            icon = Icons.Default.Settings,
-            contentDescription = "Настройки приложения"
-        ),
         NavigationItem(
             route = AppRoutes.HELP,
             title = "Помощь",

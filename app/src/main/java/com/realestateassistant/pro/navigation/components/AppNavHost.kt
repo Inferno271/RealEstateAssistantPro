@@ -23,7 +23,6 @@ import com.realestateassistant.pro.presentation.screens.booking.BookingCalendarS
 import com.realestateassistant.pro.presentation.screens.dashboard.DashboardScreen
 import com.realestateassistant.pro.presentation.screens.help.HelpScreen
 import com.realestateassistant.pro.presentation.screens.recommendation.PropertyRecommendationsScreen
-import com.realestateassistant.pro.presentation.screens.settings.SettingsScreen
 import com.realestateassistant.pro.presentation.screens.booking.BookingListScreen
 
 /**
@@ -284,20 +283,7 @@ fun AppNavHost(
             )
         }
         
-        // Экраны для работы с уведомлениями
-        composable(route = AppRoutes.NOTIFICATIONS) {
-            PlaceholderScreen("Уведомления")
-        }
-        
         // Дополнительные экраны
-        composable(route = AppRoutes.SETTINGS) {
-            SettingsScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-        
         composable(route = AppRoutes.HELP) {
             HelpScreen(
                 onNavigateBack = {

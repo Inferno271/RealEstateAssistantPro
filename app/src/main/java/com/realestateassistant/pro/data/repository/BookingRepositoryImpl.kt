@@ -102,6 +102,16 @@ class BookingRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun hasBookingConflictsExcludingBooking(propertyId: String, fromDate: Long, toDate: Long, excludeBookingId: String): Result<Boolean> {
+        return try {
+            val conflictsCount = bookingDao.countBookingConflictsExcludingBooking(propertyId, fromDate, toDate, excludeBookingId)
+            Result.success(conflictsCount > 0)
+        } catch (e: Exception) {
+            Timber.e(e, "Ошибка при проверке конфликтов бронирования (с исключением)")
+            Result.failure(e)
+        }
+    }
+
     override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<Unit> {
         return try {
             bookingDao.updateBookingStatus(bookingId, status.name)
