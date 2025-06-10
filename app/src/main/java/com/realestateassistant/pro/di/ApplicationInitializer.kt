@@ -59,8 +59,8 @@ class ApplicationInitializer : Initializer<Unit> {
                 // Проверяем соединение с базой данных
                 try {
                     // Простой запрос для проверки соединения
-                    val userCount = db.userDao().getUserCount()
-                    Log.d(TAG, "Проверка соединения с базой данных: пользователей в базе: $userCount")
+                    val propertyCount = db.propertyDao().getPropertyCount()
+                    Log.d(TAG, "Проверка соединения с базой данных: объектов в базе: $propertyCount")
                 } catch (e: Exception) {
                     Log.e(TAG, "Ошибка при проверке соединения с базой данных", e)
                 }

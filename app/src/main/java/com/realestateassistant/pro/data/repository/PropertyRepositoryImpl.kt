@@ -1,8 +1,11 @@
 package com.realestateassistant.pro.data.repository
 
+import com.realestateassistant.pro.data.local.dao.BookingDao
 import com.realestateassistant.pro.data.local.dao.PropertyDao
 import com.realestateassistant.pro.data.mapper.PropertyMapper
+import com.realestateassistant.pro.domain.model.BookingStatus
 import com.realestateassistant.pro.domain.model.Property
+import com.realestateassistant.pro.domain.model.PropertyStatus
 import com.realestateassistant.pro.domain.repository.PropertyRepository
 import com.realestateassistant.pro.network.YandexGeocoderService
 import kotlinx.coroutines.Dispatchers
@@ -15,13 +18,15 @@ import android.util.Log
 import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.flow.firstOrNull
 
 /**
  * Реализация репозитория для работы с объектами недвижимости
  */
 class PropertyRepositoryImpl @Inject constructor(
     private val propertyDao: PropertyDao,
-    private val propertyMapper: PropertyMapper
+    private val propertyMapper: PropertyMapper,
+    private val bookingDao: BookingDao
 ) : PropertyRepository {
 
     private val TAG = "PropertyRepositoryImpl"
@@ -229,5 +234,131 @@ class PropertyRepositoryImpl @Inject constructor(
         Log.d(TAG, "Запуск синхронизации объектов недвижимости")
         // Метод оставлен для совместимости с интерфейсом, но логика с Firebase удалена
         // При необходимости можно добавить здесь синхронизацию с другими источниками данных
+    }
+    
+    /**
+     * Наблюдает за объектами недвижимости с определенным статусом
+     */
+    override fun observePropertiesByStatus(status: PropertyStatus): Flow<List<Property>> {
+        return propertyDao.getPropertiesByStatus(status.name)
+            .map { entities -> entities.map { propertyMapper.mapToDomain(it) } }
+            .catch { e -> 
+                Log.e(TAG, "Ошибка при наблюдении за объектами недвижимости со статусом ${status.name}", e)
+                throw e
+            }
+            .flowOn(Dispatchers.IO)
+    }
+    
+    /**
+     * Обновляет статус объекта недвижимости
+     */
+    override suspend fun updatePropertyStatus(propertyId: String, status: PropertyStatus): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Обновление статуса объекта недвижимости с ID: $propertyId на ${status.name}")
+            propertyDao.updatePropertyStatus(propertyId, status.name)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Ошибка при обновлении статуса объекта недвижимости", e)
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * Наблюдает за объектами недвижимости с активными бронированиями
+     */
+    override fun observePropertiesWithActiveBookings(): Flow<List<Property>> {
+        return propertyDao.getPropertiesWithActiveBookings()
+            .map { entities -> entities.map { propertyMapper.mapToDomain(it) } }
+            .catch { e -> 
+                Log.e(TAG, "Ошибка при наблюдении за объектами недвижимости с активными бронированиями", e)
+                throw e
+            }
+            .flowOn(Dispatchers.IO)
+    }
+    
+    /**
+     * Наблюдает за объектами недвижимости с предстоящими бронированиями
+     */
+    override fun observePropertiesWithUpcomingBookings(): Flow<List<Property>> {
+        return propertyDao.getPropertiesWithUpcomingBookings()
+            .map { entities -> entities.map { propertyMapper.mapToDomain(it) } }
+            .catch { e -> 
+                Log.e(TAG, "Ошибка при наблюдении за объектами недвижимости с предстоящими бронированиями", e)
+                throw e
+            }
+            .flowOn(Dispatchers.IO)
+    }
+    
+    /**
+     * Получает список объектов недвижимости, доступных для бронирования в указанном диапазоне дат
+     */
+    override fun getAvailableProperties(startDate: Long, endDate: Long): Flow<List<Property>> {
+        return propertyDao.getAvailableProperties(startDate, endDate)
+            .map { entities -> entities.map { propertyMapper.mapToDomain(it) } }
+            .catch { e -> 
+                Log.e(TAG, "Ошибка при получении доступных объектов недвижимости", e)
+                throw e
+            }
+            .flowOn(Dispatchers.IO)
+    }
+    
+    /**
+     * Обновляет статусы всех объектов недвижимости на основе текущих бронирований
+     */
+    override suspend fun updateAllPropertyStatuses(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Обновление статусов всех объектов недвижимости")
+            
+            // Получаем все объекты недвижимости
+            val allProperties = propertyDao.getAllProperties().firstOrNull() ?: return@withContext Result.success(Unit)
+            
+            // Получаем все активные бронирования (на текущую дату)
+            val currentDate = System.currentTimeMillis()
+            val activeBookings = bookingDao.getBookingsInDateRange(currentDate, currentDate).firstOrNull() ?: emptyList()
+            
+            // Получаем предстоящие бронирования (забронировано, но еще не наступила дата)
+            val futureBookings = bookingDao.getUpcomingBookings(currentDate).firstOrNull() ?: emptyList()
+            
+            // Получаем ID объектов с активными бронированиями
+            val activePropertyIds = activeBookings
+                .filter { it.status == BookingStatus.ACTIVE.name }
+                .map { it.propertyId }
+                .toSet()
+                
+            // Получаем ID объектов с подтвержденными бронированиями
+            val reservedPropertyIds = activeBookings
+                .filter { it.status == BookingStatus.CONFIRMED.name }
+                .map { it.propertyId }
+                .toSet() +
+                futureBookings
+                .filter { it.status == BookingStatus.CONFIRMED.name || it.status == BookingStatus.PENDING.name }
+                .map { it.propertyId }
+                .toSet()
+            
+            // Обновляем статусы всех объектов
+            allProperties.forEach { property ->
+                val newStatus = when {
+                    // Если объект занят сейчас (кто-то заселился)
+                    property.id in activePropertyIds -> PropertyStatus.OCCUPIED.name
+                    
+                    // Если объект зарезервирован (бронь подтверждена, но еще не заехали)
+                    property.id in reservedPropertyIds -> PropertyStatus.RESERVED.name
+                    
+                    // Иначе объект доступен
+                    else -> PropertyStatus.AVAILABLE.name
+                }
+                
+                // Обновляем статус только если он изменился
+                if (property.status != newStatus) {
+                    propertyDao.updatePropertyStatus(property.id, newStatus)
+                }
+            }
+            
+            Log.d(TAG, "Статусы объектов недвижимости успешно обновлены")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Ошибка при обновлении статусов объектов недвижимости", e)
+            Result.failure(e)
+        }
     }
 } 

@@ -78,7 +78,19 @@ fun BookingCalendarScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Календарь бронирований") },
+                title = { 
+                    Column {
+                        Text("Календарь бронирований") 
+                        // Отображаем адрес объекта, если он загружен
+                        val property = state.selectedProperty
+                        if (property != null) {
+                            Text(
+                                text = property.address,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")

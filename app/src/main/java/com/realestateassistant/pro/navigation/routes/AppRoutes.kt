@@ -25,6 +25,7 @@ object AppRoutes {
     // Дополнительные экраны
     const val HELP = "help"
     const val ABOUT = "about"
+    const val SETTINGS = "settings"
     
     // Функции для создания маршрутов с параметрами для объектов недвижимости
     fun propertyDetail(propertyId: String) = "property_detail/$propertyId"

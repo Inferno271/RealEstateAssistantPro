@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import com.realestateassistant.pro.navigation.routes.AppRoutes
 
 /**
@@ -55,6 +56,12 @@ object NavigationItems {
             title = "Помощь",
             icon = Icons.Default.Help,
             contentDescription = "Помощь и инструкции"
+        ),
+        NavigationItem(
+            route = AppRoutes.SETTINGS,
+            title = "Настройки",
+            icon = Icons.Default.Settings,
+            contentDescription = "Настройки приложения"
         ),
         NavigationItem(
             route = AppRoutes.ABOUT,

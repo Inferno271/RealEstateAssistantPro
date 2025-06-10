@@ -3,6 +3,8 @@ package com.realestateassistant.pro.presentation.viewmodel
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -75,22 +77,109 @@ class PdfExportViewModel @Inject constructor(
     }
     
     /**
-     * Открывает сгенерированный PDF файл
+     * Открывает сгенерированный PDF файл, используя наиболее совместимый подход
      * 
      * @param context Контекст для запуска Intent
      * @param uri URI файла PDF
      */
     fun openPdf(context: Context, uri: Uri) {
+        Log.d("PdfExportViewModel", "Пытаемся открыть PDF: $uri, content type: ${context.contentResolver.getType(uri)}")
+        
+        // Попробуем несколько подходов последовательно
+        if (!tryOpenWithExplicitChooser(context, uri) && 
+            !tryOpenWithGenericIntent(context, uri) &&
+            !tryOpenWithSendAction(context, uri)) {
+            
+            // Если все методы не сработали, сообщаем пользователю
+            Toast.makeText(
+                context,
+                "На устройстве не найдено приложение для просмотра PDF. Установите PDF-ридер.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+    
+    /**
+     * Пытается открыть PDF с явным выбором приложения
+     */
+    private fun tryOpenWithExplicitChooser(context: Context, uri: Uri): Boolean {
+        return try {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/pdf")
-            flags = Intent.FLAG_ACTIVITY_NO_HISTORY or 
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            
+            val chooserIntent = Intent.createChooser(intent, "Выберите приложение для просмотра PDF")
+            
+            // Если нет приложений, которые могут обработать этот intent
+            if (intent.resolveActivity(context.packageManager) == null) {
+                Log.d("PdfExportViewModel", "Не найдено приложений для обработки PDF через ACTION_VIEW + MIME")
+                return false
+            }
+            
+            context.startActivity(chooserIntent)
+            Log.d("PdfExportViewModel", "Запущен выбор приложения через ACTION_VIEW + MIME")
+            true
+        } catch (e: Exception) {
+            Log.e("PdfExportViewModel", "Ошибка при открытии PDF через ACTION_VIEW + MIME: ${e.message}", e)
+            false
+        }
+    }
+    
+    /**
+     * Пытается открыть PDF с общим интентом без указания MIME-типа
+     */
+    private fun tryOpenWithGenericIntent(context: Context, uri: Uri): Boolean {
+        return try {
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                data = uri
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         
-        val chooserIntent = Intent.createChooser(intent, "Открыть PDF")
-        
-        if (intent.resolveActivity(context.packageManager) != null) {
-            ContextCompat.startActivity(context, chooserIntent, null)
+            val chooserIntent = Intent.createChooser(intent, "Выберите приложение")
+            
+            // Если нет приложений, которые могут обработать этот intent
+            if (intent.resolveActivity(context.packageManager) == null) {
+                Log.d("PdfExportViewModel", "Не найдено приложений для обработки PDF через ACTION_VIEW без MIME")
+                return false
+            }
+            
+            context.startActivity(chooserIntent)
+            Log.d("PdfExportViewModel", "Запущен выбор приложения через ACTION_VIEW без MIME")
+            true
+        } catch (e: Exception) {
+            Log.e("PdfExportViewModel", "Ошибка при открытии PDF через ACTION_VIEW без MIME: ${e.message}", e)
+            false
+        }
+    }
+    
+    /**
+     * Пытается поделиться PDF файлом, что может открыть больше опций для пользователя
+     */
+    private fun tryOpenWithSendAction(context: Context, uri: Uri): Boolean {
+        return try {
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            
+            val chooserIntent = Intent.createChooser(intent, "Открыть PDF с помощью")
+            
+            // Если нет приложений, которые могут обработать этот intent
+            if (intent.resolveActivity(context.packageManager) == null) {
+                Log.d("PdfExportViewModel", "Не найдено приложений для обработки PDF через ACTION_SEND")
+                return false
+            }
+            
+            context.startActivity(chooserIntent)
+            Log.d("PdfExportViewModel", "Запущен выбор приложения через ACTION_SEND")
+            true
+        } catch (e: Exception) {
+            Log.e("PdfExportViewModel", "Ошибка при открытии PDF через ACTION_SEND: ${e.message}", e)
+            false
         }
     }
     

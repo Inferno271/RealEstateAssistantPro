@@ -17,13 +17,11 @@ import com.realestateassistant.pro.data.local.dao.AppointmentDao
 import com.realestateassistant.pro.data.local.dao.BookingDao
 import com.realestateassistant.pro.data.local.dao.ClientDao
 import com.realestateassistant.pro.data.local.dao.PropertyDao
-import com.realestateassistant.pro.data.local.dao.UserDao
 import com.realestateassistant.pro.data.local.entity.AppointmentConverters
 import com.realestateassistant.pro.data.local.entity.AppointmentEntity
 import com.realestateassistant.pro.data.local.entity.BookingEntity
 import com.realestateassistant.pro.data.local.entity.ClientEntity
 import com.realestateassistant.pro.data.local.entity.PropertyEntity
-import com.realestateassistant.pro.data.local.entity.UserEntity
 import com.realestateassistant.pro.data.local.security.DatabaseEncryption
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -48,10 +46,9 @@ import kotlinx.coroutines.SupervisorJob
         PropertyEntity::class,
         ClientEntity::class,
         AppointmentEntity::class,
-        UserEntity::class,
         BookingEntity::class
     ],
-    version = 6,
+    version = 12,
     exportSchema = true
 )
 @TypeConverters(
@@ -79,10 +76,7 @@ abstract class AppDatabase : RoomDatabase() {
      */
     abstract fun appointmentDao(): AppointmentDao
     
-    /**
-     * Получение DAO для пользователей
-     */
-    abstract fun userDao(): UserDao
+
     
     /**
      * Получение DAO для бронирований
@@ -293,6 +287,92 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
         
+        // Миграция с версии 6 на версию 7 (удаление таблицы users и поля agentId из appointments)
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Удаляем таблицу users
+                database.execSQL("DROP TABLE IF EXISTS users")
+                
+                // Создаем временную таблицу appointments без поля agentId
+                database.execSQL(
+                    "CREATE TABLE appointments_new (" +
+                    "id TEXT NOT NULL PRIMARY KEY, " +
+                    "propertyId TEXT NOT NULL, " +
+                    "clientId TEXT NOT NULL, " +
+                    "title TEXT NOT NULL, " +
+                    "description TEXT, " +
+                    "startTime INTEGER NOT NULL, " +
+                    "endTime INTEGER NOT NULL, " +
+                    "status TEXT NOT NULL, " +
+                    "type TEXT NOT NULL, " +
+                    "location TEXT, " +
+                    "notes TEXT, " +
+                    "reminderTime INTEGER, " +
+                    "isAllDay INTEGER NOT NULL, " +
+                    "isRecurring INTEGER NOT NULL, " +
+                    "recurrenceRule TEXT, " +
+                    "color TEXT NOT NULL, " +
+                    "attachments TEXT NOT NULL, " +
+                    "participants TEXT NOT NULL, " +
+                    "clientName TEXT, " +
+                    "propertyAddress TEXT, " +
+                    "createdAt INTEGER NOT NULL, " +
+                    "updatedAt INTEGER NOT NULL, " +
+                    "isSynced INTEGER NOT NULL DEFAULT 0)"
+                )
+                
+                // Копируем данные из старой таблицы в новую, игнорируя поле agentId
+                database.execSQL(
+                    "INSERT INTO appointments_new SELECT " +
+                    "id, propertyId, clientId, title, description, startTime, endTime, status, type, " +
+                    "location, notes, reminderTime, isAllDay, isRecurring, recurrenceRule, color, " +
+                    "attachments, participants, clientName, propertyAddress, createdAt, updatedAt, isSynced " +
+                    "FROM appointments"
+                )
+                
+                // Удаляем старую таблицу
+                database.execSQL("DROP TABLE appointments")
+                
+                // Переименовываем новую таблицу
+                database.execSQL("ALTER TABLE appointments_new RENAME TO appointments")
+            }
+        }
+        
+        // Миграция с версии 7 на версию 8 (пустая миграция)
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Пустая миграция для синхронизации версии
+            }
+        }
+        
+        // Миграция с версии 8 на версию 9 (пустая миграция)
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Пустая миграция для синхронизации версии
+            }
+        }
+        
+        // Миграция с версии 9 на версию 10 (пустая миграция)
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Пустая миграция для синхронизации версии
+            }
+        }
+        
+        // Миграция с версии 10 на версию 11 (пустая миграция)
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Пустая миграция для синхронизации версии
+            }
+        }
+        
+        // Миграция с версии 11 на версию 12 (пустая миграция)
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Пустая миграция для синхронизации версии
+            }
+        }
+        
         // Синглтон для базы данных
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -358,7 +438,7 @@ abstract class AppDatabase : RoomDatabase() {
                         DATABASE_NAME
                     )
                     .openHelperFactory(factory)
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                     .build()
                     
                     // Проверка базы данных на целостность (асинхронно)
@@ -451,7 +531,7 @@ abstract class AppDatabase : RoomDatabase() {
                     DATABASE_NAME
                 )
                 .openHelperFactory(factory)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                 .build()
                 
                 // Проверка базы данных на целостность

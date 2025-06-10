@@ -3,6 +3,7 @@ package com.realestateassistant.pro.data.mapper
 import com.realestateassistant.pro.data.local.entity.PropertyEntity
 import com.realestateassistant.pro.data.local.entity.SeasonalPriceEntity
 import com.realestateassistant.pro.domain.model.Property
+import com.realestateassistant.pro.domain.model.PropertyStatus
 import com.realestateassistant.pro.domain.model.SeasonalPrice
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -102,6 +103,11 @@ class PropertyMapper @Inject constructor() {
             additionalComments = entity.additionalComments,
             photos = entity.photos,
             documents = entity.documents,
+            status = try {
+                PropertyStatus.valueOf(entity.status)
+            } catch (e: Exception) {
+                PropertyStatus.AVAILABLE
+            },
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt
         )
@@ -197,6 +203,7 @@ class PropertyMapper @Inject constructor() {
             additionalComments = domain.additionalComments,
             photos = domain.photos,
             documents = domain.documents,
+            status = domain.status.name,
             createdAt = domain.createdAt,
             updatedAt = domain.updatedAt,
             isSynced = false

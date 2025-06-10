@@ -20,7 +20,6 @@ data class AppointmentFormState(
     val id: String = "",
     val propertyId: String = "",
     val clientId: String = "",
-    val agentId: String = "",
     val title: String = "",
     val description: String = "",
     
@@ -149,7 +148,6 @@ data class AppointmentFormState(
             clientName = clientName,
             propertyId = propertyId,
             propertyAddress = propertyAddress,
-            agentId = agentId,
             location = location,
             notes = notes,
             type = type,
@@ -172,7 +170,6 @@ data class AppointmentFormState(
                 id = appointment.id,
                 propertyId = appointment.propertyId,
                 clientId = appointment.clientId,
-                agentId = appointment.agentId,
                 title = appointment.title,
                 description = appointment.description ?: "",
                 startDate = appointment.startDate,

@@ -7,7 +7,6 @@ import com.realestateassistant.pro.data.local.dao.AppointmentDao
 import com.realestateassistant.pro.data.local.dao.BookingDao
 import com.realestateassistant.pro.data.local.dao.ClientDao
 import com.realestateassistant.pro.data.local.dao.PropertyDao
-import com.realestateassistant.pro.data.local.dao.UserDao
 import com.realestateassistant.pro.data.local.security.DatabaseEncryption
 import dagger.Module
 import dagger.Provides
@@ -196,14 +195,7 @@ object DatabaseModule {
         return database.appointmentDao()
     }
     
-    /**
-     * Предоставляет DAO для работы с пользователями
-     */
-    @Provides
-    @Singleton
-    fun provideUserDao(database: AppDatabase): UserDao {
-        return database.userDao()
-    }
+
     
     /**
      * Предоставляет DAO для работы с бронированиями

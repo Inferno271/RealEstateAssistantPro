@@ -1,9 +1,11 @@
 package com.realestateassistant.pro.di
 
+import com.realestateassistant.pro.data.local.dao.BookingDao
 import com.realestateassistant.pro.data.repository.BookingRepositoryImpl
 import com.realestateassistant.pro.domain.repository.BookingRepository
-import dagger.Binds
+import com.realestateassistant.pro.domain.usecase.property.UpdatePropertyStatusesUseCase
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
@@ -13,14 +15,17 @@ import javax.inject.Singleton
  */
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class BookingModule {
+object BookingModule {
     
     /**
-     * Связывает интерфейс BookingRepository с его реализацией BookingRepositoryImpl
+     * Предоставляет репозиторий для работы с бронированиями
      */
-    @Binds
+    @Provides
     @Singleton
-    abstract fun bindBookingRepository(
-        bookingRepositoryImpl: BookingRepositoryImpl
-    ): BookingRepository
+    fun provideBookingRepository(
+        bookingDao: BookingDao,
+        updatePropertyStatusesUseCase: UpdatePropertyStatusesUseCase
+    ): BookingRepository {
+        return BookingRepositoryImpl(bookingDao, updatePropertyStatusesUseCase)
+    }
 } 

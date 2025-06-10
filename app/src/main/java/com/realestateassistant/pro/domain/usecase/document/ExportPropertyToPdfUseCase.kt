@@ -23,6 +23,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
+import android.util.Log
+import android.media.MediaScannerConnection
 
 /**
  * UseCase для экспорта информации об объекте недвижимости в PDF файл.
@@ -55,14 +57,19 @@ class ExportPropertyToPdfUseCase @Inject constructor(
             val hasPermission = checkStoragePermission()
             
             val fileName = generateFileName(property)
+            Log.d("ExportPropertyToPdfUseCase", "Генерируем PDF с именем: $fileName")
+            
             val pdfFile = createPdfFile(fileName, hasPermission)
                 ?: return@withContext Result.failure(IOException("Не удалось создать файл PDF"))
+            
+            Log.d("ExportPropertyToPdfUseCase", "Файл PDF создан по пути: ${pdfFile.absolutePath}")
             
             // Создаем PDF документ
             document = PdfDocument()
             
             // Загружаем изображения для объекта недвижимости
             val images = loadPropertyImages(property)
+            Log.d("ExportPropertyToPdfUseCase", "Загружено ${images.size} изображений")
             
             // Генерируем содержимое PDF
             // Передаем весь document в сервис для отрисовки содержимого,
@@ -72,18 +79,47 @@ class ExportPropertyToPdfUseCase @Inject constructor(
             // Сохраняем документ в файл
             outputStream = FileOutputStream(pdfFile)
             document.writeTo(outputStream)
+            outputStream.flush()
+            
+            // Убедимся, что файл был успешно создан и доступен
+            if (!pdfFile.exists() || pdfFile.length() == 0L) {
+                Log.e("ExportPropertyToPdfUseCase", "Файл не был создан или пустой: ${pdfFile.absolutePath}")
+                return@withContext Result.failure(IOException("Не удалось создать PDF файл"))
+            }
+            
+            Log.d("ExportPropertyToPdfUseCase", "PDF файл создан успешно, размер: ${pdfFile.length()} байт")
             
             // Получаем URI для созданного файла
-            // Для файлов в публичной директории используем другой метод получения URI
-            val uri = if (pdfFile.absolutePath.contains("Download")) {
-                storageHelper.getUriForPublicFile(pdfFile)
-            } else {
-                storageHelper.getUriForFile(pdfFile)
+            val uri = storageHelper.getUriForPublicFile(pdfFile)
+            if (uri == null) {
+                Log.e("ExportPropertyToPdfUseCase", "Не удалось получить URI для файла: ${pdfFile.absolutePath}")
+                return@withContext Result.failure(IOException("Не удалось получить URI для файла"))
             }
-                ?: return@withContext Result.failure(IOException("Не удалось получить URI для файла"))
             
-            Result.success(uri)
+            // Проверяем доступность URI
+            try {
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val available = inputStream.available()
+                    Log.d("ExportPropertyToPdfUseCase", "URI доступен, можно прочитать $available байт")
+                }
+            } catch (e: Exception) {
+                Log.e("ExportPropertyToPdfUseCase", "Ошибка при проверке доступности URI: ${e.message}", e)
+                // Продолжаем выполнение, возможно, другие приложения все равно смогут открыть файл
+            }
+            
+            // Вызываем MediaScanner для обновления галереи
+            MediaScannerConnection.scanFile(
+                context,
+                arrayOf(pdfFile.absolutePath),
+                arrayOf("application/pdf"),
+                null
+            )
+            
+            Log.d("ExportPropertyToPdfUseCase", "Возвращаем URI: $uri")
+            
+            return@withContext Result.success(uri)
         } catch (e: Exception) {
+            Log.e("ExportPropertyToPdfUseCase", "Ошибка при генерации PDF: ${e.message}", e)
             Result.failure(IOException("Не удалось сгенерировать PDF: ${e.message}", e))
         } finally {
             // Закрываем ресурсы
@@ -92,6 +128,7 @@ class ExportPropertyToPdfUseCase @Inject constructor(
                 document?.close()
             } catch (e: IOException) {
                 // Игнорируем ошибки при закрытии ресурсов
+                Log.w("ExportPropertyToPdfUseCase", "Ошибка при закрытии ресурсов: ${e.message}")
             }
         }
     }
@@ -147,8 +184,12 @@ class ExportPropertyToPdfUseCase @Inject constructor(
                     exportDir.mkdirs()
                 }
                 
-                // Создаем файл с помощью StorageHelper
-                return storageHelper.createFile(exportDir, fileName)
+                if (exportDir.exists() && exportDir.canWrite()) {
+                    // Создаем файл с помощью StorageHelper
+                    return storageHelper.createFile(exportDir, fileName)
+                } else {
+                    Log.w("ExportPropertyToPdfUseCase", "Директория $exportDir недоступна для записи")
+                }
             }
         }
         

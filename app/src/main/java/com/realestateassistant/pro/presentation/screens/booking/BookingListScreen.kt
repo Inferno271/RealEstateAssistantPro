@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BookOnline
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -65,7 +66,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -98,6 +102,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.launch
+import androidx.compose.ui.window.Dialog
 
 // Add extension property for displayName
 val BookingStatus.displayName: String
@@ -322,9 +327,17 @@ fun BookingListScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { 
-                    // При нажатии на кнопку создания, сначала нужно выбрать объект недвижимости
-                    if (propertyState.isNotEmpty()) {
-                        onNavigateToCreateBooking(propertyState.first().id)
+                    // При нажатии на кнопку создания бронирования
+                    val propertyId = selectedPropertyId
+                    if (propertyId != null && propertyId.isNotEmpty()) {
+                        // Если объект уже выбран в фильтре, используем его
+                        onNavigateToCalendar(propertyId)
+                    } else if (propertyState.isNotEmpty()) {
+                        // Если не выбран, но есть объекты, показываем диалог выбора
+                        coroutineScope.launch {
+                            val message = "Пожалуйста, выберите объект недвижимости в фильтре перед созданием бронирования"
+                            snackbarHostState.showSnackbar(message)
+                        }
                     } else {
                         // Если объектов нет, показываем сообщение
                         coroutineScope.launch {
@@ -444,30 +457,16 @@ fun BookingListScreen(
                     )
                 }
                 
-                // Выпадающее меню для выбора объекта недвижимости
-                DropdownMenu(
-                    expanded = showPropertySelector,
-                    onDismissRequest = { showPropertySelector = false }
-                ) {
-                    // Опция "Все объекты"
-                    DropdownMenuItem(
-                        text = { Text("Все объекты") },
-                        onClick = {
-                            selectedPropertyId = null
+                // Диалог выбора объекта недвижимости
+                if (showPropertySelector) {
+                    PropertySelectorDialog(
+                        properties = propertyState,
+                        onDismiss = { showPropertySelector = false },
+                        onPropertySelected = { propertyId ->
+                            selectedPropertyId = propertyId
                             showPropertySelector = false
                         }
                     )
-                    
-                    // Список объектов недвижимости
-                    propertyState.forEach { property ->
-                        DropdownMenuItem(
-                            text = { Text(property.address) },
-                            onClick = {
-                                selectedPropertyId = property.id
-                                showPropertySelector = false
-                            }
-                        )
-                    }
                 }
             }
             
@@ -648,7 +647,11 @@ fun BookingListScreen(
                 selectedBooking = null
             },
             onEdit = {
-                onNavigateToBookingDetails(selectedBooking!!.id)
+                // Вместо перехода на несуществующий экран деталей бронирования
+                // перейдем на экран календаря объекта недвижимости, чтобы там редактировать бронирование
+                onNavigateToCalendar(selectedBooking!!.propertyId)
+                // Сохраним выбранное бронирование в глобальном состоянии
+                bookingViewModel.onEvent(BookingCalendarEvent.SelectBooking(selectedBooking!!))
                 showBookingDialog = false
             },
             onDelete = {
@@ -874,6 +877,211 @@ fun BookingListItem(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Вспомогательные функции
+
+/**
+ * Форматирует строковое представление диапазона дат для бронирования
+ */
+private fun formatDateRange(booking: Booking): String {
+    val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+    val startDate = LocalDate.ofInstant(Instant.ofEpochMilli(booking.startDate), ZoneId.systemDefault())
+    val endDate = LocalDate.ofInstant(Instant.ofEpochMilli(booking.endDate), ZoneId.systemDefault())
+    return "${startDate.format(formatter)} - ${endDate.format(formatter)}"
+}
+
+/**
+ * Диалог выбора объекта недвижимости с функцией поиска
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PropertySelectorDialog(
+    properties: List<Property>,
+    onPropertySelected: (String?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.9f),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                // Заголовок
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Выберите объект недвижимости",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Закрыть"
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Поле поиска для объектов
+                var searchQuery by remember { mutableStateOf("") }
+                
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Поиск по адресу...") },
+                    leadingIcon = { 
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Поиск"
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Очистить"
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Опция "Все объекты"
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable { onPropertySelected(null) },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "Все объекты",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(16.dp),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Фильтруем объекты по поисковому запросу
+                val filteredProperties = remember(searchQuery, properties) {
+                    if (searchQuery.isBlank()) {
+                        properties
+                    } else {
+                        properties.filter { property ->
+                            property.address.contains(searchQuery, ignoreCase = true) ||
+                            (property.description?.contains(searchQuery, ignoreCase = true) ?: false)
+                        }
+                    }
+                }
+                
+                // Список объектов недвижимости
+                if (filteredProperties.isEmpty() && searchQuery.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Объекты недвижимости не найдены",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        items(filteredProperties) { property ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clickable { onPropertySelected(property.id) },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                ) {
+                                    Text(
+                                        text = property.address,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    
+                                    Row {
+                                        val priceText = when {
+                                            property.monthlyRent != null -> "${property.monthlyRent} руб./мес."
+                                            property.dailyPrice != null -> "${property.dailyPrice} руб./день"
+                                            else -> "Цена не указана"
+                                        }
+                                        
+                                        Text(
+                                            text = priceText,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        
+                                        Text(
+                                            text = "${property.area} м²",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        
+                                        Text(
+                                            text = if (property.isStudio) "Студия" else "${property.roomsCount} комн.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }

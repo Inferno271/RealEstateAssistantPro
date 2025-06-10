@@ -63,12 +63,6 @@ interface AppointmentDao {
     fun getAppointmentsForProperty(propertyId: String): Flow<List<AppointmentEntity>>
     
     /**
-     * Получает список встреч для агента
-     */
-    @Query("SELECT * FROM appointments WHERE agentId = :agentId ORDER BY startTime ASC")
-    fun getAppointmentsForAgent(agentId: String): Flow<List<AppointmentEntity>>
-    
-    /**
      * Получает список встреч на определенную дату
      */
     @Query("SELECT * FROM appointments WHERE startTime BETWEEN :startTime AND :endTime ORDER BY startTime ASC")

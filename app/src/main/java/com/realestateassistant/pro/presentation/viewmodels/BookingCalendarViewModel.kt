@@ -7,9 +7,11 @@ import com.realestateassistant.pro.core.result.Result
 import com.realestateassistant.pro.domain.model.Booking
 import com.realestateassistant.pro.domain.model.BookingStatus
 import com.realestateassistant.pro.domain.model.Client
+import com.realestateassistant.pro.domain.model.Property
 import com.realestateassistant.pro.domain.model.PropertyId
 import com.realestateassistant.pro.domain.usecase.ClientUseCases
 import com.realestateassistant.pro.domain.usecase.booking.BookingUseCases
+import com.realestateassistant.pro.domain.usecase.PropertyUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,6 +33,7 @@ import javax.inject.Inject
  */
 data class BookingCalendarState(
     val selectedPropertyId: String? = null,
+    val selectedProperty: Property? = null,
     val bookings: List<Booking> = emptyList(),
     val clients: List<Client> = emptyList(),
     val selectedBooking: Booking? = null,
@@ -100,6 +103,7 @@ sealed class BookingCalendarEvent {
 class BookingCalendarViewModel @Inject constructor(
     private val bookingUseCases: BookingUseCases,
     private val clientUseCases: ClientUseCases,
+    private val propertyUseCases: PropertyUseCases,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     
@@ -254,6 +258,17 @@ class BookingCalendarViewModel @Inject constructor(
             }
             
             try {
+                // Загружаем информацию о выбранном объекте недвижимости
+                val propertyResult = propertyUseCases.getProperty(propertyId)
+                val property = propertyResult.getOrNull()
+                if (property != null) {
+                    _state.update {
+                        it.copy(selectedProperty = property)
+                    }
+                } else {
+                    println("DEBUG: Не удалось загрузить информацию об объекте: $propertyId")
+                }
+                
                 bookingUseCases.observeBookingsByPropertyUseCase(propertyId)
                     .stateIn(
                         scope = viewModelScope,

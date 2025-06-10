@@ -2,15 +2,21 @@
   "formatVersion": 1,
   "database": {
     "version": 12,
-    "identityHash": "44f1ea47dce065e8ae6280ef2845ec06",
+    "identityHash": "25d8d6e881e69a69499bb3f096b294ce",
     "entities": [
       {
         "tableName": "properties",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `contactName` TEXT NOT NULL, `contactPhone` TEXT NOT NULL, `additionalContactInfo` TEXT, `propertyType` TEXT NOT NULL, `address` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `district` TEXT NOT NULL, `nearbyObjects` TEXT NOT NULL, `views` TEXT NOT NULL, `area` REAL NOT NULL, `roomsCount` INTEGER NOT NULL, `isStudio` INTEGER NOT NULL, `layout` TEXT NOT NULL, `floor` INTEGER NOT NULL, `totalFloors` INTEGER NOT NULL, `description` TEXT, `management` TEXT NOT NULL, `levelsCount` INTEGER NOT NULL, `landArea` REAL NOT NULL, `hasGarage` INTEGER NOT NULL, `garageSpaces` INTEGER NOT NULL, `hasBathhouse` INTEGER NOT NULL, `hasPool` INTEGER NOT NULL, `poolType` TEXT NOT NULL, `repairState` TEXT NOT NULL, `bedsCount` INTEGER, `bathroomsCount` INTEGER, `bathroomType` TEXT NOT NULL, `noFurniture` INTEGER NOT NULL, `hasAppliances` INTEGER NOT NULL, `heatingType` TEXT NOT NULL, `balconiesCount` INTEGER NOT NULL, `elevatorsCount` INTEGER, `hasParking` INTEGER NOT NULL, `parkingType` TEXT, `parkingSpaces` INTEGER, `amenities` TEXT NOT NULL, `smokingAllowed` INTEGER NOT NULL, `childrenAllowed` INTEGER NOT NULL, `minChildAge` TEXT, `maxChildrenCount` TEXT, `petsAllowed` INTEGER NOT NULL, `maxPetsCount` TEXT, `allowedPetTypes` TEXT NOT NULL, `monthlyRent` REAL, `winterMonthlyRent` REAL, `summerMonthlyRent` REAL, `hasCompensationContract` INTEGER NOT NULL, `isSelfEmployed` INTEGER NOT NULL, `isPersonalIncomeTax` INTEGER NOT NULL, `isCompanyIncomeTax` INTEGER NOT NULL, `utilitiesIncluded` INTEGER NOT NULL, `utilitiesCost` REAL, `minRentPeriod` TEXT, `maxRentPeriod` INTEGER, `depositCustomAmount` REAL, `securityDeposit` REAL, `additionalExpenses` TEXT, `longTermRules` TEXT, `dailyPrice` REAL, `minStayDays` INTEGER, `maxStayDays` INTEGER, `maxGuests` INTEGER, `checkInTime` TEXT, `checkOutTime` TEXT, `shortTermDeposit` REAL, `shortTermDepositCustomAmount` REAL, `seasonalPrices` TEXT NOT NULL, `weekdayPrice` REAL, `weekendPrice` REAL, `weeklyDiscount` REAL, `monthlyDiscount` REAL, `additionalServices` TEXT, `shortTermRules` TEXT, `cleaningService` INTEGER NOT NULL, `cleaningDetails` TEXT, `hasExtraBed` INTEGER NOT NULL, `extraBedPrice` REAL, `partiesAllowed` INTEGER NOT NULL, `specialOffers` TEXT, `additionalComments` TEXT, `photos` TEXT NOT NULL, `documents` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `status` TEXT NOT NULL, `contactName` TEXT NOT NULL, `contactPhone` TEXT NOT NULL, `additionalContactInfo` TEXT, `propertyType` TEXT NOT NULL, `address` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `district` TEXT NOT NULL, `nearbyObjects` TEXT NOT NULL, `views` TEXT NOT NULL, `area` REAL NOT NULL, `roomsCount` INTEGER NOT NULL, `isStudio` INTEGER NOT NULL, `layout` TEXT NOT NULL, `floor` INTEGER NOT NULL, `totalFloors` INTEGER NOT NULL, `description` TEXT, `management` TEXT NOT NULL, `levelsCount` INTEGER NOT NULL, `landArea` REAL NOT NULL, `hasGarage` INTEGER NOT NULL, `garageSpaces` INTEGER NOT NULL, `hasBathhouse` INTEGER NOT NULL, `hasPool` INTEGER NOT NULL, `poolType` TEXT NOT NULL, `repairState` TEXT NOT NULL, `bedsCount` INTEGER, `bathroomsCount` INTEGER, `bathroomType` TEXT NOT NULL, `noFurniture` INTEGER NOT NULL, `hasAppliances` INTEGER NOT NULL, `heatingType` TEXT NOT NULL, `balconiesCount` INTEGER NOT NULL, `elevatorsCount` INTEGER, `hasParking` INTEGER NOT NULL, `parkingType` TEXT, `parkingSpaces` INTEGER, `amenities` TEXT NOT NULL, `smokingAllowed` INTEGER NOT NULL, `childrenAllowed` INTEGER NOT NULL, `minChildAge` TEXT, `maxChildrenCount` TEXT, `petsAllowed` INTEGER NOT NULL, `maxPetsCount` TEXT, `allowedPetTypes` TEXT NOT NULL, `monthlyRent` REAL, `winterMonthlyRent` REAL, `summerMonthlyRent` REAL, `hasCompensationContract` INTEGER NOT NULL, `isSelfEmployed` INTEGER NOT NULL, `isPersonalIncomeTax` INTEGER NOT NULL, `isCompanyIncomeTax` INTEGER NOT NULL, `utilitiesIncluded` INTEGER NOT NULL, `utilitiesCost` REAL, `minRentPeriod` TEXT, `maxRentPeriod` INTEGER, `depositCustomAmount` REAL, `securityDeposit` REAL, `additionalExpenses` TEXT, `longTermRules` TEXT, `dailyPrice` REAL, `minStayDays` INTEGER, `maxStayDays` INTEGER, `maxGuests` INTEGER, `checkInTime` TEXT, `checkOutTime` TEXT, `shortTermDeposit` REAL, `shortTermDepositCustomAmount` REAL, `seasonalPrices` TEXT NOT NULL, `weekdayPrice` REAL, `weekendPrice` REAL, `weeklyDiscount` REAL, `monthlyDiscount` REAL, `additionalServices` TEXT, `shortTermRules` TEXT, `cleaningService` INTEGER NOT NULL, `cleaningDetails` TEXT, `hasExtraBed` INTEGER NOT NULL, `extraBedPrice` REAL, `partiesAllowed` INTEGER NOT NULL, `specialOffers` TEXT, `additionalComments` TEXT, `photos` TEXT NOT NULL, `documents` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -548,7 +554,7 @@
       },
       {
         "tableName": "clients",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `fullName` TEXT NOT NULL, `phone` TEXT NOT NULL, `rentalType` TEXT NOT NULL, `comment` TEXT NOT NULL, `familyComposition` TEXT, `peopleCount` INTEGER, `childrenCount` INTEGER, `childrenAges` TEXT NOT NULL, `hasPets` INTEGER NOT NULL, `petTypes` TEXT NOT NULL, `petCount` INTEGER, `occupation` TEXT, `isSmokingClient` INTEGER NOT NULL, `preferredDistrict` TEXT, `preferredAddress` TEXT, `additionalComments` TEXT, `urgencyLevel` TEXT, `budgetFlexibility` INTEGER NOT NULL, `maxBudgetIncrease` REAL, `requirementFlexibility` TEXT NOT NULL, `priorityCriteria` TEXT NOT NULL, `preferredAmenities` TEXT NOT NULL, `preferredViews` TEXT NOT NULL, `preferredNearbyObjects` TEXT NOT NULL, `preferredRepairState` TEXT, `preferredFloorMin` INTEGER, `preferredFloorMax` INTEGER, `needsElevator` INTEGER NOT NULL, `preferredBalconiesCount` INTEGER, `preferredBathroomsCount` INTEGER, `preferredBathroomType` TEXT, `needsFurniture` INTEGER NOT NULL, `needsAppliances` INTEGER NOT NULL, `preferredHeatingType` TEXT, `needsParking` INTEGER NOT NULL, `preferredParkingType` TEXT, `needsYard` INTEGER NOT NULL, `preferredYardArea` REAL, `needsGarage` INTEGER NOT NULL, `preferredGarageSpaces` INTEGER, `needsBathhouse` INTEGER NOT NULL, `needsPool` INTEGER NOT NULL, `needsOfficialAgreement` INTEGER NOT NULL, `preferredTaxOption` TEXT, `longTermBudgetMin` REAL, `longTermBudgetMax` REAL, `desiredPropertyType` TEXT, `desiredRoomsCount` INTEGER, `desiredArea` REAL, `additionalRequirements` TEXT, `legalPreferences` TEXT, `moveInDeadline` INTEGER, `shortTermBudgetMin` REAL, `shortTermBudgetMax` REAL, `shortTermCheckInDate` INTEGER, `shortTermCheckOutDate` INTEGER, `hasAdditionalGuests` INTEGER NOT NULL, `shortTermGuests` INTEGER, `dailyBudget` REAL, `preferredShortTermDistrict` TEXT, `checkInOutConditions` TEXT, `additionalServices` TEXT, `additionalShortTermRequirements` TEXT, `minRooms` INTEGER, `maxRooms` INTEGER, `minArea` REAL, `maxArea` REAL, `preferredLayout` TEXT, `minBudget` INTEGER, `maxBudget` INTEGER, `housingNotes` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `fullName` TEXT NOT NULL, `phone` TEXT NOT NULL, `rentalType` TEXT NOT NULL, `comment` TEXT NOT NULL, `familyComposition` TEXT, `peopleCount` INTEGER, `childrenCount` INTEGER, `childrenAges` TEXT NOT NULL, `hasPets` INTEGER NOT NULL, `petTypes` TEXT NOT NULL, `petCount` INTEGER, `occupation` TEXT, `isSmokingClient` INTEGER NOT NULL, `preferredDistrict` TEXT, `preferredAddress` TEXT, `additionalComments` TEXT, `urgencyLevel` TEXT, `budgetFlexibility` INTEGER NOT NULL, `maxBudgetIncrease` REAL, `requirementFlexibility` TEXT NOT NULL, `priorityCriteria` TEXT NOT NULL, `preferredAmenities` TEXT NOT NULL, `preferredViews` TEXT NOT NULL, `preferredNearbyObjects` TEXT NOT NULL, `preferredRepairState` TEXT, `preferredFloorMin` INTEGER, `preferredFloorMax` INTEGER, `needsElevator` INTEGER NOT NULL, `preferredBalconiesCount` INTEGER, `preferredBathroomsCount` INTEGER, `preferredBathroomType` TEXT, `needsFurniture` INTEGER NOT NULL, `needsAppliances` INTEGER NOT NULL, `preferredHeatingType` TEXT, `needsParking` INTEGER NOT NULL, `preferredParkingType` TEXT, `needsYard` INTEGER NOT NULL, `preferredYardArea` REAL, `needsGarage` INTEGER NOT NULL, `preferredGarageSpaces` INTEGER, `needsBathhouse` INTEGER NOT NULL, `needsPool` INTEGER NOT NULL, `needsOfficialAgreement` INTEGER NOT NULL, `preferredTaxOption` TEXT, `longTermBudgetMin` REAL, `longTermBudgetMax` REAL, `desiredPropertyType` TEXT, `desiredRoomsCount` INTEGER, `desiredArea` REAL, `additionalRequirements` TEXT, `legalPreferences` TEXT, `moveInDeadline` INTEGER, `shortTermBudgetMin` REAL, `shortTermBudgetMax` REAL, `shortTermCheckInDate` INTEGER, `shortTermCheckOutDate` INTEGER, `hasAdditionalGuests` INTEGER NOT NULL, `shortTermGuests` INTEGER, `dailyBudget` REAL, `preferredShortTermDistrict` TEXT, `checkInOutConditions` TEXT, `additionalServices` TEXT, `additionalShortTermRequirements` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -935,54 +941,6 @@
             "notNull": false
           },
           {
-            "fieldPath": "minRooms",
-            "columnName": "minRooms",
-            "affinity": "INTEGER",
-            "notNull": false
-          },
-          {
-            "fieldPath": "maxRooms",
-            "columnName": "maxRooms",
-            "affinity": "INTEGER",
-            "notNull": false
-          },
-          {
-            "fieldPath": "minArea",
-            "columnName": "minArea",
-            "affinity": "REAL",
-            "notNull": false
-          },
-          {
-            "fieldPath": "maxArea",
-            "columnName": "maxArea",
-            "affinity": "REAL",
-            "notNull": false
-          },
-          {
-            "fieldPath": "preferredLayout",
-            "columnName": "preferredLayout",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "minBudget",
-            "columnName": "minBudget",
-            "affinity": "INTEGER",
-            "notNull": false
-          },
-          {
-            "fieldPath": "maxBudget",
-            "columnName": "maxBudget",
-            "affinity": "INTEGER",
-            "notNull": false
-          },
-          {
-            "fieldPath": "housingNotes",
-            "columnName": "housingNotes",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
             "fieldPath": "createdAt",
             "columnName": "createdAt",
             "affinity": "INTEGER",
@@ -1012,7 +970,7 @@
       },
       {
         "tableName": "appointments",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `propertyId` TEXT NOT NULL, `clientId` TEXT NOT NULL, `agentId` TEXT NOT NULL, `appointmentTime` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `status` TEXT NOT NULL, `type` TEXT NOT NULL, `notes` TEXT NOT NULL, `reminderTime` INTEGER, `location` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`propertyId`) REFERENCES `properties`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`clientId`) REFERENCES `clients`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `propertyId` TEXT NOT NULL, `clientId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `startTime` INTEGER NOT NULL, `endTime` INTEGER NOT NULL, `status` TEXT NOT NULL, `type` TEXT NOT NULL, `location` TEXT, `notes` TEXT, `reminderTime` INTEGER, `isAllDay` INTEGER NOT NULL, `isRecurring` INTEGER NOT NULL, `recurrenceRule` TEXT, `color` TEXT NOT NULL, `attachments` TEXT NOT NULL, `participants` TEXT NOT NULL, `clientName` TEXT, `propertyAddress` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -1033,20 +991,26 @@
             "notNull": true
           },
           {
-            "fieldPath": "agentId",
-            "columnName": "agentId",
+            "fieldPath": "title",
+            "columnName": "title",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "appointmentTime",
-            "columnName": "appointmentTime",
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "startTime",
+            "columnName": "startTime",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "duration",
-            "columnName": "duration",
+            "fieldPath": "endTime",
+            "columnName": "endTime",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -1063,10 +1027,16 @@
             "notNull": true
           },
           {
+            "fieldPath": "location",
+            "columnName": "location",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
             "fieldPath": "notes",
             "columnName": "notes",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "reminderTime",
@@ -1075,114 +1045,52 @@
             "notNull": false
           },
           {
-            "fieldPath": "location",
-            "columnName": "location",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "createdAt",
-            "columnName": "createdAt",
+            "fieldPath": "isAllDay",
+            "columnName": "isAllDay",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "updatedAt",
-            "columnName": "updatedAt",
+            "fieldPath": "isRecurring",
+            "columnName": "isRecurring",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "isSynced",
-            "columnName": "isSynced",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        },
-        "indices": [
-          {
-            "name": "index_appointments_propertyId",
-            "unique": false,
-            "columnNames": [
-              "propertyId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_appointments_propertyId` ON `${TABLE_NAME}` (`propertyId`)"
+            "fieldPath": "recurrenceRule",
+            "columnName": "recurrenceRule",
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
-            "name": "index_appointments_clientId",
-            "unique": false,
-            "columnNames": [
-              "clientId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_appointments_clientId` ON `${TABLE_NAME}` (`clientId`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "properties",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "propertyId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "clients",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "clientId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          }
-        ]
-      },
-      {
-        "tableName": "users",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `email` TEXT NOT NULL, `name` TEXT NOT NULL, `phone` TEXT NOT NULL, `photoUrl` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
+            "fieldPath": "color",
+            "columnName": "color",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "email",
-            "columnName": "email",
+            "fieldPath": "attachments",
+            "columnName": "attachments",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "name",
-            "columnName": "name",
+            "fieldPath": "participants",
+            "columnName": "participants",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "phone",
-            "columnName": "phone",
+            "fieldPath": "clientName",
+            "columnName": "clientName",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
-            "fieldPath": "photoUrl",
-            "columnName": "photoUrl",
+            "fieldPath": "propertyAddress",
+            "columnName": "propertyAddress",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "createdAt",
@@ -1211,12 +1119,227 @@
         },
         "indices": [],
         "foreignKeys": []
+      },
+      {
+        "tableName": "bookings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `propertyId` TEXT NOT NULL, `clientId` TEXT, `startDate` INTEGER NOT NULL, `endDate` INTEGER NOT NULL, `status` TEXT NOT NULL, `paymentStatus` TEXT NOT NULL, `totalAmount` REAL NOT NULL, `depositAmount` REAL, `notes` TEXT, `guestsCount` INTEGER, `checkInTime` TEXT, `checkOutTime` TEXT, `includedServices` TEXT NOT NULL, `additionalServices` TEXT NOT NULL, `rentPeriodMonths` INTEGER, `monthlyPaymentAmount` REAL, `utilityPayments` INTEGER, `contractType` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`propertyId`) REFERENCES `properties`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`clientId`) REFERENCES `clients`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "propertyId",
+            "columnName": "propertyId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clientId",
+            "columnName": "clientId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "startDate",
+            "columnName": "startDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endDate",
+            "columnName": "endDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "paymentStatus",
+            "columnName": "paymentStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalAmount",
+            "columnName": "totalAmount",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "depositAmount",
+            "columnName": "depositAmount",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "guestsCount",
+            "columnName": "guestsCount",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "checkInTime",
+            "columnName": "checkInTime",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "checkOutTime",
+            "columnName": "checkOutTime",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "includedServices",
+            "columnName": "includedServices",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "additionalServices",
+            "columnName": "additionalServices",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rentPeriodMonths",
+            "columnName": "rentPeriodMonths",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "monthlyPaymentAmount",
+            "columnName": "monthlyPaymentAmount",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "utilityPayments",
+            "columnName": "utilityPayments",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "contractType",
+            "columnName": "contractType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSynced",
+            "columnName": "isSynced",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_bookings_propertyId",
+            "unique": false,
+            "columnNames": [
+              "propertyId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookings_propertyId` ON `${TABLE_NAME}` (`propertyId`)"
+          },
+          {
+            "name": "index_bookings_clientId",
+            "unique": false,
+            "columnNames": [
+              "clientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookings_clientId` ON `${TABLE_NAME}` (`clientId`)"
+          },
+          {
+            "name": "index_bookings_startDate",
+            "unique": false,
+            "columnNames": [
+              "startDate"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookings_startDate` ON `${TABLE_NAME}` (`startDate`)"
+          },
+          {
+            "name": "index_bookings_endDate",
+            "unique": false,
+            "columnNames": [
+              "endDate"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookings_endDate` ON `${TABLE_NAME}` (`endDate`)"
+          },
+          {
+            "name": "index_bookings_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookings_status` ON `${TABLE_NAME}` (`status`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "properties",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "propertyId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "clients",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "clientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '44f1ea47dce065e8ae6280ef2845ec06')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '25d8d6e881e69a69499bb3f096b294ce')"
     ]
   }
 }

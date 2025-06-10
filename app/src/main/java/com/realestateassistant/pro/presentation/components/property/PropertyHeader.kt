@@ -25,26 +25,42 @@ fun PropertyHeader(property: Property) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Тип недвижимости и комнаты
+            // Тип недвижимости, комнаты и статус объекта
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val icon = propertyTypeIcon(property.propertyType)
+                // Левая часть с иконкой и типом недвижимости
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    val icon = propertyTypeIcon(property.propertyType)
+                    
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(12.dp))
+                    
+                    Text(
+                        text = "${property.propertyType}, ${property.roomsCount} ${getRoomsText(property.roomsCount)}",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                Text(
-                    text = "${property.propertyType}, ${property.roomsCount} ${getRoomsText(property.roomsCount)}",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                // Статус объекта недвижимости
+                property.status?.let { status ->
+                    PropertyStatusBadge(
+                        status = status,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(8.dp))

@@ -3,9 +3,13 @@ package com.realestateassistant.pro
 import android.app.Application
 import android.os.StrictMode
 import android.util.Log
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
+import com.realestateassistant.pro.data.worker.WorkManagerHelper
 import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
+import javax.inject.Inject
 
 /**
  * Основной класс приложения.
@@ -13,7 +17,13 @@ import timber.log.Timber
  * Базы данных инициализируются асинхронно через Jetpack App Startup.
  */
 @HiltAndroidApp
-class RealEstateApplication : Application() {
+class RealEstateApplication : Application(), Configuration.Provider {
+    
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    @Inject
+    lateinit var workManagerHelper: WorkManagerHelper
     
     companion object {
         private const val TAG = "RealEstateApplication"
@@ -41,6 +51,9 @@ class RealEstateApplication : Application() {
         if (DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
+        
+        // Планируем периодическое обновление статусов объектов недвижимости
+        workManagerHelper.schedulePropertyStatusUpdates(this)
     }
     
     /**
@@ -78,4 +91,12 @@ class RealEstateApplication : Application() {
         
         Log.d(TAG, "StrictMode настроен для обнаружения проблем производительности")
     }
+    
+    /**
+     * Конфигурация для WorkManager с поддержкой Hilt
+     */
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 } 

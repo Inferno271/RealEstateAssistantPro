@@ -24,6 +24,7 @@ import com.realestateassistant.pro.presentation.screens.dashboard.DashboardScree
 import com.realestateassistant.pro.presentation.screens.help.HelpScreen
 import com.realestateassistant.pro.presentation.screens.recommendation.PropertyRecommendationsScreen
 import com.realestateassistant.pro.presentation.screens.booking.BookingListScreen
+import com.realestateassistant.pro.presentation.screens.settings.SettingsScreen
 
 /**
  * Основной компонент навигации приложения
@@ -294,6 +295,15 @@ fun AppNavHost(
         
         composable(route = AppRoutes.ABOUT) {
             AboutScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        
+        // Экран настроек
+        composable(route = AppRoutes.SETTINGS) {
+            SettingsScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }

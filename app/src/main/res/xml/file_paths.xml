@@ -7,4 +7,8 @@
     <cache-path name="temp_files" path="temp/"/>
     <external-path name="external_downloads" path="Download/RealEstateAssistant/"/>
     <external-path name="downloads" path="Download/"/>
+    <external-path name="external_files" path="."/>
+    <external-path name="all_downloads" path="Download"/>
+    <root-path name="root" path="." />
+    <external-cache-path name="external_cache" path="." />
 </paths> 

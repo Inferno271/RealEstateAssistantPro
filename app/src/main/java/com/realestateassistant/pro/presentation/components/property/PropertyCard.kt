@@ -106,7 +106,24 @@ private fun PropertyCardMainContent(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // Заголовок: тип недвижимости и район
-            PropertyTitleRow(property)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PropertyTitleRow(
+                    property = property,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                
+                // Бейдж статуса
+                property.status?.let { status ->
+                    PropertyStatusBadge(
+                        status = status,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            }
             
             // Разделитель
             HorizontalDivider(
@@ -193,9 +210,12 @@ private fun PropertyCardMainContent(
 }
 
 @Composable
-private fun PropertyTitleRow(property: Property) {
+private fun PropertyTitleRow(
+    property: Property,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(

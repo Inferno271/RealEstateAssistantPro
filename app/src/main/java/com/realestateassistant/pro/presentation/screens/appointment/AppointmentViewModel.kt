@@ -319,7 +319,6 @@ class AppointmentViewModel @Inject constructor(
             is AppointmentEvent.AddParticipant,
             is AppointmentEvent.RemoveAttachment,
             is AppointmentEvent.RemoveParticipant,
-            is AppointmentEvent.SetAgent,
             is AppointmentEvent.SetAllDay,
             is AppointmentEvent.SetClient,
             is AppointmentEvent.SetColor,

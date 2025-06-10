@@ -13,7 +13,6 @@ import java.util.UUID
  * @property id Уникальный идентификатор встречи/показа
  * @property propertyId Идентификатор объекта недвижимости
  * @property clientId Идентификатор клиента
- * @property agentId Идентификатор агента
  * @property title Заголовок встречи
  * @property description Описание встречи
  * @property startTime Время начала встречи в формате timestamp
@@ -40,7 +39,6 @@ data class Appointment(
     val clientName: String? = null,
     val propertyId: String = "",
     val propertyAddress: String? = null,
-    val agentId: String = "",
     val startTime: Long = 0L,
     val endTime: Long = 0L,
     val isAllDay: Boolean = false,
@@ -127,7 +125,6 @@ data class Appointment(
             clientName: String? = null,
             propertyId: String = "",
             propertyAddress: String? = null,
-            agentId: String = "",
             location: String? = null,
             notes: String? = null,
             type: AppointmentType = AppointmentType.CLIENT_MEETING,
@@ -169,7 +166,6 @@ data class Appointment(
                 clientName = clientName,
                 propertyId = propertyId,
                 propertyAddress = propertyAddress,
-                agentId = agentId,
                 startTime = startMillis,
                 endTime = endMillis,
                 isAllDay = isAllDay,
@@ -202,7 +198,6 @@ data class Appointment(
             clientName: String? = null,
             propertyId: String = "",
             propertyAddress: String? = null,
-            agentId: String = "",
             location: String? = null,
             notes: String? = null,
             type: AppointmentType = AppointmentType.CLIENT_MEETING,
@@ -244,7 +239,6 @@ data class Appointment(
                 clientName = clientName,
                 propertyId = propertyId,
                 propertyAddress = propertyAddress,
-                agentId = agentId,
                 startTime = startMillis,
                 endTime = endMillis,
                 isAllDay = isAllDay,
@@ -286,7 +280,6 @@ data class Participant(
  * Роли участников встречи
  */
 enum class ParticipantRole {
-    AGENT,      // Агент
     CLIENT,     // Клиент
     OWNER,      // Владелец объекта
     INSPECTOR,  // Инспектор

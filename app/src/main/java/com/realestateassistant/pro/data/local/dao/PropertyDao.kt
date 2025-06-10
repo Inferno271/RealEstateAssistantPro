@@ -70,4 +70,40 @@ interface PropertyDao {
      */
     @Query("UPDATE properties SET isSynced = :isSynced WHERE id = :propertyId")
     suspend fun updateSyncStatus(propertyId: String, isSynced: Boolean)
+    
+    /**
+     * Получает список объектов недвижимости по статусу
+     */
+    @Query("SELECT * FROM properties WHERE status = :status")
+    fun getPropertiesByStatus(status: String): Flow<List<PropertyEntity>>
+    
+    /**
+     * Обновляет статус объекта недвижимости
+     */
+    @Query("UPDATE properties SET status = :status, updatedAt = :updatedAt WHERE id = :propertyId")
+    suspend fun updatePropertyStatus(propertyId: String, status: String, updatedAt: Long = System.currentTimeMillis())
+    
+    /**
+     * Получает список объектов недвижимости с активными бронированиями на указанную дату
+     */
+    @Query("SELECT p.* FROM properties p JOIN bookings b ON p.id = b.propertyId " +
+           "WHERE b.status IN ('CONFIRMED', 'ACTIVE') AND " +
+           "(:currentDate BETWEEN b.startDate AND b.endDate)")
+    fun getPropertiesWithActiveBookings(currentDate: Long = System.currentTimeMillis()): Flow<List<PropertyEntity>>
+    
+    /**
+     * Получает список объектов недвижимости с предстоящими бронированиями
+     */
+    @Query("SELECT p.* FROM properties p JOIN bookings b ON p.id = b.propertyId " +
+           "WHERE b.status IN ('CONFIRMED', 'PENDING') AND " +
+           "b.startDate > :currentDate")
+    fun getPropertiesWithUpcomingBookings(currentDate: Long = System.currentTimeMillis()): Flow<List<PropertyEntity>>
+    
+    /**
+     * Получает список объектов недвижимости без активных бронирований
+     */
+    @Query("SELECT * FROM properties WHERE id NOT IN " +
+           "(SELECT propertyId FROM bookings WHERE status IN ('CONFIRMED', 'ACTIVE', 'PENDING') " +
+           "AND (startDate <= :endDate AND endDate >= :startDate))")
+    fun getAvailableProperties(startDate: Long, endDate: Long): Flow<List<PropertyEntity>>
 } 

@@ -12,7 +12,6 @@ activityCompose = "1.10.0"
 composeBom = "2025.01.01"
 hilt = "2.49"
 hilt-navigation-compose = "1.2.0"
-firebase-bom = "33.8.0"
 room = "2.6.1"
 
 

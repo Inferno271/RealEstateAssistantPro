@@ -115,6 +115,9 @@ data class PropertyEntity(
     val photos: List<String>,
     val documents: List<String>,
     
+    // Статус объекта
+    val status: String = "AVAILABLE",
+    
     // Локальные системные поля
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),

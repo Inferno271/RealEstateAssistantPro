@@ -1,5 +1,6 @@
 package com.realestateassistant.pro.presentation.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -72,22 +73,52 @@ fun PropertyDetailScreen(
         }
     }
     
-    // Обработка состояния экспорта PDF
+    // Создаем SnackbarHostState для отображения сообщений
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    // Обработка состояния экспорта PDF для отображения снэкбара
     LaunchedEffect(pdfExportState) {
-        when (pdfExportState) {
-            is PdfExportViewModel.ExportState.Success -> {
+        if (pdfExportState is PdfExportViewModel.ExportState.Success) {
                 val uri = (pdfExportState as PdfExportViewModel.ExportState.Success).uri
+            Log.d("PropertyDetailScreen", "Получен URI для открытия PDF: $uri")
+            
+            if (uri != null) {
+                val result = snackbarHostState.showSnackbar(
+                    message = "PDF сохранен",
+                    actionLabel = "Открыть",
+                    duration = SnackbarDuration.Long
+                )
                 
-                // Отображаем снэкбар с возможностью открыть или поделиться файлом
-                // (Этот блок будет реализован через SnackbarHost)
+                if (result == SnackbarResult.ActionPerformed) {
+                    Log.d("PropertyDetailScreen", "Пользователь нажал 'Открыть', запускаем открытие PDF")
+                    try {
+                        // Запускаем метод открытия PDF в ViewModel
+                        pdfExportViewModel.openPdf(context, uri)
+                    } catch (e: Exception) {
+                        Log.e("PropertyDetailScreen", "Ошибка при открытии PDF: ${e.message}", e)
+                        Toast.makeText(
+                            context,
+                            "Не удалось открыть PDF: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            } else {
+                Log.e("PropertyDetailScreen", "Получен null URI для PDF")
+                Toast.makeText(
+                    context,
+                    "Ошибка: не удалось получить ссылку на PDF",
+                    Toast.LENGTH_LONG
+                ).show()
             }
-            is PdfExportViewModel.ExportState.Error -> {
+        } else if (pdfExportState is PdfExportViewModel.ExportState.Error) {
                 val errorMessage = (pdfExportState as PdfExportViewModel.ExportState.Error).message
-                Toast.makeText(context, "Ошибка при создании PDF: $errorMessage", Toast.LENGTH_LONG).show()
-            }
-            else -> {
-                // Не требуется действий
-            }
+            Log.e("PropertyDetailScreen", "Ошибка при экспорте PDF: $errorMessage")
+            Toast.makeText(
+                context,
+                "Ошибка при создании PDF: $errorMessage",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
     
@@ -118,30 +149,6 @@ fun PropertyDetailScreen(
                 }
             }
         )
-    }
-    
-    // Создаем SnackbarHostState для отображения сообщений
-    val snackbarHostState = remember { SnackbarHostState() }
-    
-    // Обработка состояния экспорта PDF для отображения снэкбара
-    LaunchedEffect(pdfExportState) {
-        if (pdfExportState is PdfExportViewModel.ExportState.Success) {
-            val uri = (pdfExportState as PdfExportViewModel.ExportState.Success).uri
-            val result = snackbarHostState.showSnackbar(
-                message = "PDF сохранен",
-                actionLabel = "Открыть",
-                duration = SnackbarDuration.Long
-            )
-            
-            when (result) {
-                SnackbarResult.ActionPerformed -> {
-                    selectedProperty?.let { property ->
-                        pdfExportViewModel.openPdf(context, uri)
-                    }
-                }
-                else -> { /* Игнорируем другие результаты */ }
-            }
-        }
     }
     
     Scaffold(

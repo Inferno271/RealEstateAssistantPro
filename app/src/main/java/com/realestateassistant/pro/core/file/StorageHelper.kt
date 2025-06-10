@@ -9,6 +9,9 @@ import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import android.provider.MediaStore
+import android.util.Log
+import android.content.ContentUris
 
 /**
  * Вспомогательный класс для безопасной работы с хранилищем файлов.
@@ -18,6 +21,10 @@ import javax.inject.Singleton
 class StorageHelper @Inject constructor(
     private val context: Context
 ) {
+    companion object {
+        private const val TAG = "StorageHelper"
+    }
+
     /**
      * Создает и возвращает директорию для сохранения файлов в приложении
      * Сначала пытается использовать внешнее хранилище приложения, при ошибке - внутреннее
@@ -159,15 +166,58 @@ class StorageHelper @Inject constructor(
     
     /**
      * Получает URI для файла из публичной директории Downloads
-     * Не использует FileProvider для этого случая
+     * Использует FileProvider для Android 7.0+ для соответствия политике безопасности
      * 
      * @param file Файл из публичной директории
      * @return URI или null в случае ошибки
      */
     fun getUriForPublicFile(file: File): Uri? {
         return try {
-            Uri.fromFile(file)
+            if (!file.exists()) {
+                Log.e(TAG, "Файл не существует: ${file.absolutePath}")
+                return null
+            }
+            
+            Log.d(TAG, "Получаем URI для файла: ${file.absolutePath}, размер: ${file.length()} байт")
+            
+            // Для Android 7.0+ (API 24+) нужно использовать FileProvider
+            val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val providerAuthority = "${context.packageName}.fileprovider"
+                Log.d(TAG, "Используем FileProvider с authority: $providerAuthority")
+                
+                try {
+                    FileProvider.getUriForFile(context, providerAuthority, file)
+                } catch (e: IllegalArgumentException) {
+                    Log.e(TAG, "Ошибка FileProvider: ${e.message}", e)
+                    // Используем альтернативный подход в зависимости от версии API
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        // Для Android 10+ (API 29+) используем Downloads URI
+                        ContentUris.withAppendedId(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            file.name.hashCode().toLong()
+                        )
+                    } else {
+                        // Для более старых версий используем общий метод
+                        Uri.parse("content://downloads/public_downloads/${file.name.hashCode()}")
+                    }
+                }
+            } else {
+                Uri.fromFile(file)
+            }
+            
+            // Проверяем, что URI не пустой и есть доступ на чтение
+            if (uri != null) {
+                try {
+                    context.contentResolver.openInputStream(uri)?.close()
+                    Log.d(TAG, "URI создан успешно и доступен для чтения: $uri")
+                } catch (e: Exception) {
+                    Log.e(TAG, "URI создан, но недоступен для чтения: $uri", e)
+                }
+            }
+            
+            uri
         } catch (e: Exception) {
+            Log.e(TAG, "Ошибка при получении URI для файла: ${e.message}", e)
             null
         }
     }

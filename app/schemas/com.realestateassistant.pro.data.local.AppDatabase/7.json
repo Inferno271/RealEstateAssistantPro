@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 7,
-    "identityHash": "af97116131a3e415f27d8e6638acd650",
+    "identityHash": "1079a677ee2033d2a0443054df4dd061",
     "entities": [
       {
         "tableName": "properties",
@@ -964,7 +964,7 @@
       },
       {
         "tableName": "appointments",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `propertyId` TEXT NOT NULL, `clientId` TEXT NOT NULL, `agentId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `startTime` INTEGER NOT NULL, `endTime` INTEGER NOT NULL, `status` TEXT NOT NULL, `type` TEXT NOT NULL, `location` TEXT, `notes` TEXT, `reminderTime` INTEGER, `isAllDay` INTEGER NOT NULL, `isRecurring` INTEGER NOT NULL, `recurrenceRule` TEXT, `color` TEXT NOT NULL, `attachments` TEXT NOT NULL, `participants` TEXT NOT NULL, `clientName` TEXT, `propertyAddress` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `propertyId` TEXT NOT NULL, `clientId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `startTime` INTEGER NOT NULL, `endTime` INTEGER NOT NULL, `status` TEXT NOT NULL, `type` TEXT NOT NULL, `location` TEXT, `notes` TEXT, `reminderTime` INTEGER, `isAllDay` INTEGER NOT NULL, `isRecurring` INTEGER NOT NULL, `recurrenceRule` TEXT, `color` TEXT NOT NULL, `attachments` TEXT NOT NULL, `participants` TEXT NOT NULL, `clientName` TEXT, `propertyAddress` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -981,12 +981,6 @@
           {
             "fieldPath": "clientId",
             "columnName": "clientId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "agentId",
-            "columnName": "agentId",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -1091,68 +1085,6 @@
             "columnName": "propertyAddress",
             "affinity": "TEXT",
             "notNull": false
-          },
-          {
-            "fieldPath": "createdAt",
-            "columnName": "createdAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "updatedAt",
-            "columnName": "updatedAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "isSynced",
-            "columnName": "isSynced",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        },
-        "indices": [],
-        "foreignKeys": []
-      },
-      {
-        "tableName": "users",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `email` TEXT NOT NULL, `name` TEXT NOT NULL, `phone` TEXT NOT NULL, `photoUrl` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "email",
-            "columnName": "email",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "name",
-            "columnName": "name",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "phone",
-            "columnName": "phone",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "photoUrl",
-            "columnName": "photoUrl",
-            "affinity": "TEXT",
-            "notNull": true
           },
           {
             "fieldPath": "createdAt",
@@ -1396,226 +1328,12 @@
             ]
           }
         ]
-      },
-      {
-        "tableName": "notifications",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `message` TEXT NOT NULL, `type` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `isRead` INTEGER NOT NULL, `priority` TEXT NOT NULL, `relatedEntityId` TEXT, `relatedEntityType` TEXT, `actionDeepLink` TEXT, `actionLabel` TEXT)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "title",
-            "columnName": "title",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "message",
-            "columnName": "message",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "type",
-            "columnName": "type",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "timestamp",
-            "columnName": "timestamp",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "isRead",
-            "columnName": "isRead",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "priority",
-            "columnName": "priority",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "relatedEntityId",
-            "columnName": "relatedEntityId",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "relatedEntityType",
-            "columnName": "relatedEntityType",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "actionDeepLink",
-            "columnName": "actionDeepLink",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "actionLabel",
-            "columnName": "actionLabel",
-            "affinity": "TEXT",
-            "notNull": false
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": true,
-          "columnNames": [
-            "id"
-          ]
-        },
-        "indices": [],
-        "foreignKeys": []
-      },
-      {
-        "tableName": "notification_settings",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `bookingNotificationsEnabled` INTEGER NOT NULL, `appointmentNotificationsEnabled` INTEGER NOT NULL, `clientNotificationsEnabled` INTEGER NOT NULL, `bookingUpcomingReminderTimeDays` INTEGER NOT NULL, `bookingEndingReminderTimeDays` INTEGER NOT NULL, `appointmentReminderTimeHours` INTEGER NOT NULL, `clientCheckInReminderTimeDays` INTEGER NOT NULL, `conflictNotificationsEnabled` INTEGER NOT NULL, `paymentNotificationsEnabled` INTEGER NOT NULL, `statusChangeNotificationsEnabled` INTEGER NOT NULL, `silentHoursStart` INTEGER NOT NULL, `silentHoursEnd` INTEGER NOT NULL, `silentHoursEnabled` INTEGER NOT NULL, `bookingReminderHours` INTEGER NOT NULL, `appointmentReminderHours` INTEGER NOT NULL, `autoDeleteRead` INTEGER NOT NULL, `deleteReadAfterDays` INTEGER NOT NULL, `maxNotificationsCount` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "enabled",
-            "columnName": "enabled",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "bookingNotificationsEnabled",
-            "columnName": "bookingNotificationsEnabled",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "appointmentNotificationsEnabled",
-            "columnName": "appointmentNotificationsEnabled",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "clientNotificationsEnabled",
-            "columnName": "clientNotificationsEnabled",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "bookingUpcomingReminderTimeDays",
-            "columnName": "bookingUpcomingReminderTimeDays",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "bookingEndingReminderTimeDays",
-            "columnName": "bookingEndingReminderTimeDays",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "appointmentReminderTimeHours",
-            "columnName": "appointmentReminderTimeHours",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "clientCheckInReminderTimeDays",
-            "columnName": "clientCheckInReminderTimeDays",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "conflictNotificationsEnabled",
-            "columnName": "conflictNotificationsEnabled",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "paymentNotificationsEnabled",
-            "columnName": "paymentNotificationsEnabled",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "statusChangeNotificationsEnabled",
-            "columnName": "statusChangeNotificationsEnabled",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "silentHoursStart",
-            "columnName": "silentHoursStart",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "silentHoursEnd",
-            "columnName": "silentHoursEnd",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "silentHoursEnabled",
-            "columnName": "silentHoursEnabled",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "bookingReminderHours",
-            "columnName": "bookingReminderHours",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "appointmentReminderHours",
-            "columnName": "appointmentReminderHours",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "autoDeleteRead",
-            "columnName": "autoDeleteRead",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "deleteReadAfterDays",
-            "columnName": "deleteReadAfterDays",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "maxNotificationsCount",
-            "columnName": "maxNotificationsCount",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        },
-        "indices": [],
-        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'af97116131a3e415f27d8e6638acd650')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1079a677ee2033d2a0443054df4dd061')"
     ]
   }
 }

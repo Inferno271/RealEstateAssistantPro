@@ -1,6 +1,7 @@
 package com.realestateassistant.pro.domain.repository
 
 import com.realestateassistant.pro.domain.model.Property
+import com.realestateassistant.pro.domain.model.PropertyStatus
 import kotlinx.coroutines.flow.Flow
 
 interface PropertyRepository {
@@ -46,4 +47,35 @@ interface PropertyRepository {
      * Синхронизирует данные между локальной базой данных и Firebase.
      */
     suspend fun syncProperties()
+    
+    /**
+     * Наблюдает за объектами недвижимости с определенным статусом.
+     * Возвращает Flow, который будет обновляться при изменении данных.
+     */
+    fun observePropertiesByStatus(status: PropertyStatus): Flow<List<Property>>
+    
+    /**
+     * Обновляет статус объекта недвижимости.
+     */
+    suspend fun updatePropertyStatus(propertyId: String, status: PropertyStatus): Result<Unit>
+    
+    /**
+     * Наблюдает за объектами недвижимости с активными бронированиями на текущую дату.
+     */
+    fun observePropertiesWithActiveBookings(): Flow<List<Property>>
+    
+    /**
+     * Наблюдает за объектами недвижимости с предстоящими бронированиями.
+     */
+    fun observePropertiesWithUpcomingBookings(): Flow<List<Property>>
+    
+    /**
+     * Получает список объектов недвижимости, доступных для бронирования в указанном диапазоне дат.
+     */
+    fun getAvailableProperties(startDate: Long, endDate: Long): Flow<List<Property>>
+    
+    /**
+     * Обновляет статусы всех объектов недвижимости на основе текущих бронирований.
+     */
+    suspend fun updateAllPropertyStatuses(): Result<Unit>
 } 

@@ -1,0 +1,539 @@
+# Cursor Rules для проекта RealEstateAssistant PRO
+
+# Основные правила для проекта
+project_root = "/c:/Users/user/Desktop/BM/Dip"
+language = "kotlin"
+architecture = "clean_architecture"
+pattern = "mvvm"
+
+# Правила для документации
+[[documentation]]
+main_doc = "docs/project_documentation.md"
+update_on_changes = true
+web_docs = [
+    "https://developer.android.com/docs",
+    "https://kotlinlang.org/docs/home.html",
+    "https://developer.android.com/jetpack/compose/documentation"
+]
+
+# Структура проекта
+[[project_structure]]
+src_root = "app/src/main"
+test_root = "app/src/test"
+androidTest_root = "app/src/androidTest"
+
+# Слои архитектуры
+[[clean_architecture]]
+layers = [
+    "presentation",
+    "domain",
+    "data"
+]
+
+[[presentation]]
+path = "app/src/main/java/com/realestateassistant/pro/presentation"
+components = [
+    "screens",
+    "viewmodels",
+    "components",
+    "theme"
+]
+
+[[domain]]
+path = "app/src/main/java/com/realestateassistant/pro/domain"
+components = [
+    "model",
+    "repository",
+    "usecase"
+]
+
+[[data]]
+path = "app/src/main/java/com/realestateassistant/pro/data"
+components = [
+    "repository",
+    "local",
+    "mapper"
+]
+
+# Правила именования
+[[naming]]
+viewmodel_suffix = "ViewModel"
+usecase_suffix = "UseCase"
+repository_suffix = "Repository"
+dao_suffix = "Dao"
+screen_suffix = "Screen"
+
+# Правила для Compose
+[[compose]]
+components_path = "presentation/components"
+screens_path = "presentation/screens"
+theme_path = "presentation/theme"
+
+# Правила для тестов
+[[testing]]
+unit_test_path = "app/src/test"
+android_test_path = "app/src/androidTest"
+test_suffix = "Test"
+
+# Правила для Room
+[[room]]
+entities_path = "data/local/entity"
+dao_path = "data/local/dao"
+database_path = "data/local/database"
+
+# Правила для Hilt
+[[hilt]]
+modules_path = "di"
+module_suffix = "Module"
+
+# Правила для ресурсов
+[[resources]]
+drawable_path = "app/src/main/res/drawable"
+layout_path = "app/src/main/res/layout"
+values_path = "app/src/main/res/values"
+
+# Правила для версионирования
+[[versioning]]
+version_control = "git"
+ignore_patterns = [
+    "*.iml",
+    ".gradle",
+    "/local.properties",
+    "/.idea",
+    "/.idea/caches",
+    "/.idea/libraries",
+    "/.idea/modules.xml",
+    "/.idea/workspace.xml",
+    "/.idea/navEditor.xml",
+    "/.idea/assetWizardSettings.xml",
+    ".DS_Store",
+    "/build",
+    "/captures",
+    ".externalNativeBuild",
+    ".cxx",
+    "local.properties"
+]
+
+# Правила для зависимостей
+[[dependencies]]
+gradle_version = "8.0.0"
+kotlin_version = "1.9.0"
+compose_version = "1.6.0"
+room_version = "2.6.1"
+hilt_version = "2.48"
+
+# Правила для форматирования кода
+[[code_style]]
+max_line_length = 100
+indent_size = 4
+continuation_indent_size = 8
+
+# Правила для документирования кода
+[[code_documentation]]
+required_sections = [
+    "Parameters",
+    "Return",
+    "Throws",
+    "Sample"
+]
+
+# Правила для обработки ошибок
+[[error_handling]]
+use_sealed_classes = true
+error_suffix = "Exception"
+result_wrapper = true
+
+# Правила для навигации
+[[navigation]]
+navigation_path = "presentation/navigation"
+route_prefix = "screen_"
+
+# Правила для UI/UX
+[[ui_ux]]
+material_design_version = 3
+support_dark_theme = true
+support_dynamic_colors = true
+
+# Правила для изображений
+[[images]]
+max_size = "2048x2048"
+compression_quality = 80
+supported_formats = [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp"
+]
+
+# Правила для логирования
+[[logging]]
+tag_prefix = "REA_"
+log_levels = [
+    "DEBUG",
+    "INFO",
+    "WARNING",
+    "ERROR"
+]
+
+# Правила для безопасности
+[[security]]
+encryption_required = true
+secure_storage = true
+min_sdk = 24
+target_sdk = 35
+
+# Правила для производительности
+[[performance]]
+enable_r8 = true
+enable_proguard = true
+enable_minification = true
+enable_shrink_resources = true
+
+# Правила для CI/CD
+[[ci_cd]]
+build_types = [
+    "debug",
+    "release"
+]
+flavors = [
+    "dev",
+    "prod"
+]
+
+# Правила для асинхронного программирования
+[[async]]
+default_dispatcher = "Dispatchers.IO"
+coroutine_scope = [
+    "viewModelScope",
+    "lifecycleScope",
+    "coroutineScope"
+]
+flow_operators = [
+    "flowOn",
+    "catch",
+    "map",
+    "flatMapLatest",
+    "distinctUntilChanged"
+]
+error_handling = [
+    "try-catch блоки для корутин",
+    "catch операторы для Flow",
+    "supervisorScope для независимых операций"
+]
+
+# Правила для работы с базой данных
+[[database]]
+async_queries = true
+transaction_required = [
+    "множественные операции записи",
+    "связанные операции чтения-записи"
+]
+query_timeout = 30 # секунд
+background_thread_required = true
+dao_methods = [
+    "suspend для единичных операций",
+    "Flow для наблюдаемых данных"
+]
+
+# Правила для RecyclerView и списков
+[[lists]]
+use_diff_util = true
+payload_support = true
+view_holder_pattern = true
+item_click_handling = "lambda"
+list_state_handling = [
+    "empty_state",
+    "loading_state",
+    "error_state"
+]
+
+# Правила для документирования изменений
+[[code_changes]]
+required_sections = [
+    "Причина изменения",
+    "Описание изменений",
+    "Влияние на другие компоненты",
+    "Тестовые сценарии"
+]
+commit_message_template = """
+feat/fix/refactor(scope): краткое описание
+
+- Подробное описание изменений
+- Причина изменений
+- Связанные задачи
+"""
+
+# Правила для обработки неоднозначностей
+[[clarification]]
+require_clarification = [
+    "неявные требования",
+    "конфликтующие требования",
+    "отсутствующий контекст",
+    "потенциальные побочные эффекты"
+]
+clarification_format = """
+- Текущее понимание
+- Неясные моменты
+- Предлагаемые варианты
+- Необходимая информация
+"""
+
+# Правила для комментирования кода
+[[code_comments]]
+required_comments = [
+    "сложные алгоритмы",
+    "неочевидные решения",
+    "временные решения",
+    "важные предупреждения"
+]
+comment_style = """
+/**
+ * Краткое описание
+ *
+ * Подробное объяснение при необходимости
+ * @param paramName описание параметра
+ * @return описание возвращаемого значения
+ * @throws ExceptionType описание исключения
+ */
+"""
+todo_format = "TODO(author): описание задачи [issue-number]"
+
+# Правила для приоритизации изменений
+[[priorities]]
+high_priority = [
+    "критические баги",
+    "проблемы безопасности",
+    "утечки памяти",
+    "падения приложения"
+]
+medium_priority = [
+    "оптимизация производительности",
+    "улучшение UX",
+    "рефакторинг кода"
+]
+low_priority = [
+    "улучшение документации",
+    "мелкие улучшения UI",
+    "необязательные фичи"
+]
+priority_factors = [
+    "соответствие архитектуре",
+    "влияние на пользователей",
+    "сложность реализации",
+    "технический долг"
+]
+
+# Правила профессиональной этики
+[[ethics]]
+prohibited_actions = [
+    "ложь о возможностях кода",
+    "сокрытие известных проблем",
+    "копирование защищённого кода",
+    "намеренное создание уязвимостей"
+]
+required_actions = [
+    "признание ошибок",
+    "сообщение о потенциальных проблемах",
+    "уведомление о технических ограничениях",
+    "запрос помощи при неуверенности"
+]
+communication_rules = [
+    "четкое объяснение технических решений",
+    "конструктивная обратная связь",
+    "уважительное обсуждение кода",
+    "открытость к альтернативным решениям"
+]
+
+# Правила для работы с состоянием
+[[state_management]]
+immutable_state = true
+state_holders = [
+    "StateFlow для UI состояний",
+    "SharedFlow для событий",
+    "SavedStateHandle для сохранения состояния"
+]
+state_restoration = [
+    "сохранение состояния при смене конфигурации",
+    "восстановление состояния после процесс-смерти",
+    "кэширование важных данных"
+]
+
+# Правила для работы с памятью
+[[memory_management]]
+leak_prevention = [
+    "отмена корутин при уничтожении ViewModel",
+    "очистка слушателей и подписок",
+    "использование weak references где необходимо",
+    "правильное освобождение ресурсов"
+]
+cache_rules = [
+    "ограничение размера кэша изображений",
+    "очистка устаревших данных",
+    "приоритизация важных данных"
+]
+
+# Правила для обработки жизненного цикла
+[[lifecycle]]
+required_handling = [
+    "onPause для сохранения состояния",
+    "onDestroy для очистки ресурсов",
+    "onSaveInstanceState для критических данных"
+]
+compose_lifecycle = [
+    "LaunchedEffect для побочных эффектов",
+    "DisposableEffect для очистки",
+    "rememberSaveable для сохранения состояния"
+]
+
+# Правила для работы с разрешениями
+[[permissions]]
+request_timing = "точно перед использованием функционала"
+handling_rules = [
+    "проверка разрешений перед операцией",
+    "graceful degradation при отказе",
+    "понятные объяснения необходимости разрешений"
+]
+required_permissions = [
+    "CAMERA для фото объектов",
+    "READ_EXTERNAL_STORAGE для выбора изображений",
+    "WRITE_EXTERNAL_STORAGE для сохранения файлов"
+]
+
+# Правила для локализации
+[[localization]]
+string_resources = true
+rtl_support = true
+date_time_format = "системный формат"
+number_format = "системный формат"
+supported_languages = [
+    "ru",
+    "en"
+]
+
+# Правила для доступности
+[[accessibility]]
+required_features = [
+    "контентные описания для изображений",
+    "минимальный размер тач-таргетов",
+    "поддержка TalkBack",
+    "настраиваемый размер текста"
+]
+contrast_requirements = [
+    "минимальный контраст текста 4.5:1",
+    "минимальный контраст важных элементов 3:1"
+]
+
+# Правила для обработки конфигураций
+[[configurations]]
+orientation_support = [
+    "portrait",
+    "landscape для планшетов"
+]
+screen_sizes = [
+    "phone",
+    "tablet",
+    "foldable"
+]
+density_support = [
+    "mdpi",
+    "hdpi",
+    "xhdpi",
+    "xxhdpi",
+    "xxxhdpi"
+]
+
+# Правила для метрик и аналитики
+[[analytics]]
+required_logging = [
+    "критические ошибки",
+    "важные пользовательские действия",
+    "времена загрузки экранов",
+    "использование основных функций"
+]
+privacy_rules = [
+    "не логировать личные данные",
+    "анонимизация идентификаторов",
+    "возможность отказа от сбора данных"
+]
+
+# Правила для Kotlin
+[[kotlin_style]]
+basic_principles = [
+    "использовать английский язык для кода",
+    "использовать русский язык для комментариев и документации",
+    "всегда указывать типы для переменных и функций",
+    "избегать использования Any там, где можно создать типизированные классы",
+    "не оставлять пустых строк внутри функций"
+]
+nomenclature = [
+    "PascalCase для классов",
+    "camelCase для переменных, функций и методов",
+    "snake_case для имен файлов и директорий",
+    "UPPERCASE для констант и окружения",
+    "префикс 'is', 'has', 'can' для булевых переменных",
+    "использовать полные слова вместо сокращений"
+]
+
+# Правила для функций
+[[function_style]]
+principles = [
+    "создавать короткие функции с единственной целью (менее 20 инструкций)",
+    "начинать имя функции с глагола",
+    "для функций, возвращающих boolean, использовать префиксы is/has/can",
+    "избегать вложенных блоков через ранние проверки и возвраты",
+    "использовать функции высшего порядка (map, filter) для избежания вложенности",
+    "использовать значения по умолчанию вместо проверок на null",
+    "следовать принципу единого уровня абстракции"
+]
+parameters = [
+    "использовать объекты для передачи множественных параметров",
+    "использовать объекты для возвращаемых результатов",
+    "объявлять необходимые типы для входных и выходных данных"
+]
+
+# Правила для данных
+[[data_style]]
+principles = [
+    "использовать data классы для данных",
+    "не злоупотреблять примитивными типами, инкапсулировать в составные типы",
+    "избегать валидации данных в функциях, использовать классы с внутренней валидацией",
+    "предпочитать неизменяемость для данных",
+    "использовать val для литералов, которые не меняются"
+]
+
+# Правила для классов
+[[class_style]]
+principles = [
+    "следовать принципам SOLID",
+    "предпочитать композицию наследованию",
+    "объявлять интерфейсы для определения контрактов",
+    "писать небольшие классы с единственной целью"
+]
+limitations = [
+    "менее 200 инструкций в классе",
+    "менее 10 публичных методов",
+    "менее 10 свойств"
+]
+
+# Правила для исключений
+[[exception_handling]]
+principles = [
+    "использовать исключения для обработки неожиданных ошибок",
+    "перехватывать исключения только для исправления ожидаемых проблем или добавления контекста",
+    "в остальных случаях использовать глобальный обработчик"
+]
+
+# Правила для тестирования
+[[testing_rules]]
+principles = [
+    "следовать конвенции Arrange-Act-Assert для тестов",
+    "использовать четкие имена переменных в тестах (input, mock, actual, expected)",
+    "писать модульные тесты для каждой публичной функции",
+    "использовать тестовые заглушки для симуляции зависимостей",
+    "писать приемочные тесты для каждого модуля"
+]
+test_naming = [
+    "должно включать тестируемый метод",
+    "должно указывать ожидаемое поведение",
+    "следует формату: methodName_givenCondition_expectedBehavior"
+] 

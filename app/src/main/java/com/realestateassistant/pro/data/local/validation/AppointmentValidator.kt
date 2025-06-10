@@ -14,45 +14,20 @@ class AppointmentValidator @Inject constructor() {
      * @return Результат валидации
      */
     fun validate(appointment: AppointmentEntity): ValidationResult {
-        val validations = mutableListOf<ValidationResult>()
-
+        val validations = mutableListOf<ValidationResult>(
         // Обязательные поля
-        validations.add(Validators.validateRequired(appointment.id, "ID"))
-        validations.add(Validators.validateRequired(appointment.propertyId, "ID объекта"))
-        validations.add(Validators.validateRequired(appointment.clientId, "ID клиента"))
-        validations.add(Validators.validateRequired(appointment.agentId, "ID агента"))
-        validations.add(Validators.validateRequired(appointment.title, "Заголовок"))
-        validations.add(Validators.validateRequired(appointment.location, "Место встречи"))
-
-        // Валидация времени
-        if (appointment.startTime <= System.currentTimeMillis()) {
+            Validators.validateRequired(appointment.id, "ID"),
+            Validators.validateRequired(appointment.propertyId, "ID объекта"),
+            Validators.validateRequired(appointment.clientId, "ID клиента"),
+            Validators.validateRequired(appointment.title, "Название")
+        )
+        
+        // Проверяем, что время начала раньше времени окончания
+        if (appointment.startTime >= appointment.endTime) {
             validations.add(ValidationResult.Error(
-                "Время начала встречи не может быть в прошлом",
+                "Время начала должно быть раньше времени окончания",
                 "startTime"
             ))
-        }
-
-        // Валидация продолжительности
-        if (appointment.endTime <= appointment.startTime) {
-            validations.add(ValidationResult.Error(
-                "Время окончания должно быть позже времени начала",
-                "endTime"
-            ))
-        }
-
-        // Валидация напоминания
-        appointment.reminderTime?.let { reminderTime ->
-            if (reminderTime >= appointment.startTime) {
-                validations.add(ValidationResult.Error(
-                    "Время напоминания должно быть раньше времени встречи",
-                    "reminderTime"
-                ))
-            }
-        }
-
-        // Валидация заметок
-        appointment.notes.let { notes ->
-            validations.add(Validators.validateMaxLength(notes, 500, "Заметки"))
         }
 
         return validations.combine()

@@ -182,6 +182,9 @@ data class Property(
     val photos: List<String> = emptyList(),
     val documents: List<String> = emptyList(),
     
+    // Статус объекта
+    val status: PropertyStatus = PropertyStatus.AVAILABLE,
+    
     // Служебные поля
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

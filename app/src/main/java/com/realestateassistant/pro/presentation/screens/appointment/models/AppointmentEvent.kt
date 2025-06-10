@@ -17,7 +17,6 @@ sealed class AppointmentEvent {
     data class SetDescription(val description: String) : AppointmentEvent()
     data class SetProperty(val propertyId: String) : AppointmentEvent()
     data class SetClient(val clientId: String) : AppointmentEvent()
-    data class SetAgent(val agentId: String) : AppointmentEvent()
     data class SetStartDate(val date: Long) : AppointmentEvent()
     data class SetStartTime(val time: Long) : AppointmentEvent()
     data class SetEndDate(val date: Long) : AppointmentEvent()

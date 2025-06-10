@@ -1,10 +1,14 @@
 package com.realestateassistant.pro.di
 
+import com.realestateassistant.pro.data.local.dao.BookingDao
 import com.realestateassistant.pro.data.local.dao.PropertyDao
 import com.realestateassistant.pro.data.mapper.PropertyMapper
 import com.realestateassistant.pro.data.repository.PropertyRepositoryImpl
 import com.realestateassistant.pro.domain.repository.PropertyRepository
 import com.realestateassistant.pro.domain.usecase.*
+import com.realestateassistant.pro.domain.usecase.property.GetPropertiesByStatusUseCase
+import com.realestateassistant.pro.domain.usecase.property.GetPropertiesWithBookingsUseCase
+import com.realestateassistant.pro.domain.usecase.property.UpdatePropertyStatusesUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,9 +38,10 @@ object PropertyModule {
     @Singleton
     fun providePropertyRepository(
         propertyDao: PropertyDao,
-        propertyMapper: PropertyMapper
+        propertyMapper: PropertyMapper,
+        bookingDao: BookingDao
     ): PropertyRepository {
-        return PropertyRepositoryImpl(propertyDao, propertyMapper)
+        return PropertyRepositoryImpl(propertyDao, propertyMapper, bookingDao)
     }
     
     /**
@@ -52,7 +57,37 @@ object PropertyModule {
             getProperty = GetProperty(repository),
             getAllProperties = GetAllProperties(repository),
             observeAllProperties = ObserveAllProperties(repository),
-            observePropertiesByType = ObservePropertiesByType(repository)
+            observePropertiesByType = ObservePropertiesByType(repository),
+            getPropertiesByStatus = GetPropertiesByStatusUseCase(repository),
+            getPropertiesWithBookings = GetPropertiesWithBookingsUseCase(repository),
+            updatePropertyStatuses = UpdatePropertyStatusesUseCase(repository)
         )
+    }
+    
+    /**
+     * Предоставляет отдельный юз-кейс для обновления статусов недвижимости
+     */
+    @Provides
+    @Singleton
+    fun provideUpdatePropertyStatusesUseCase(repository: PropertyRepository): UpdatePropertyStatusesUseCase {
+        return UpdatePropertyStatusesUseCase(repository)
+    }
+    
+    /**
+     * Предоставляет отдельный юз-кейс для получения объектов по статусу
+     */
+    @Provides
+    @Singleton
+    fun provideGetPropertiesByStatusUseCase(repository: PropertyRepository): GetPropertiesByStatusUseCase {
+        return GetPropertiesByStatusUseCase(repository)
+    }
+    
+    /**
+     * Предоставляет отдельный юз-кейс для получения объектов с бронированиями
+     */
+    @Provides
+    @Singleton
+    fun provideGetPropertiesWithBookingsUseCase(repository: PropertyRepository): GetPropertiesWithBookingsUseCase {
+        return GetPropertiesWithBookingsUseCase(repository)
     }
 } 

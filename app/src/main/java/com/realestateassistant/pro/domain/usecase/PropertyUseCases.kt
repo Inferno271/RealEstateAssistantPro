@@ -2,6 +2,9 @@ package com.realestateassistant.pro.domain.usecase
 
 import com.realestateassistant.pro.domain.model.Property
 import com.realestateassistant.pro.domain.repository.PropertyRepository
+import com.realestateassistant.pro.domain.usecase.property.GetPropertiesByStatusUseCase
+import com.realestateassistant.pro.domain.usecase.property.GetPropertiesWithBookingsUseCase
+import com.realestateassistant.pro.domain.usecase.property.UpdatePropertyStatusesUseCase
 import kotlinx.coroutines.flow.Flow
 
 class AddProperty(private val repository: PropertyRepository) {
@@ -54,5 +57,8 @@ data class PropertyUseCases(
     val getProperty: GetProperty,
     val getAllProperties: GetAllProperties,
     val observeAllProperties: ObserveAllProperties,
-    val observePropertiesByType: ObservePropertiesByType
+    val observePropertiesByType: ObservePropertiesByType,
+    val getPropertiesByStatus: GetPropertiesByStatusUseCase,
+    val getPropertiesWithBookings: GetPropertiesWithBookingsUseCase,
+    val updatePropertyStatuses: UpdatePropertyStatusesUseCase
 ) 

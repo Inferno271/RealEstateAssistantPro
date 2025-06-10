@@ -592,17 +592,7 @@ data class AdditionalService(
 )
 ```
 
-### User (Пользователь)
 
-```kotlin
-data class User(
-    val id: String = "",
-    val email: String = "",
-    val name: String = "",
-    val phone: String = "",
-    val photoUrl: String = ""
-)
-```
 
 ### SeasonalPrice (Сезонная цена)
 
@@ -2742,18 +2732,684 @@ object NavigationItems {
 ### Модели календаря
 
 - `CalendarView` - компонент календаря для выбора даты
-- `BookingCalendarScreen` - экран календаря бронирований
-- `BookingListScreen` - экран списка бронирований
-- `BookingDetailDialog` - диалог с деталями бронирования
-- `BookingFormDialog` - диалог для создания/редактирования бронирования
+- `BookingCalendarScreen` - экран календаря бронирований с отображением адреса выбранного объекта в заголовке
+- `BookingListScreen` - экран списка бронирований с фильтрацией и сортировкой
+
+### Компоненты календаря
+
+В календаре бронирований используются следующие компоненты:
+
+```kotlin
+@Composable
+fun BookingCalendarCompat(
+    bookings: List<Booking>,
+    selectedDate: LocalDate? = null,
+    selectedEndDate: LocalDate? = null,
+    onDateSelected: (LocalDate) -> Unit,
+    onBookingSelected: (Booking) -> Unit,
+    modifier: Modifier = Modifier
+)
+```
+
+Для удобства пользователей реализована возможность отображения адреса объекта недвижимости в заголовке экрана календаря:
+
+```kotlin
+// Отображение адреса объекта в заголовке экрана календаря бронирований
+TopAppBar(
+    title = { 
+        Column {
+            Text("Календарь бронирований") 
+            val property = state.selectedProperty
+            if (property != null) {
+                Text(
+                    text = property.address,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    },
+    navigationIcon = {
+        IconButton(onClick = onNavigateBack) {
+            Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
+        }
+    }
+)
+```
+
+### Улучшенная работа с объектами в бронировании
+
+#### Поиск объектов в диалоге выбора
+
+Для удобства работы с большим количеством объектов недвижимости реализован диалог с функцией поиска:
+
+```kotlin
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PropertySelectorDialog(
+    properties: List<Property>,
+    onPropertySelected: (String?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.9f),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Заголовок диалога
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Выберите объект",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Закрыть")
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Поле поиска
+                var searchQuery by remember { mutableStateOf("") }
+                val filteredProperties = remember(searchQuery, properties) {
+                    if (searchQuery.isBlank()) {
+                        properties
+                    } else {
+                        properties.filter { property ->
+                            property.address.contains(searchQuery, ignoreCase = true)
+                        }
+                    }
+                }
+                
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Поиск по адресу") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Очистить")
+                            }
+                        }
+                    },
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Кнопка "Все объекты"
+                OutlinedButton(
+                    onClick = { 
+                        onPropertySelected(null)
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Все объекты")
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Список объектов
+                if (filteredProperties.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Нет объектов, соответствующих запросу",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        items(filteredProperties) { property ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clickable {
+                                        onPropertySelected(property.id)
+                                        onDismiss()
+                                    },
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp)
+                                ) {
+                                    Text(
+                                        text = property.address,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        // Цена
+                                        val price = property.dailyPrice ?: property.monthlyRent
+                                        if (price != null) {
+                                            Text(
+                                                text = "${price.toInt()} ₽" + 
+                                                      if (property.dailyPrice != null) "/сутки" else "/месяц",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                        
+                                        // Площадь и комнаты
+                                        Text(
+                                            text = "${property.area} м² • ${property.roomsCount} комн.",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+Данный компонент позволяет:
+- Осуществлять поиск объектов по адресу
+- Выбирать опцию "Все объекты" для сброса фильтра
+- Просматривать расширенную информацию об объекте (адрес, цена, площадь, количество комнат)
+- Получать уведомление, если по поисковому запросу ничего не найдено
+
+## Интеграция с картами Яндекс
+
+Приложение интегрирует Yandex MapKit для отображения местоположения объектов недвижимости на карте. Интеграция осуществлена с использованием Jetpack Compose.
+
+### Инициализация MapKit
+
+В основном классе приложения инициализируется MapKit с использованием API-ключа:
+
+```kotlin
+// RealEstateApplication.kt
+override fun onCreate() {
+    // ...
+    
+    // Инициализация Yandex MapKit
+    MapKitFactory.setApiKey("80b06c04-6156-4dfd-a086-2cee0b05fdb8")
+    
+    // ...
+}
+```
+
+### Компоненты карты
+
+#### PropertyMapView
+
+Основной компонент для отображения объекта недвижимости на карте:
+
+```kotlin
+@Composable
+fun PropertyMapView(
+    address: String,
+    latitude: Double?,
+    longitude: Double?,
+    markerColor: Color = Color(0xFF2196F3),
+    modifier: Modifier = Modifier
+) {
+    // Реализация компонента с Yandex MapKit
+}
+```
+
+#### Геокодирование адресов
+
+Для преобразования адресов в координаты используется сервис геокодирования:
+
+```kotlin
+object YandexGeocoderService {
+    private const val API_KEY = "80b06c04-6156-4dfd-a086-2cee0b05fdb8"
+    private const val BASE_URL = "https://geocode-maps.yandex.ru/1.x/"
+    
+    // Кэш для геокодирования
+    private val geocodeCache = HashMap<String, Pair<Double, Double>>()
+    
+    /**
+     * Получает координаты (широта, долгота) по адресу
+     * Возвращает пару (latitude, longitude) или null, если адрес не найден
+     */
+    suspend fun getCoordinates(address: String): Pair<Double, Double>? {
+        // ... реализация геокодирования
+    }
+}
+```
+
+### Интеграция с объектами недвижимости
+
+При создании и редактировании объектов недвижимости карта помогает визуализировать местоположение и уточнять координаты:
+
+```kotlin
+// При изменении адреса автоматически выполняется геокодирование
+LaunchedEffect(address) {
+    if (property.latitude == null && property.longitude == null && address.isNotEmpty()) {
+        try {
+            val coordinates = YandexGeocoderService.getCoordinates(address)
+            coordinates?.let {
+                latitude = it.first
+                longitude = it.second
+            }
+        } catch (e: Exception) {
+            // Обработка ошибки
+        }
+    }
+}
+```
+
+## Экспорт данных в PDF
+
+Приложение поддерживает экспорт данных об объектах недвижимости в формат PDF для создания отчетов и коммерческих предложений.
+
+### Архитектура системы экспорта PDF
+
+#### PdfExportService
+
+Основной сервис для формирования PDF-документов:
+
+```kotlin
+@Singleton
+class PdfExportService @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+    /**
+     * Формирует содержимое PDF-документа с данными объекта недвижимости
+     */
+    fun drawPropertyContent(document: PdfDocument, property: Property, images: List<Bitmap>) {
+        // ... реализация генерации PDF
+    }
+    
+    /**
+     * Рисует шапку документа
+     */
+    private fun drawHeader(canvas: Canvas, title: String, date: String, startY: Float, pageNumber: Int): Float {
+        // ... реализация отрисовки шапки
+    }
+    
+    // Другие вспомогательные методы
+}
+```
+
+#### ExportPropertyToPdfUseCase
+
+Use case для экспорта объекта недвижимости в PDF:
+
+```kotlin
+class ExportPropertyToPdfUseCase @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val imageRepository: ImageRepository,
+    private val documentRepository: DocumentRepository,
+    private val pdfExportService: PdfExportService,
+    private val storageHelper: StorageHelper
+) {
+    /**
+     * Генерирует PDF-документ с информацией о объекте недвижимости.
+     *
+     * @param property Объект недвижимости
+     * @return Result, содержащий Uri для доступа к сгенерированному PDF файлу, либо ошибку
+     */
+    suspend fun invoke(property: Property): Result<Uri> = withContext(Dispatchers.IO) {
+        // ... реализация экспорта в PDF
+    }
+    
+    /**
+     * Генерирует имя файла на основе характеристик объекта
+     */
+    private fun generateFileName(property: Property): String {
+        // ... генерация имени файла
+    }
+}
+```
+
+#### PdfExportViewModel
+
+ViewModel для управления экспортом из UI:
+
+```kotlin
+@HiltViewModel
+class PdfExportViewModel @Inject constructor(
+    private val exportPropertyToPdfUseCase: ExportPropertyToPdfUseCase
+) : ViewModel() {
+    
+    /**
+     * Состояния процесса экспорта PDF
+     */
+    sealed class ExportState {
+        object Initial : ExportState()
+        object Loading : ExportState()
+        data class Success(val uri: Uri) : ExportState()
+        data class Error(val message: String) : ExportState()
+    }
+    
+    // Состояние экспорта
+    private val _exportState = MutableStateFlow<ExportState>(ExportState.Initial)
+    val exportState: StateFlow<ExportState> = _exportState
+    
+    /**
+     * Экспортирует информацию об объекте недвижимости в PDF
+     *
+     * @param property Объект недвижимости для экспорта
+     */
+    fun exportPropertyToPdf(property: Property) {
+        // ... инициирование экспорта и обновление состояний
+    }
+}
+```
+
+### Структура PDF-документа
+
+Сгенерированный PDF-документ содержит:
+
+1. Шапку с логотипом, датой и номером страницы
+2. Общую информацию об объекте (адрес, тип, площадь, цена)
+3. Фотографии объекта недвижимости
+4. Подробные характеристики объекта
+5. Дополнительную информацию (описание, заметки)
+6. Контактную информацию агента
+7. Подвал с QR-кодом для быстрого доступа
+
+### Поддержка платформ и разрешений
+
+Экспорт PDF поддерживает различные версии Android:
+- Для Android 10+ используется API MediaStore для сохранения в общую директорию Downloads
+- Для более ранних версий используются стандартные методы сохранения файлов
+- Имеется встроенный менеджер разрешений для запроса доступа к хранилищу
+
+### Предоставление доступа к PDF
+
+После генерации PDF файла приложение предлагает пользователю открыть его:
+
+```kotlin
+fun openPdfFile(context: Context, uri: Uri) {
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, "application/pdf")
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+    }
+    
+    val chooserIntent = Intent.createChooser(intent, "Открыть PDF с помощью")
+    chooserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    context.startActivity(chooserIntent)
+}
+```
+
+### Улучшенное открытие PDF и работа с уведомлениями
+
+В приложении реализован надежный механизм открытия PDF файлов, в том числе из уведомлений, что решает проблему "device has no application to view" при попытке открыть файл:
+
+```kotlin
+/**
+ * Открывает сгенерированный PDF файл, используя наиболее совместимый подход
+ */
+fun openPdf(context: Context, uri: Uri) {
+    Log.d("PdfExportViewModel", "Пытаемся открыть PDF: $uri")
+    
+    // Пробуем разные подходы последовательно
+    if (!tryOpenWithExplicitChooser(context, uri) && 
+        !tryOpenWithGenericIntent(context, uri) &&
+        !tryOpenWithSendAction(context, uri)) {
+        
+        // Если все методы не сработали, сообщаем пользователю
+        Toast.makeText(
+            context,
+            "На устройстве не найдено приложение для просмотра PDF. Установите PDF-ридер.",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+}
+
+/**
+ * Пытается открыть PDF с явным выбором приложения
+ */
+private fun tryOpenWithExplicitChooser(context: Context, uri: Uri): Boolean {
+    return try {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/pdf")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        
+        val chooserIntent = Intent.createChooser(intent, "Открыть PDF с помощью")
+        chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        
+        context.startActivity(chooserIntent)
+        Log.d("PdfExportViewModel", "PDF открыт через явный выбор приложения")
+        true
+    } catch (e: Exception) {
+        Log.e("PdfExportViewModel", "Ошибка при открытии PDF через выбор приложения", e)
+        false
+    }
+}
+```
+
+Система также обеспечивает корректное открытие PDF файлов из уведомлений:
+
+1. Используется FileProvider для предоставления доступа к файлам через провайдер контента
+2. Добавлены корректные флаги для Intent: `FLAG_GRANT_READ_URI_PERMISSION`
+3. Реализована проверка наличия приложений для открытия PDF
+4. Добавлена иерархия запасных методов открытия файлов
+
+#### Конфигурация FileProvider
+
+В AndroidManifest.xml настроен FileProvider для безопасного доступа к PDF файлам:
+
+```xml
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="${applicationId}.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths" />
+</provider>
+```
+
+А в файле `file_paths.xml` определены доступные пути:
+
+```xml
+<paths>
+    <external-path name="external_files" path="." />
+    <external-files-path name="external_files_path" path="." />
+    <cache-path name="cached_files" path="." />
+    <files-path name="files" path="." />
+    <external-cache-path name="external_cache" path="." />
+</paths>
+```
+
+#### Взаимодействие с уведомлениями
+
+При генерации PDF из уведомления:
+
+1. Уведомление передает идентификатор объекта недвижимости
+2. Система загружает данные объекта с помощью соответствующих репозиториев
+3. Генерируется PDF с помощью `ExportPropertyToPdfUseCase`
+4. Полученный URI (path) файла конвертируется в URI контент-провайдера
+5. Intent для открытия PDF формируется с правильными флагами и типом
+
+Это обеспечивает бесшовное взаимодействие между компонентами приложения и системными компонентами Android, гарантируя надежное открытие PDF файлов на всех поддерживаемых версиях Android.
+
+## Система логирования и отладки
+
+В приложении реализована комплексная система логирования и отладки, которая помогает обнаруживать и исправлять проблемы в различных средах выполнения.
+
+### Timber для управления логами
+
+Проект использует библиотеку Timber для упрощения управления логами:
+
+```kotlin
+// Инициализация Timber в Application классе
+override fun onCreate() {
+    // ...
+    
+    // Инициализация логирования с Timber
+    if (DEBUG) {
+        Timber.plant(Timber.DebugTree())
+    }
+}
+```
+
+Основные преимущества использования Timber:
+
+1. Автоматическое определение тегов на основе имен классов
+2. Отсутствие логов в релизных версиях
+3. Простой синтаксис для логирования
+
+```kotlin
+// Пример использования Timber в репозитории
+override suspend fun addBooking(booking: Booking): Result<Booking> {
+    return try {
+        val bookingEntity = BookingMapper.toEntity(booking)
+        bookingDao.insertBooking(bookingEntity)
+        Result.success(BookingMapper.toDomain(bookingEntity))
+    } catch (e: Exception) {
+        Timber.e(e, "Ошибка при добавлении бронирования")
+        Result.failure(e)
+    }
+}
+```
+
+### StrictMode для выявления проблем производительности
+
+Приложение использует StrictMode для выявления потенциальных проблем производительности и потоков во время разработки:
+
+```kotlin
+/**
+ * Включает строгий режим для обнаружения блокировок основного потока и других проблем
+ * Используется только в режиме отладки
+ */
+private fun enableStrictModeForDebug() {
+    Log.d(TAG, "Включение StrictMode для отладки потоков")
+    
+    // Настройка политики для потоков - обнаруживает блокирующие операции в основном потоке
+    StrictMode.setThreadPolicy(
+        StrictMode.ThreadPolicy.Builder()
+            .detectDiskReads()
+            .detectDiskWrites()
+            .detectNetwork()
+            .detectCustomSlowCalls()
+            .permitDiskReads() // Разрешаем чтение с диска для предотвращения блокировок UI
+            .penaltyLog() // Записываем нарушения в logcat
+            .build()
+    )
+    
+    // Настройка политики для виртуальной машины - обнаруживает утечки ресурсов
+    StrictMode.setVmPolicy(
+        StrictMode.VmPolicy.Builder()
+            .detectLeakedSqlLiteObjects()
+            .detectLeakedClosableObjects()
+            .detectLeakedRegistrationObjects()
+            .detectActivityLeaks()
+            .detectCleartextNetwork()
+            .detectContentUriWithoutPermission()
+            .detectUnsafeIntentLaunch()
+            .penaltyLog()
+            .build()
+    )
+}
+```
+
+### Правила логирования
+
+В приложении применяются следующие правила для логирования:
+
+1. Использование префикса `REA_` для тегов логов для простоты фильтрации
+2. Разделение логов по уровням: DEBUG, INFO, WARNING, ERROR
+3. Логирование ключевых событий и операций:
+   - Критические ошибки и исключения
+   - Важные пользовательские действия
+   - Время загрузки экранов и компонентов
+   - Использование основных функций
+
+### Конфиденциальность в логировании
+
+Для обеспечения безопасности данных применяются следующие практики:
+
+1. Никогда не логировать личные данные пользователей и клиентов
+2. Анонимизировать идентификаторы в логах, когда это необходимо
+3. Предоставлять возможность отключения сбора аналитических данных
+4. Использовать обобщенные сообщения для логирования ошибок аутентификации
+
+### Асинхронная инициализация компонентов
+
+Для ускорения запуска приложения и предотвращения блокировки основного потока в проекте используется асинхронная инициализация тяжелых компонентов с помощью Jetpack App Startup:
+
+```kotlin
+/**
+ * Инициализатор приложения для Jetpack App Startup.
+ * Выполняет инициализацию базы данных и других критических компонентов
+ * в фоновом потоке при запуске приложения.
+ */
+class ApplicationInitializer : Initializer<Unit> {
+    private val initializerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    
+    override fun create(context: Context) {
+        // Запуск инициализации в фоновом потоке
+        initializerScope.launch {
+            // Инициализация базы данных
+            val entryPoint = EntryPointAccessors.fromApplication(
+                context, 
+                ApplicationInitializerEntryPoint::class.java
+            )
+            
+            try {
+                // Получение и инициализация компонентов
+                val database = AppDatabase.getInstance(
+                    context,
+                    entryPoint.databaseEncryption()
+                )
+                
+                // Проверка связи с базой данных
+                database.openHelper.readableDatabase
+                Log.d(TAG, "База данных успешно инициализирована")
+            } catch (e: Exception) {
+                Log.e(TAG, "Ошибка при инициализации базы данных", e)
+                // Обработка ошибок инициализации
+            }
+        }
+    }
+    
+    override fun dependencies(): List<Class<out Initializer<*>>> = emptyList()
+}
+```
+
+Эти инструменты и практики обеспечивают стабильную и безопасную работу приложения, упрощают процесс отладки и позволяют оперативно выявлять потенциальные проблемы на этапе разработки.
 
 ## Технический долг и планы развития
 
 ### Технический долг
 
 1. **Оптимизация производительности**
-   - Оптимизация загрузки и кэширования изображений
-   - Пагинация для больших списков объектов и клиентов
+   - Оптимизация загрузки и кэширования изображений для более быстрого отображения
+   - Внедрение пагинации для больших списков объектов и клиентов
    - Оптимизация главного экрана для улучшения скорости загрузки и уменьшения использования ресурсов
 
 2. **Улучшение UI/UX**
@@ -3625,74 +4281,1943 @@ object DatabaseModule {
 
 1. **Оптимизация производительности**
    - Оптимизация загрузки и кэширования изображений для более быстрого отображения
-   - Внедрение пагинации для больших списков объектов, клиентов и бронирований
-   - Оптимизация запросов к базе данных для сложных операций фильтрации
-   - Улучшение производительности календаря бронирований для объектов с большим количеством бронирований
+   - Внедрение пагинации для больших списков объектов и клиентов
+   - Оптимизация главного экрана для улучшения скорости загрузки и уменьшения использования ресурсов
 
 2. **Улучшение UI/UX**
-   - Доработка отзывчивости UI для разных размеров экранов и ориентаций
-   - Улучшение доступности приложения для пользователей с ограниченными возможностями
-   - Добавление анимаций для более плавных переходов между экранами
-   - Улучшение фильтров и поиска для всех основных сущностей
+   - Доработка отзывчивости UI для разных размеров экранов
+   - Улучшение доступности приложения
+   - Добавление анимаций для улучшения UX
 
-3. **Расширение тестового покрытия**
-   - Написание юнит-тестов для репозиториев и юзкейсов
-   - Добавление UI-тестов для основных пользовательских сценариев
-   - Реализация интеграционных тестов для проверки работы базы данных
-   - Тестирование корректности миграций базы данных
-
-4. **Рефакторинг кода**
-   - Унификация обработки ошибок и исключений
-   - Оптимизация инъекции зависимостей для более эффективной загрузки
-   - Улучшение структуры навигации с использованием вложенных графов
-   - Улучшение обработки жизненного цикла в Compose компонентах
+3. **Тесты**
+   - Покрытие основных компонентов UI тестами
+   - Написание unit-тестов для репозиториев и юзкейсов
+   - Интеграционные тесты для проверки работы базы данных
 
 ### Планы развития
 
-1. **Расширение функциональности бронирований**
-   - Внедрение системы онлайн-платежей для предоплаты бронирований
-   - Интеграция с календарями Google/Outlook для синхронизации встреч и бронирований
-   - Добавление системы оповещений и напоминаний о предстоящих бронированиях
-   - Реализация полноценной системы управления сезонными ценами
+1. **Разработка полноценных модулей для клиентов и показов**
+   - Реализация полного функционала раздела клиентов по аналогии с объектами:
+     - Создание детальной формы добавления/редактирования клиентов
+     - Разработка удобных карточек клиентов для списка
+     - Детальная страница с информацией о клиенте
+     - Система связи клиентов с подходящими объектами
+   - Разработка модуля показов/встреч:
+     - Форма создания и редактирования показов
+     - Календарь показов с разными представлениями
+     - Карточки показов с возможностью быстрого доступа
+     - Система уведомлений о предстоящих показах
 
-2. **Улучшение работы с клиентами**
-   - Расширение системы рекомендаций объектов для клиентов
-   - Внедрение системы ранжирования клиентов по потенциалу и приоритету
-   - Добавление функции автоматического формирования коммерческих предложений
-   - Реализация системы отслеживания истории взаимодействия с клиентами
-
-3. **Аналитика и отчеты**
-   - Создание панели с ключевыми показателями эффективности
-   - Генерация отчетов по доходам и загрузке объектов
-   - Прогнозирование спроса на основе исторических данных
+2. **Новые функции**
+   - Добавление аналитического модуля для отслеживания эффективности работы
    - Экспорт данных в различные форматы (PDF, Excel)
 
-4. **Облачная синхронизация**
-   - Разработка бэкенда на Firebase/Supabase для хранения данных в облаке
-   - Реализация механизма синхронизации локальной базы с облаком
-   - Внедрение возможности работы в офлайн-режиме с последующей синхронизацией
-   - Разработка системы управления конфликтами при синхронизации
+3. **Улучшение существующих функций**
+   - Расширенный поиск и фильтрация объектов
+   - Интеллектуальный поиск по всем сущностям приложения
+   - Система тегов для объектов, клиентов и встреч
+   - Продвинутая сортировка с возможностью настройки пользователем
+   - Улучшенный календарь встреч с напоминаниями
+   - Система заметок для объектов и клиентов
+   - Чек-листы для просмотров объектов
+   - Расширение функциональности карт с возможностью поиска объектов на карте
 
-5. **Расширение функциональности карт**
-   - Отображение всех объектов на одной карте с кластеризацией
-   - Интеграция с маршрутами для планирования показов
-   - Поиск объектов недвижимости в определенном радиусе от заданной точки
-   - Анализ и визуализация инфраструктуры района (школы, магазины, транспорт)
+4. **Технические улучшения**
+   - Реализация синхронизации данных с облаком (Supabase):
+     - Настройка API для синхронизации
+     - Механизм разрешения конфликтов при синхронизации
+     - Возможность работы в офлайн-режиме с последующей синхронизацией
+   - Внедрение многопользовательского режима
+   - Улучшение безопасности и защиты данных
 
-6. **Многопользовательский режим**
-   - Реализация ролевой модели доступа (администратор, агент, помощник)
-   - Разграничение доступа к объектам и клиентам
-   - Система уведомлений и коммуникации между пользователями
-   - Отслеживание активности пользователей в системе
+## Безопасность и шифрование данных
 
-7. **Интеграция со сторонними сервисами**
-   - Подключение к популярным порталам недвижимости для публикации объявлений
-   - Интеграция с системами CRM для управления контактами
-   - Подключение к сервисам правовой информации для проверки документов
-   - Интеграция с сервисами электронной подписи для оформления договоров
+В приложении реализована система безопасности для защиты конфиденциальных данных пользователей и объектов недвижимости.
 
-8. **Мобильная и веб-версии**
-   - Разработка веб-версии с использованием Kotlin Multiplatform
-   - Синхронизация данных между мобильной и веб-версиями
-   - Адаптация интерфейса под планшеты и складные устройства
-   - Оптимизация работы с большими объемами данных на разных устройствах
+### Шифрование базы данных
+
+Основой системы безопасности является шифрование локальной базы данных с использованием SQLCipher:
+
+```kotlin
+// Пример конфигурации шифрованной базы данных в AppDatabase
+val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+val factory = SupportFactory(passphrase)
+
+Room.databaseBuilder(
+    context.applicationContext,
+    AppDatabase::class.java,
+    DATABASE_NAME
+)
+.openHelperFactory(factory)
+.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+.build()
+```
+
+### Компоненты безопасности
+
+- `DatabaseEncryption` - класс для управления ключами шифрования и паролями базы данных
+- Интеграция с Android Keystore для безопасного хранения криптографических ключей
+- Механизмы восстановления при повреждении ключей шифрования
+
+```kotlin
+class DatabaseEncryption @Inject constructor(
+    private val context: Context
+) {
+    companion object {
+        private const val KEY_ALIAS = "database_encryption_key"
+        private const val PREF_NAME = "database_security_prefs"
+        private const val PREF_PASSWORD = "database_password"
+        private const val DEFAULT_PASSWORD = "default_secure_password"
+    }
+    
+    private val keyStore by lazy {
+        KeyStore.getInstance("AndroidKeyStore").apply {
+            load(null)
+        }
+    }
+    
+    private val securePreferences by lazy {
+        EncryptedSharedPreferences.create(
+            PREF_NAME,
+            MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build(),
+            context,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
+    
+    /**
+     * Получает пароль для шифрования базы данных
+     */
+    fun getDatabasePassword(): String {
+        // Если пароль уже сохранен, возвращаем его
+        if (securePreferences.contains(PREF_PASSWORD)) {
+            return securePreferences.getString(PREF_PASSWORD, DEFAULT_PASSWORD) ?: DEFAULT_PASSWORD
+        }
+        
+        // Генерируем новый пароль и сохраняем его
+        val password = generateSecurePassword()
+        securePreferences.edit().putString(PREF_PASSWORD, password).apply()
+        return password
+    }
+    
+    /**
+     * Генерирует криптографически стойкий пароль
+     */
+    private fun generateSecurePassword(): String {
+        val bytes = ByteArray(32)
+        SecureRandom().nextBytes(bytes)
+        return Base64.encodeToString(bytes, Base64.NO_WRAP)
+    }
+    
+    /**
+     * Сбрасывает пароль и ключи шифрования в случае проблем
+     */
+    fun resetSecurityKeys() {
+        try {
+            // Удаляем ключ из KeyStore
+            if (keyStore.containsAlias(KEY_ALIAS)) {
+                keyStore.deleteEntry(KEY_ALIAS)
+            }
+            
+            // Сбрасываем пароль
+            securePreferences.edit().remove(PREF_PASSWORD).apply()
+            
+            // Генерируем новый пароль
+            val newPassword = generateSecurePassword()
+            securePreferences.edit().putString(PREF_PASSWORD, newPassword).apply()
+        } catch (e: Exception) {
+            Log.e("DatabaseEncryption", "Ошибка при сбросе ключей безопасности", e)
+            
+            // В случае фатальной ошибки пытаемся сбросить все настройки
+            context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                .edit().clear().apply()
+        }
+    }
+}
+```
+
+### Защита конфиденциальных данных
+
+Приложение обеспечивает безопасность через:
+
+- Шифрование всех конфиденциальных данных в базе данных с использованием SQLCipher
+- Использование EncryptedSharedPreferences для хранения чувствительных настроек
+- Механизмы очистки кэша и временных файлов при выходе из приложения
+- Защиту от экспорта незашифрованных данных
+
+### Безопасность медиафайлов
+
+Для защиты фотографий и документов применяются следующие меры:
+
+- Хранение в приватной директории приложения, недоступной другим приложениям
+- Контролируемый доступ к файлам через FileProvider
+- Безопасное удаление файлов при удалении связанных с ними записей
+- Шифрование особо важных документов с помощью AES шифрования
+
+### Аварийное восстановление
+
+В приложении реализован механизм восстановления при нарушении целостности криптографических ключей или повреждении базы данных:
+
+```kotlin
+try {
+    // Используем зашифрованную базу данных
+    database.openHelper.readableDatabase
+} catch (e: Exception) {
+    // Обрабатываем ошибки целостности ключей
+    if (e is AEADBadTagException || e.cause is AEADBadTagException) {
+        // Сброс повреждённых ключей и восстановление хранилища
+        databaseEncryption.resetSecurityKeys()
+        
+        // Пытаемся пересоздать базу данных
+        resetDatabaseFiles(context)
+        
+        // Создаем новый экземпляр базы данных с новыми ключами
+        createDatabaseWithNewKeys(context, databaseEncryption)
+    } else {
+        // Обработка других ошибок базы данных
+        Log.e(TAG, "Ошибка при доступе к базе данных", e)
+        
+        // Регистрируем ошибку в системе аналитики
+        reportDatabaseError(e)
+        
+        // Уведомляем пользователя о проблеме
+        showDatabaseErrorNotification(context)
+    }
+}
+```
+
+## Бронирования и календарь
+
+Модуль бронирований предоставляет функциональность для управления бронированиями объектов недвижимости как для долгосрочной, так и для посуточной аренды.
+
+### Модель бронирования
+
+Модель `Booking` объединяет информацию о бронировании, включая даты, статус, клиента и финансовую информацию:
+
+```kotlin
+data class Booking(
+    val id: String = "",
+    val propertyId: String,
+    val clientId: String? = null,
+    val startDate: Long,
+    val endDate: Long,
+    val status: BookingStatus = BookingStatus.PENDING,
+    val paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
+    val totalAmount: Double,
+    val depositAmount: Double? = null,
+    val notes: String? = null,
+    val guestsCount: Int? = null,
+    val checkInTime: String? = null,
+    val checkOutTime: String? = null,
+    val includedServices: List<String> = emptyList(),
+    val additionalServices: List<AdditionalService> = emptyList(),
+    val rentPeriodMonths: Int? = null,
+    val monthlyPaymentAmount: Double? = null,
+    val utilityPayments: Boolean? = null,
+    val contractType: String? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+```
+
+### Статусы бронирования
+
+```kotlin
+enum class BookingStatus {
+    PENDING,    // Ожидает подтверждения
+    CONFIRMED,  // Подтверждено
+    CANCELLED,  // Отменено
+    COMPLETED,  // Завершено
+    NO_SHOW     // Клиент не явился
+}
+
+enum class PaymentStatus {
+    UNPAID,         // Не оплачено
+    PARTIALLY_PAID, // Частично оплачено
+    FULLY_PAID,     // Полностью оплачено
+    REFUNDED,       // Возвращено
+    DEPOSIT_PAID    // Оплачен только депозит
+}
+```
+
+### Репозиторий бронирований
+
+Интерфейс `BookingRepository` предоставляет методы для работы с бронированиями:
+
+```kotlin
+interface BookingRepository {
+    suspend fun addBooking(booking: Booking): Result<Booking>
+    suspend fun updateBooking(booking: Booking): Result<Unit>
+    suspend fun deleteBooking(bookingId: String): Result<Unit>
+    suspend fun getBooking(bookingId: String): Result<Booking>
+    suspend fun getAllBookings(): Result<List<Booking>>
+    fun observeAllBookings(): Flow<List<Booking>>
+    fun observeBookingsByProperty(propertyId: String): Flow<List<Booking>>
+    fun observeBookingsByClient(clientId: String): Flow<List<Booking>>
+    fun observeBookingsInDateRange(fromDate: Long, toDate: Long): Flow<List<Booking>>
+    fun observeBookingsForPropertyInDateRange(propertyId: String, fromDate: Long, toDate: Long): Flow<List<Booking>>
+    suspend fun hasBookingConflicts(propertyId: String, fromDate: Long, toDate: Long): Result<Boolean>
+    suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<Unit>
+    suspend fun updatePaymentStatus(bookingId: String, status: PaymentStatus): Result<Unit>
+    suspend fun autoUpdateBookingStatuses(): Result<Int>
+}
+```
+
+### Календарь бронирований
+
+Календарь бронирований позволяет визуализировать занятые и свободные даты для объектов недвижимости, а также создавать и управлять бронированиями.
+
+#### BookingCalendarScreen
+
+```kotlin
+@Composable
+fun BookingCalendarScreen(
+    propertyId: String,
+    onNavigateBack: () -> Unit,
+    viewModel: BookingCalendarViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    
+    // Загружаем бронирования для выбранного объекта
+    LaunchedEffect(propertyId) {
+        viewModel.handleEvent(BookingCalendarEvent.SelectProperty(propertyId))
+    }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Календарь бронирований") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, "Назад")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Отображение календаря с отмеченными датами бронирований
+            BookingCalendarView(
+                bookings = state.bookings,
+                selectedStartDate = state.selectedStartDate,
+                selectedEndDate = state.selectedEndDate,
+                onDateSelected = { date ->
+                    viewModel.handleEvent(BookingCalendarEvent.SelectDate(date))
+                },
+                onDateRangeConfirmed = {
+                    viewModel.handleEvent(BookingCalendarEvent.ConfirmDateSelection)
+                }
+            )
+            
+            // Отображение доступных окон для бронирования
+            if (state.availableTimeSlots.isNotEmpty()) {
+                Text(
+                    text = "Доступные периоды для бронирования:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    items(state.availableTimeSlots) { slot ->
+                        AvailableTimeSlotItem(
+                            slot = slot,
+                            onClick = {
+                                viewModel.handleEvent(
+                                    BookingCalendarEvent.UpdateDates(
+                                        start = slot.startDate,
+                                        end = slot.endDate
+                                    )
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Список бронирований для выбранного объекта
+            Text(
+                text = "Бронирования:",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            
+            if (state.bookings.isEmpty()) {
+                Text(
+                    text = "Нет активных бронирований",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .align(Alignment.CenterHorizontally)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    items(state.bookings) { booking ->
+                        BookingListItem(
+                            booking = booking,
+                            onClick = {
+                                viewModel.handleEvent(BookingCalendarEvent.SelectBooking(booking))
+                                viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Кнопка создания бронирования
+            Button(
+                onClick = {
+                    viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Создать бронирование")
+            }
+        }
+        
+        // Диалог создания/редактирования бронирования
+        if (state.isBookingDialogVisible) {
+            BookingFormDialog(
+                propertyId = propertyId,
+                startDate = state.selectedStartDate,
+                endDate = state.selectedEndDate,
+                clients = state.clients,
+                selectedClient = state.selectedClient,
+                editing = !state.isInfoMode,
+                booking = state.selectedBooking,
+                onClientSelected = { client ->
+                    viewModel.handleEvent(BookingCalendarEvent.SelectClient(client))
+                },
+                onSave = { clientId, startDate, endDate, amount, guestsCount, notes ->
+                    if (state.selectedBooking != null && !state.isInfoMode) {
+                        viewModel.handleEvent(
+                            BookingCalendarEvent.UpdateBooking(
+                                state.selectedBooking.id,
+                                clientId,
+                                startDate,
+                                endDate,
+                                amount,
+                                guestsCount,
+                                notes
+                            )
+                        )
+                    } else {
+                        viewModel.handleEvent(
+                            BookingCalendarEvent.CreateBooking(
+                                propertyId,
+                                clientId,
+                                startDate,
+                                endDate,
+                                amount,
+                                guestsCount,
+                                notes
+                            )
+                        )
+                    }
+                },
+                onDelete = {
+                    state.selectedBooking?.let { booking ->
+                        viewModel.handleEvent(BookingCalendarEvent.DeleteBooking(booking.id))
+                    }
+                },
+                onDismiss = {
+                    viewModel.handleEvent(BookingCalendarEvent.HideBookingDialog)
+                }
+            )
+        }
+    }
+}
+```
+
+#### BookingCalendarView
+
+```kotlin
+@Composable
+fun BookingCalendarView(
+    bookings: List<Booking>,
+    selectedStartDate: LocalDate?,
+    selectedEndDate: LocalDate?,
+    onDateSelected: (LocalDate) -> Unit,
+    onDateRangeConfirmed: () -> Unit
+) {
+    val currentMonth = remember { mutableStateOf(YearMonth.now()) }
+    
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Заголовок с навигацией по месяцам
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = {
+                    currentMonth.value = currentMonth.value.minusMonths(1)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChevronLeft,
+                    contentDescription = "Предыдущий месяц"
+                )
+            }
+            
+            Text(
+                text = currentMonth.value.format(DateTimeFormatter.ofPattern("LLLL yyyy")),
+                style = MaterialTheme.typography.titleMedium
+            )
+            
+            IconButton(
+                onClick = {
+                    currentMonth.value = currentMonth.value.plusMonths(1)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "Следующий месяц"
+                )
+            }
+        }
+        
+        // Дни недели
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            val daysOfWeek = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+            daysOfWeek.forEach { day ->
+                Text(
+                    text = day,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+        
+        // Календарная сетка
+        val firstDayOfMonth = currentMonth.value.atDay(1)
+        val lastDayOfMonth = currentMonth.value.atEndOfMonth()
+        
+        // Определяем первый день для отображения (может быть из предыдущего месяца)
+        val firstDay = firstDayOfMonth.minusDays(
+            (firstDayOfMonth.dayOfWeek.value - 1).toLong()
+        )
+        
+        // Создаем список всех дней для отображения
+        val calendarDays = mutableListOf<LocalDate>()
+        var day = firstDay
+        while (day.isBefore(lastDayOfMonth) || day.isEqual(lastDayOfMonth) || calendarDays.size % 7 != 0) {
+            calendarDays.add(day)
+            day = day.plusDays(1)
+        }
+        
+        // Преобразуем бронирования в множество дат
+        val bookedDates = bookings.flatMap { booking ->
+            val start = LocalDate.ofEpochDay(booking.startDate / (24 * 60 * 60 * 1000))
+            val end = LocalDate.ofEpochDay(booking.endDate / (24 * 60 * 60 * 1000))
+            start.datesUntil(end.plusDays(1)).collect(Collectors.toList())
+        }.toSet()
+        
+        // Отображаем календарь
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(7),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(320.dp)
+                .padding(16.dp)
+        ) {
+            items(calendarDays) { date ->
+                val isCurrentMonth = date.month == currentMonth.value.month
+                val isBooked = date in bookedDates
+                val isSelected = (selectedStartDate != null && selectedEndDate != null && 
+                    (date.isEqual(selectedStartDate) || date.isEqual(selectedEndDate) || 
+                    (date.isAfter(selectedStartDate) && date.isBefore(selectedEndDate))))
+                val isSelectionStart = date == selectedStartDate
+                val isSelectionEnd = date == selectedEndDate
+                
+                Box(
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .padding(2.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                isSelected -> MaterialTheme.colorScheme.primaryContainer
+                                isBooked -> MaterialTheme.colorScheme.errorContainer
+                                else -> Color.Transparent
+                            }
+                        )
+                        .border(
+                            width = if (isSelectionStart || isSelectionEnd) 2.dp else 0.dp,
+                            color = if (isSelectionStart || isSelectionEnd) 
+                                MaterialTheme.colorScheme.primary else Color.Transparent,
+                            shape = CircleShape
+                        )
+                        .clickable(
+                            enabled = !isBooked,
+                            onClick = {
+                                onDateSelected(date)
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = date.dayOfMonth.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = when {
+                            !isCurrentMonth -> MaterialTheme.colorScheme.outline
+                            isBooked -> MaterialTheme.colorScheme.onErrorContainer
+                            isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+                }
+            }
+        }
+        
+        // Кнопки для подтверждения выбора дат
+        if (selectedStartDate != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        onDateSelected(LocalDate.now()) // Сбрасываем выбор
+                    }
+                ) {
+                    Text("Отменить")
+                }
+                
+                Button(
+                    onClick = onDateRangeConfirmed,
+                    enabled = selectedStartDate != null && selectedEndDate != null
+                ) {
+                    Text("Подтвердить")
+                }
+            }
+        }
+    }
+}
+```
+
+### Автоматическое обновление статусов
+
+Приложение включает в себя механизм автоматического обновления статусов бронирований в зависимости от текущей даты:
+
+```kotlin
+class AutoUpdateBookingStatusesUseCase @Inject constructor(
+    private val repository: BookingRepository
+) {
+    suspend operator fun invoke(): Result<Int> {
+        return repository.autoUpdateBookingStatuses()
+    }
+}
+
+// Реализация в репозитории
+override suspend fun autoUpdateBookingStatuses(): Result<Int> = withContext(Dispatchers.IO) {
+    try {
+        val allBookings = bookingDao.getAllBookings()
+        val currentTime = System.currentTimeMillis()
+        var updatedCount = 0
+        
+        allBookings.forEach { bookingEntity ->
+            val newStatus = when {
+                // Если дата окончания в прошлом и статус не COMPLETED или CANCELLED, меняем на COMPLETED
+                bookingEntity.endDate < currentTime && 
+                bookingEntity.status != BookingStatus.COMPLETED.name && 
+                bookingEntity.status != BookingStatus.CANCELLED.name -> {
+                    updatedCount++
+                    BookingStatus.COMPLETED.name
+                }
+                // Если дата начала в прошлом, но до даты окончания, и статус PENDING, меняем на CONFIRMED
+                bookingEntity.startDate < currentTime && 
+                bookingEntity.endDate > currentTime && 
+                bookingEntity.status == BookingStatus.PENDING.name -> {
+                    updatedCount++
+                    BookingStatus.CONFIRMED.name
+                }
+                else -> null
+            }
+            
+            newStatus?.let { status ->
+                bookingDao.updateBookingStatus(bookingEntity.id, status)
+            }
+        }
+        
+        Result.success(updatedCount)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+```
+
+## Управление зависимостями
+
+Для управления зависимостями в проекте используется Dagger Hilt. Основные модули:
+
+### AppModule
+
+Предоставляет основные зависимости приложения:
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
+    @Provides
+    @Singleton
+    fun provideClientRepository(clientDao: ClientDao): ClientRepository {
+        return ClientRepositoryImpl(clientDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun providePropertyRepository(propertyDao: PropertyDao): PropertyRepository {
+        return PropertyRepositoryImpl(propertyDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideAppointmentRepository(appointmentDao: AppointmentDao): AppointmentRepository {
+        return AppointmentRepositoryImpl(appointmentDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideBookingRepository(bookingDao: BookingDao): BookingRepository {
+        return BookingRepositoryImpl(bookingDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideImageRepository(@ApplicationContext context: Context): ImageRepository {
+        return ImageRepositoryImpl(context)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideDocumentRepository(@ApplicationContext context: Context): DocumentRepository {
+        return DocumentRepositoryImpl(context)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideDatabaseEncryption(@ApplicationContext context: Context): DatabaseEncryption {
+        return DatabaseEncryption(context)
+    }
+    
+    // Предоставление юзкейсов
+    @Provides
+    @Singleton
+    fun provideClientUseCases(repository: ClientRepository): ClientUseCases {
+        return ClientUseCases(
+            addClient = AddClientUseCase(repository),
+            updateClient = UpdateClientUseCase(repository),
+            deleteClient = DeleteClientUseCase(repository),
+            getClient = GetClientUseCase(repository),
+            getAllClients = GetAllClientsUseCase(repository),
+            getClientsByRentalType = GetClientsByRentalTypeUseCase(repository)
+        )
+    }
+    
+    @Provides
+    @Singleton
+    fun providePropertyUseCases(repository: PropertyRepository): PropertyUseCases {
+        return PropertyUseCases(
+            addProperty = AddPropertyUseCase(repository),
+            updateProperty = UpdatePropertyUseCase(repository),
+            deleteProperty = DeletePropertyUseCase(repository),
+            getProperty = GetPropertyUseCase(repository),
+            getAllProperties = GetAllPropertiesUseCase(repository),
+            observeAllProperties = ObserveAllPropertiesUseCase(repository),
+            observePropertiesByType = ObservePropertiesByTypeUseCase(repository)
+        )
+    }
+    
+    // Остальные юзкейсы...
+}
+```
+
+### DatabaseModule
+
+Предоставляет компоненты базы данных:
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule {
+    private const val DATABASE_NAME = "realestate_assistant_db"
+    
+    @Provides
+    @Singleton
+    fun provideAppDatabase(
+        @ApplicationContext context: Context,
+        databaseEncryption: DatabaseEncryption
+    ): AppDatabase {
+        try {
+            val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+            val factory = SupportFactory(passphrase)
+            
+            return Room.databaseBuilder(
+                context.applicationContext,
+                AppDatabase::class.java,
+                DATABASE_NAME
+            )
+            .openHelperFactory(factory)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            .build()
+        } catch (e: Exception) {
+            // Обработка ошибок инициализации базы данных
+            Log.e("DatabaseModule", "Ошибка при инициализации базы данных", e)
+            
+            // Сброс ключей шифрования и повторная попытка
+            databaseEncryption.resetSecurityKeys()
+            
+            // Создаем новую базу данных с новыми ключами
+            val newPassphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+            val newFactory = SupportFactory(newPassphrase)
+            
+            return Room.databaseBuilder(
+                context.applicationContext,
+                AppDatabase::class.java,
+                DATABASE_NAME
+            )
+            .openHelperFactory(newFactory)
+            .fallbackToDestructiveMigration()
+            .build()
+        }
+    }
+    
+    @Provides
+    @Singleton
+    fun providePropertyDao(database: AppDatabase): PropertyDao {
+        return database.propertyDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideClientDao(database: AppDatabase): ClientDao {
+        return database.clientDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideAppointmentDao(database: AppDatabase): AppointmentDao {
+        return database.appointmentDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideBookingDao(database: AppDatabase): BookingDao {
+        return database.bookingDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideUserDao(database: AppDatabase): UserDao {
+        return database.userDao()
+    }
+}
+```
+
+## Технический долг и планы развития
+
+### Технический долг
+
+1. **Оптимизация производительности**
+   - Оптимизация загрузки и кэширования изображений для более быстрого отображения
+   - Внедрение пагинации для больших списков объектов и клиентов
+   - Оптимизация главного экрана для улучшения скорости загрузки и уменьшения использования ресурсов
+
+2. **Улучшение UI/UX**
+   - Доработка отзывчивости UI для разных размеров экранов
+   - Улучшение доступности приложения
+   - Добавление анимаций для улучшения UX
+
+3. **Тесты**
+   - Покрытие основных компонентов UI тестами
+   - Написание unit-тестов для репозиториев и юзкейсов
+   - Интеграционные тесты для проверки работы базы данных
+
+### Планы развития
+
+1. **Разработка полноценных модулей для клиентов и показов**
+   - Реализация полного функционала раздела клиентов по аналогии с объектами:
+     - Создание детальной формы добавления/редактирования клиентов
+     - Разработка удобных карточек клиентов для списка
+     - Детальная страница с информацией о клиенте
+     - Система связи клиентов с подходящими объектами
+   - Разработка модуля показов/встреч:
+     - Форма создания и редактирования показов
+     - Календарь показов с разными представлениями
+     - Карточки показов с возможностью быстрого доступа
+     - Система уведомлений о предстоящих показах
+
+2. **Новые функции**
+   - Добавление аналитического модуля для отслеживания эффективности работы
+   - Экспорт данных в различные форматы (PDF, Excel)
+
+3. **Улучшение существующих функций**
+   - Расширенный поиск и фильтрация объектов
+   - Интеллектуальный поиск по всем сущностям приложения
+   - Система тегов для объектов, клиентов и встреч
+   - Продвинутая сортировка с возможностью настройки пользователем
+   - Улучшенный календарь встреч с напоминаниями
+   - Система заметок для объектов и клиентов
+   - Чек-листы для просмотров объектов
+   - Расширение функциональности карт с возможностью поиска объектов на карте
+
+4. **Технические улучшения**
+   - Реализация синхронизации данных с облаком (Supabase):
+     - Настройка API для синхронизации
+     - Механизм разрешения конфликтов при синхронизации
+     - Возможность работы в офлайн-режиме с последующей синхронизацией
+   - Внедрение многопользовательского режима
+   - Улучшение безопасности и защиты данных
+
+## Безопасность и шифрование данных
+
+В приложении реализована система безопасности для защиты конфиденциальных данных пользователей и объектов недвижимости.
+
+### Шифрование базы данных
+
+Основой системы безопасности является шифрование локальной базы данных с использованием SQLCipher:
+
+```kotlin
+// Пример конфигурации шифрованной базы данных в AppDatabase
+val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+val factory = SupportFactory(passphrase)
+
+Room.databaseBuilder(
+    context.applicationContext,
+    AppDatabase::class.java,
+    DATABASE_NAME
+)
+.openHelperFactory(factory)
+.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+.build()
+```
+
+### Компоненты безопасности
+
+- `DatabaseEncryption` - класс для управления ключами шифрования и паролями базы данных
+- Интеграция с Android Keystore для безопасного хранения криптографических ключей
+- Механизмы восстановления при повреждении ключей шифрования
+
+```kotlin
+class DatabaseEncryption @Inject constructor(
+    private val context: Context
+) {
+    companion object {
+        private const val KEY_ALIAS = "database_encryption_key"
+        private const val PREF_NAME = "database_security_prefs"
+        private const val PREF_PASSWORD = "database_password"
+        private const val DEFAULT_PASSWORD = "default_secure_password"
+    }
+    
+    private val keyStore by lazy {
+        KeyStore.getInstance("AndroidKeyStore").apply {
+            load(null)
+        }
+    }
+    
+    private val securePreferences by lazy {
+        EncryptedSharedPreferences.create(
+            PREF_NAME,
+            MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build(),
+            context,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
+    
+    /**
+     * Получает пароль для шифрования базы данных
+     */
+    fun getDatabasePassword(): String {
+        // Если пароль уже сохранен, возвращаем его
+        if (securePreferences.contains(PREF_PASSWORD)) {
+            return securePreferences.getString(PREF_PASSWORD, DEFAULT_PASSWORD) ?: DEFAULT_PASSWORD
+        }
+        
+        // Генерируем новый пароль и сохраняем его
+        val password = generateSecurePassword()
+        securePreferences.edit().putString(PREF_PASSWORD, password).apply()
+        return password
+    }
+    
+    /**
+     * Генерирует криптографически стойкий пароль
+     */
+    private fun generateSecurePassword(): String {
+        val bytes = ByteArray(32)
+        SecureRandom().nextBytes(bytes)
+        return Base64.encodeToString(bytes, Base64.NO_WRAP)
+    }
+    
+    /**
+     * Сбрасывает пароль и ключи шифрования в случае проблем
+     */
+    fun resetSecurityKeys() {
+        try {
+            // Удаляем ключ из KeyStore
+            if (keyStore.containsAlias(KEY_ALIAS)) {
+                keyStore.deleteEntry(KEY_ALIAS)
+            }
+            
+            // Сбрасываем пароль
+            securePreferences.edit().remove(PREF_PASSWORD).apply()
+            
+            // Генерируем новый пароль
+            val newPassword = generateSecurePassword()
+            securePreferences.edit().putString(PREF_PASSWORD, newPassword).apply()
+        } catch (e: Exception) {
+            Log.e("DatabaseEncryption", "Ошибка при сбросе ключей безопасности", e)
+            
+            // В случае фатальной ошибки пытаемся сбросить все настройки
+            context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                .edit().clear().apply()
+        }
+    }
+}
+```
+
+### Защита конфиденциальных данных
+
+Приложение обеспечивает безопасность через:
+
+- Шифрование всех конфиденциальных данных в базе данных с использованием SQLCipher
+- Использование EncryptedSharedPreferences для хранения чувствительных настроек
+- Механизмы очистки кэша и временных файлов при выходе из приложения
+- Защиту от экспорта незашифрованных данных
+
+### Безопасность медиафайлов
+
+Для защиты фотографий и документов применяются следующие меры:
+
+- Хранение в приватной директории приложения, недоступной другим приложениям
+- Контролируемый доступ к файлам через FileProvider
+- Безопасное удаление файлов при удалении связанных с ними записей
+- Шифрование особо важных документов с помощью AES шифрования
+
+### Аварийное восстановление
+
+В приложении реализован механизм восстановления при нарушении целостности криптографических ключей или повреждении базы данных:
+
+```kotlin
+try {
+    // Используем зашифрованную базу данных
+    database.openHelper.readableDatabase
+} catch (e: Exception) {
+    // Обрабатываем ошибки целостности ключей
+    if (e is AEADBadTagException || e.cause is AEADBadTagException) {
+        // Сброс повреждённых ключей и восстановление хранилища
+        databaseEncryption.resetSecurityKeys()
+        
+        // Пытаемся пересоздать базу данных
+        resetDatabaseFiles(context)
+        
+        // Создаем новый экземпляр базы данных с новыми ключами
+        createDatabaseWithNewKeys(context, databaseEncryption)
+    } else {
+        // Обработка других ошибок базы данных
+        Log.e(TAG, "Ошибка при доступе к базе данных", e)
+        
+        // Регистрируем ошибку в системе аналитики
+        reportDatabaseError(e)
+        
+        // Уведомляем пользователя о проблеме
+        showDatabaseErrorNotification(context)
+    }
+}
+```
+
+## Бронирования и календарь
+
+Модуль бронирований предоставляет функциональность для управления бронированиями объектов недвижимости как для долгосрочной, так и для посуточной аренды.
+
+### Модель бронирования
+
+Модель `Booking` объединяет информацию о бронировании, включая даты, статус, клиента и финансовую информацию:
+
+```kotlin
+data class Booking(
+    val id: String = "",
+    val propertyId: String,
+    val clientId: String? = null,
+    val startDate: Long,
+    val endDate: Long,
+    val status: BookingStatus = BookingStatus.PENDING,
+    val paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
+    val totalAmount: Double,
+    val depositAmount: Double? = null,
+    val notes: String? = null,
+    val guestsCount: Int? = null,
+    val checkInTime: String? = null,
+    val checkOutTime: String? = null,
+    val includedServices: List<String> = emptyList(),
+    val additionalServices: List<AdditionalService> = emptyList(),
+    val rentPeriodMonths: Int? = null,
+    val monthlyPaymentAmount: Double? = null,
+    val utilityPayments: Boolean? = null,
+    val contractType: String? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+```
+
+### Статусы бронирования
+
+```kotlin
+enum class BookingStatus {
+    PENDING,    // Ожидает подтверждения
+    CONFIRMED,  // Подтверждено
+    CANCELLED,  // Отменено
+    COMPLETED,  // Завершено
+    NO_SHOW     // Клиент не явился
+}
+
+enum class PaymentStatus {
+    UNPAID,         // Не оплачено
+    PARTIALLY_PAID, // Частично оплачено
+    FULLY_PAID,     // Полностью оплачено
+    REFUNDED,       // Возвращено
+    DEPOSIT_PAID    // Оплачен только депозит
+}
+```
+
+### Репозиторий бронирований
+
+Интерфейс `BookingRepository` предоставляет методы для работы с бронированиями:
+
+```kotlin
+interface BookingRepository {
+    suspend fun addBooking(booking: Booking): Result<Booking>
+    suspend fun updateBooking(booking: Booking): Result<Unit>
+    suspend fun deleteBooking(bookingId: String): Result<Unit>
+    suspend fun getBooking(bookingId: String): Result<Booking>
+    suspend fun getAllBookings(): Result<List<Booking>>
+    fun observeAllBookings(): Flow<List<Booking>>
+    fun observeBookingsByProperty(propertyId: String): Flow<List<Booking>>
+    fun observeBookingsByClient(clientId: String): Flow<List<Booking>>
+    fun observeBookingsInDateRange(fromDate: Long, toDate: Long): Flow<List<Booking>>
+    fun observeBookingsForPropertyInDateRange(propertyId: String, fromDate: Long, toDate: Long): Flow<List<Booking>>
+    suspend fun hasBookingConflicts(propertyId: String, fromDate: Long, toDate: Long): Result<Boolean>
+    suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<Unit>
+    suspend fun updatePaymentStatus(bookingId: String, status: PaymentStatus): Result<Unit>
+    suspend fun autoUpdateBookingStatuses(): Result<Int>
+}
+```
+
+### Календарь бронирований
+
+Календарь бронирований позволяет визуализировать занятые и свободные даты для объектов недвижимости, а также создавать и управлять бронированиями.
+
+#### BookingCalendarScreen
+
+```kotlin
+@Composable
+fun BookingCalendarScreen(
+    propertyId: String,
+    onNavigateBack: () -> Unit,
+    viewModel: BookingCalendarViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    
+    // Загружаем бронирования для выбранного объекта
+    LaunchedEffect(propertyId) {
+        viewModel.handleEvent(BookingCalendarEvent.SelectProperty(propertyId))
+    }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Календарь бронирований") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, "Назад")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Отображение календаря с отмеченными датами бронирований
+            BookingCalendarView(
+                bookings = state.bookings,
+                selectedStartDate = state.selectedStartDate,
+                selectedEndDate = state.selectedEndDate,
+                onDateSelected = { date ->
+                    viewModel.handleEvent(BookingCalendarEvent.SelectDate(date))
+                },
+                onDateRangeConfirmed = {
+                    viewModel.handleEvent(BookingCalendarEvent.ConfirmDateSelection)
+                }
+            )
+            
+            // Отображение доступных окон для бронирования
+            if (state.availableTimeSlots.isNotEmpty()) {
+                Text(
+                    text = "Доступные периоды для бронирования:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    items(state.availableTimeSlots) { slot ->
+                        AvailableTimeSlotItem(
+                            slot = slot,
+                            onClick = {
+                                viewModel.handleEvent(
+                                    BookingCalendarEvent.UpdateDates(
+                                        start = slot.startDate,
+                                        end = slot.endDate
+                                    )
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Список бронирований для выбранного объекта
+            Text(
+                text = "Бронирования:",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            
+            if (state.bookings.isEmpty()) {
+                Text(
+                    text = "Нет активных бронирований",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .align(Alignment.CenterHorizontally)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    items(state.bookings) { booking ->
+                        BookingListItem(
+                            booking = booking,
+                            onClick = {
+                                viewModel.handleEvent(BookingCalendarEvent.SelectBooking(booking))
+                                viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Кнопка создания бронирования
+            Button(
+                onClick = {
+                    viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Создать бронирование")
+            }
+        }
+        
+        // Диалог создания/редактирования бронирования
+        if (state.isBookingDialogVisible) {
+            BookingFormDialog(
+                propertyId = propertyId,
+                startDate = state.selectedStartDate,
+                endDate = state.selectedEndDate,
+                clients = state.clients,
+                selectedClient = state.selectedClient,
+                editing = !state.isInfoMode,
+                booking = state.selectedBooking,
+                onClientSelected = { client ->
+                    viewModel.handleEvent(BookingCalendarEvent.SelectClient(client))
+                },
+                onSave = { clientId, startDate, endDate, amount, guestsCount, notes ->
+                    if (state.selectedBooking != null && !state.isInfoMode) {
+                        viewModel.handleEvent(
+                            BookingCalendarEvent.UpdateBooking(
+                                state.selectedBooking.id,
+                                clientId,
+                                startDate,
+                                endDate,
+                                amount,
+                                guestsCount,
+                                notes
+                            )
+                        )
+                    } else {
+                        viewModel.handleEvent(
+                            BookingCalendarEvent.CreateBooking(
+                                propertyId,
+                                clientId,
+                                startDate,
+                                endDate,
+                                amount,
+                                guestsCount,
+                                notes
+                            )
+                        )
+                    }
+                },
+                onDelete = {
+                    state.selectedBooking?.let { booking ->
+                        viewModel.handleEvent(BookingCalendarEvent.DeleteBooking(booking.id))
+                    }
+                },
+                onDismiss = {
+                    viewModel.handleEvent(BookingCalendarEvent.HideBookingDialog)
+                }
+            )
+        }
+    }
+}
+```
+
+#### BookingCalendarView
+
+```kotlin
+@Composable
+fun BookingCalendarView(
+    bookings: List<Booking>,
+    selectedStartDate: LocalDate?,
+    selectedEndDate: LocalDate?,
+    onDateSelected: (LocalDate) -> Unit,
+    onDateRangeConfirmed: () -> Unit
+) {
+    val currentMonth = remember { mutableStateOf(YearMonth.now()) }
+    
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Заголовок с навигацией по месяцам
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = {
+                    currentMonth.value = currentMonth.value.minusMonths(1)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChevronLeft,
+                    contentDescription = "Предыдущий месяц"
+                )
+            }
+            
+            Text(
+                text = currentMonth.value.format(DateTimeFormatter.ofPattern("LLLL yyyy")),
+                style = MaterialTheme.typography.titleMedium
+            )
+            
+            IconButton(
+                onClick = {
+                    currentMonth.value = currentMonth.value.plusMonths(1)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "Следующий месяц"
+                )
+            }
+        }
+        
+        // Дни недели
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            val daysOfWeek = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+            daysOfWeek.forEach { day ->
+                Text(
+                    text = day,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+        
+        // Календарная сетка
+        val firstDayOfMonth = currentMonth.value.atDay(1)
+        val lastDayOfMonth = currentMonth.value.atEndOfMonth()
+        
+        // Определяем первый день для отображения (может быть из предыдущего месяца)
+        val firstDay = firstDayOfMonth.minusDays(
+            (firstDayOfMonth.dayOfWeek.value - 1).toLong()
+        )
+        
+        // Создаем список всех дней для отображения
+        val calendarDays = mutableListOf<LocalDate>()
+        var day = firstDay
+        while (day.isBefore(lastDayOfMonth) || day.isEqual(lastDayOfMonth) || calendarDays.size % 7 != 0) {
+            calendarDays.add(day)
+            day = day.plusDays(1)
+        }
+        
+        // Преобразуем бронирования в множество дат
+        val bookedDates = bookings.flatMap { booking ->
+            val start = LocalDate.ofEpochDay(booking.startDate / (24 * 60 * 60 * 1000))
+            val end = LocalDate.ofEpochDay(booking.endDate / (24 * 60 * 60 * 1000))
+            start.datesUntil(end.plusDays(1)).collect(Collectors.toList())
+        }.toSet()
+        
+        // Отображаем календарь
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(7),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(320.dp)
+                .padding(16.dp)
+        ) {
+            items(calendarDays) { date ->
+                val isCurrentMonth = date.month == currentMonth.value.month
+                val isBooked = date in bookedDates
+                val isSelected = (selectedStartDate != null && selectedEndDate != null && 
+                    (date.isEqual(selectedStartDate) || date.isEqual(selectedEndDate) || 
+                    (date.isAfter(selectedStartDate) && date.isBefore(selectedEndDate))))
+                val isSelectionStart = date == selectedStartDate
+                val isSelectionEnd = date == selectedEndDate
+                
+                Box(
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .padding(2.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                isSelected -> MaterialTheme.colorScheme.primaryContainer
+                                isBooked -> MaterialTheme.colorScheme.errorContainer
+                                else -> Color.Transparent
+                            }
+                        )
+                        .border(
+                            width = if (isSelectionStart || isSelectionEnd) 2.dp else 0.dp,
+                            color = if (isSelectionStart || isSelectionEnd) 
+                                MaterialTheme.colorScheme.primary else Color.Transparent,
+                            shape = CircleShape
+                        )
+                        .clickable(
+                            enabled = !isBooked,
+                            onClick = {
+                                onDateSelected(date)
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = date.dayOfMonth.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = when {
+                            !isCurrentMonth -> MaterialTheme.colorScheme.outline
+                            isBooked -> MaterialTheme.colorScheme.onErrorContainer
+                            isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+                }
+            }
+        }
+        
+        // Кнопки для подтверждения выбора дат
+        if (selectedStartDate != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        onDateSelected(LocalDate.now()) // Сбрасываем выбор
+                    }
+                ) {
+                    Text("Отменить")
+                }
+                
+                Button(
+                    onClick = onDateRangeConfirmed,
+                    enabled = selectedStartDate != null && selectedEndDate != null
+                ) {
+                    Text("Подтвердить")
+                }
+            }
+        }
+    }
+}
+```
+
+### Автоматическое обновление статусов
+
+Приложение включает в себя механизм автоматического обновления статусов бронирований в зависимости от текущей даты:
+
+```kotlin
+class AutoUpdateBookingStatusesUseCase @Inject constructor(
+    private val repository: BookingRepository
+) {
+    suspend operator fun invoke(): Result<Int> {
+        return repository.autoUpdateBookingStatuses()
+    }
+}
+
+// Реализация в репозитории
+override suspend fun autoUpdateBookingStatuses(): Result<Int> = withContext(Dispatchers.IO) {
+    try {
+        val allBookings = bookingDao.getAllBookings()
+        val currentTime = System.currentTimeMillis()
+        var updatedCount = 0
+        
+        allBookings.forEach { bookingEntity ->
+            val newStatus = when {
+                // Если дата окончания в прошлом и статус не COMPLETED или CANCELLED, меняем на COMPLETED
+                bookingEntity.endDate < currentTime && 
+                bookingEntity.status != BookingStatus.COMPLETED.name && 
+                bookingEntity.status != BookingStatus.CANCELLED.name -> {
+                    updatedCount++
+                    BookingStatus.COMPLETED.name
+                }
+                // Если дата начала в прошлом, но до даты окончания, и статус PENDING, меняем на CONFIRMED
+                bookingEntity.startDate < currentTime && 
+                bookingEntity.endDate > currentTime && 
+                bookingEntity.status == BookingStatus.PENDING.name -> {
+                    updatedCount++
+                    BookingStatus.CONFIRMED.name
+                }
+                else -> null
+            }
+            
+            newStatus?.let { status ->
+                bookingDao.updateBookingStatus(bookingEntity.id, status)
+            }
+        }
+        
+        Result.success(updatedCount)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+```
+
+## Управление зависимостями
+
+Для управления зависимостями в проекте используется Dagger Hilt. Основные модули:
+
+### AppModule
+
+Предоставляет основные зависимости приложения:
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
+    @Provides
+    @Singleton
+    fun provideClientRepository(clientDao: ClientDao): ClientRepository {
+        return ClientRepositoryImpl(clientDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun providePropertyRepository(propertyDao: PropertyDao): PropertyRepository {
+        return PropertyRepositoryImpl(propertyDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideAppointmentRepository(appointmentDao: AppointmentDao): AppointmentRepository {
+        return AppointmentRepositoryImpl(appointmentDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideBookingRepository(bookingDao: BookingDao): BookingRepository {
+        return BookingRepositoryImpl(bookingDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideImageRepository(@ApplicationContext context: Context): ImageRepository {
+        return ImageRepositoryImpl(context)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideDocumentRepository(@ApplicationContext context: Context): DocumentRepository {
+        return DocumentRepositoryImpl(context)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideDatabaseEncryption(@ApplicationContext context: Context): DatabaseEncryption {
+        return DatabaseEncryption(context)
+    }
+    
+    // Предоставление юзкейсов
+    @Provides
+    @Singleton
+    fun provideClientUseCases(repository: ClientRepository): ClientUseCases {
+        return ClientUseCases(
+            addClient = AddClientUseCase(repository),
+            updateClient = UpdateClientUseCase(repository),
+            deleteClient = DeleteClientUseCase(repository),
+            getClient = GetClientUseCase(repository),
+            getAllClients = GetAllClientsUseCase(repository),
+            getClientsByRentalType = GetClientsByRentalTypeUseCase(repository)
+        )
+    }
+    
+    @Provides
+    @Singleton
+    fun providePropertyUseCases(repository: PropertyRepository): PropertyUseCases {
+        return PropertyUseCases(
+            addProperty = AddPropertyUseCase(repository),
+            updateProperty = UpdatePropertyUseCase(repository),
+            deleteProperty = DeletePropertyUseCase(repository),
+            getProperty = GetPropertyUseCase(repository),
+            getAllProperties = GetAllPropertiesUseCase(repository),
+            observeAllProperties = ObserveAllPropertiesUseCase(repository),
+            observePropertiesByType = ObservePropertiesByTypeUseCase(repository)
+        )
+    }
+    
+    // Остальные юзкейсы...
+}
+```
+
+### DatabaseModule
+
+Предоставляет компоненты базы данных:
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule {
+    private const val DATABASE_NAME = "realestate_assistant_db"
+    
+    @Provides
+    @Singleton
+    fun provideAppDatabase(
+        @ApplicationContext context: Context,
+        databaseEncryption: DatabaseEncryption
+    ): AppDatabase {
+        try {
+            val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+            val factory = SupportFactory(passphrase)
+            
+            return Room.databaseBuilder(
+                context.applicationContext,
+                AppDatabase::class.java,
+                DATABASE_NAME
+            )
+            .openHelperFactory(factory)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            .build()
+        } catch (e: Exception) {
+            // Обработка ошибок инициализации базы данных
+            Log.e("DatabaseModule", "Ошибка при инициализации базы данных", e)
+            
+            // Сброс ключей шифрования и повторная попытка
+            databaseEncryption.resetSecurityKeys()
+            
+            // Создаем новую базу данных с новыми ключами
+            val newPassphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+            val newFactory = SupportFactory(newPassphrase)
+            
+            return Room.databaseBuilder(
+                context.applicationContext,
+                AppDatabase::class.java,
+                DATABASE_NAME
+            )
+            .openHelperFactory(newFactory)
+            .fallbackToDestructiveMigration()
+            .build()
+        }
+    }
+    
+    @Provides
+    @Singleton
+    fun providePropertyDao(database: AppDatabase): PropertyDao {
+        return database.propertyDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideClientDao(database: AppDatabase): ClientDao {
+        return database.clientDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideAppointmentDao(database: AppDatabase): AppointmentDao {
+        return database.appointmentDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideBookingDao(database: AppDatabase): BookingDao {
+        return database.bookingDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideUserDao(database: AppDatabase): UserDao {
+        return database.userDao()
+    }
+}
+```
+
+## Технический долг и планы развития
+
+### Технический долг
+
+1. **Оптимизация производительности**
+   - Оптимизация загрузки и кэширования изображений для более быстрого отображения
+   - Внедрение пагинации для больших списков объектов и клиентов
+   - Оптимизация главного экрана для улучшения скорости загрузки и уменьшения использования ресурсов
+
+2. **Улучшение UI/UX**
+   - Доработка отзывчивости UI для разных размеров экранов
+   - Улучшение доступности приложения
+   - Добавление анимаций для улучшения UX
+
+3. **Тесты**
+   - Покрытие основных компонентов UI тестами
+   - Написание unit-тестов для репозиториев и юзкейсов
+   - Интеграционные тесты для проверки работы базы данных
+
+### Планы развития
+
+1. **Разработка полноценных модулей для клиентов и показов**
+   - Реализация полного функционала раздела клиентов по аналогии с объектами:
+     - Создание детальной формы добавления/редактирования клиентов
+     - Разработка удобных карточек клиентов для списка
+     - Детальная страница с информацией о клиенте
+     - Система связи клиентов с подходящими объектами
+   - Разработка модуля показов/встреч:
+     - Форма создания и редактирования показов
+     - Календарь показов с разными представлениями
+     - Карточки показов с возможностью быстрого доступа
+     - Система уведомлений о предстоящих показах
+
+2. **Новые функции**
+   - Добавление аналитического модуля для отслеживания эффективности работы
+   - Экспорт данных в различные форматы (PDF, Excel)
+
+3. **Улучшение существующих функций**
+   - Расширенный поиск и фильтрация объектов
+   - Интеллектуальный поиск по всем сущностям приложения
+   - Система тегов для объектов, клиентов и встреч
+   - Продвинутая сортировка с возможностью настройки пользователем
+   - Улучшенный календарь встреч с напоминаниями
+   - Система заметок для объектов и клиентов
+   - Чек-листы для просмотров объектов
+   - Расширение функциональности карт с возможностью поиска объектов на карте
+
+4. **Технические улучшения**
+   - Реализация синхронизации данных с облаком (Supabase):
+     - Настройка API для синхронизации
+     - Механизм разрешения конфликтов при синхронизации
+     - Возможность работы в офлайн-режиме с последующей синхронизацией
+   - Внедрение многопользовательского режима
+   - Улучшение безопасности и защиты данных
+
+## Безопасность и шифрование данных
+
+В приложении реализована система безопасности для защиты конфиденциальных данных пользователей и объектов недвижимости.
+
+### Шифрование базы данных
+
+Основой системы безопасности является шифрование локальной базы данных с использованием SQLCipher:
+
+```kotlin
+// Пример конфигурации шифрованной базы данных в AppDatabase
+val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+val factory = SupportFactory(passphrase)
+
+Room.databaseBuilder(
+    context.applicationContext,
+    AppDatabase::class.java,
+    DATABASE_NAME
+)
+.openHelperFactory(factory)
+.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+.build()
+```
+
+### Компоненты безопасности
+
+- `DatabaseEncryption` - класс для управления ключами шифрования и паролями базы данных
+- Интеграция с Android Keystore для безопасного хранения криптографических ключей
+- Механизмы восстановления при повреждении ключей шифрования
+
+```kotlin
+class DatabaseEncryption @Inject constructor(
+    private val context: Context
+) {
+    companion object {
+        private const val KEY_ALIAS = "database_encryption_key"
+        private const val PREF_NAME = "database_security_prefs"
+        private const val PREF_PASSWORD = "database_password"
+        private const val DEFAULT_PASSWORD = "default_secure_password"
+    }
+    
+    private val keyStore by lazy {
+        KeyStore.getInstance("AndroidKeyStore").apply {
+            load(null)
+        }
+    }
+    
+    private val securePreferences by lazy {
+        EncryptedSharedPreferences.create(
+            PREF_NAME,
+            MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build(),
+            context,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
+    
+    /**
+     * Получает пароль для шифрования базы данных
+     */
+    fun getDatabasePassword(): String {
+        // Если пароль уже сохранен, возвращаем его
+        if (securePreferences.contains(PREF_PASSWORD)) {
+            return securePreferences.getString(PREF_PASSWORD, DEFAULT_PASSWORD) ?: DEFAULT_PASSWORD
+        }
+        
+        // Генерируем новый пароль и сохраняем его
+        val password = generateSecurePassword()
+        securePreferences.edit().putString(PREF_PASSWORD, password).apply()
+        return password
+    }
+    
+    /**
+     * Генерирует криптографически стойкий пароль
+     */
+    private fun generateSecurePassword(): String {
+        val bytes = ByteArray(32)
+        SecureRandom().nextBytes(bytes)
+        return Base64.encodeToString(bytes, Base64.NO_WRAP)
+    }
+    
+    /**
+     * Сбрасывает пароль и ключи шифрования в случае проблем
+     */
+    fun resetSecurityKeys() {
+        try {
+            // Удаляем ключ из KeyStore
+            if (keyStore.containsAlias(KEY_ALIAS)) {
+                keyStore.deleteEntry(KEY_ALIAS)
+            }
+            
+            // Сбрасываем пароль
+            securePreferences.edit().remove(PREF_PASSWORD).apply()
+            
+            // Генерируем новый пароль
+            val newPassword = generateSecurePassword()
+            securePreferences.edit().putString(PREF_PASSWORD, newPassword).apply()
+        } catch (e: Exception) {
+            Log.e("DatabaseEncryption", "Ошибка при сбросе ключей безопасности", e)
+            
+            // В случае фатальной ошибки пытаемся сбросить все настройки
+            context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                .edit().clear().apply()
+        }
+    }
+}
+```
+
+### Защита конфиденциальных данных
+
+Приложение обеспечивает безопасность через:
+
+- Шифрование всех конфиденциальных данных в базе данных с использованием SQLCipher
+- Использование EncryptedSharedPreferences для хранения чувствительных настроек
+- Механизмы очистки кэша и временных файлов при выходе из приложения
+- Защиту от экспорта незашифрованных данных
+
+### Безопасность медиафайлов
+
+Для защиты фотографий и документов применяются следующие меры:
+
+- Хранение в приватной директории приложения, недоступной другим приложениям
+- Контролируемый доступ к файлам через FileProvider
+- Безопасное удаление файлов при удалении связанных с ними записей
+- Шифрование особо важных документов с помощью AES шифрования
+
+### Аварийное восстановление
+
+В приложении реализован механизм восстановления при нарушении целостности криптографических ключей или повреждении базы данных:
+
+```kotlin
+try {
+    // Используем зашифрованную базу данных
+    database.openHelper.readableDatabase
+} catch (e: Exception) {
+    // Обрабатываем ошибки целостности ключей
+    if (e is AEADBadTagException || e.cause is AEADBadTagException) {
+        // Сброс повреждённых ключей и восстановление хранилища
+        databaseEncryption.resetSecurityKeys()
+        
+        // Пытаемся пересоздать базу данных
+        resetDatabaseFiles(context)
+        
+        // Создаем новый экземпляр базы данных с новыми ключами
+        createDatabaseWithNewKeys(context, databaseEncryption)
+    } else {

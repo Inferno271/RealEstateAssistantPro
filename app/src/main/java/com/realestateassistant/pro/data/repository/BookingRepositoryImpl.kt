@@ -11,29 +11,62 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import java.util.*
+import com.realestateassistant.pro.domain.usecase.property.UpdatePropertyStatusesUseCase
 
 /**
  * Реализация репозитория для работы с бронированиями
  */
 class BookingRepositoryImpl @Inject constructor(
-    private val bookingDao: BookingDao
+    private val bookingDao: BookingDao,
+    private val updatePropertyStatusesUseCase: UpdatePropertyStatusesUseCase
 ) : BookingRepository {
     
-    override suspend fun addBooking(booking: Booking): Result<Booking> {
-        return try {
-            val bookingEntity = BookingMapper.toEntity(booking)
-            bookingDao.insertBooking(bookingEntity)
-            Result.success(BookingMapper.toDomain(bookingEntity))
+    override suspend fun addBooking(booking: Booking): Result<Booking> = withContext(Dispatchers.IO) {
+        try {
+            Timber.d("Добавление нового бронирования")
+            
+            // Генерируем ID, если не задан
+            val bookingWithId = if (booking.id.isEmpty()) {
+                booking.copy(id = UUID.randomUUID().toString())
+            } else {
+                booking
+            }
+            
+            // Сохраняем в БД
+            val entity = BookingMapper.toEntity(bookingWithId)
+            bookingDao.insertBooking(entity)
+            
+            // Обновляем статусы объектов недвижимости
+            updatePropertyStatusesUseCase()
+            
+            Timber.d("Бронирование успешно добавлено с ID: ${bookingWithId.id}")
+            Result.success(bookingWithId)
         } catch (e: Exception) {
             Timber.e(e, "Ошибка при добавлении бронирования")
             Result.failure(e)
         }
     }
 
-    override suspend fun updateBooking(booking: Booking): Result<Unit> {
-        return try {
-            val bookingEntity = BookingMapper.toEntity(booking.copy(updatedAt = System.currentTimeMillis()))
-            bookingDao.updateBooking(bookingEntity)
+    override suspend fun updateBooking(booking: Booking): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            if (booking.id.isEmpty()) {
+                Timber.e("Невозможно обновить бронирование - пустой ID")
+                return@withContext Result.failure(Exception("Booking ID пустой"))
+            }
+            
+            Timber.d("Обновление бронирования с ID: ${booking.id}")
+            
+            // Обновляем в БД
+            val entity = BookingMapper.toEntity(booking)
+            bookingDao.updateBooking(entity)
+            
+            // Обновляем статусы объектов недвижимости
+            updatePropertyStatusesUseCase()
+            
+            Timber.d("Бронирование успешно обновлено")
             Result.success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "Ошибка при обновлении бронирования")
@@ -41,9 +74,16 @@ class BookingRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteBooking(bookingId: String): Result<Unit> {
-        return try {
+    override suspend fun deleteBooking(bookingId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            Timber.d("Удаление бронирования с ID: $bookingId")
+            
             bookingDao.deleteBooking(bookingId)
+            
+            // Обновляем статусы объектов недвижимости
+            updatePropertyStatusesUseCase()
+            
+            Timber.d("Бронирование успешно удалено")
             Result.success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "Ошибка при удалении бронирования")
@@ -112,9 +152,13 @@ class BookingRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<Unit> {
-        return try {
+    override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             bookingDao.updateBookingStatus(bookingId, status.name)
+            
+            // Обновляем статусы объектов недвижимости
+            updatePropertyStatusesUseCase()
+            
             Result.success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "Ошибка при обновлении статуса бронирования")

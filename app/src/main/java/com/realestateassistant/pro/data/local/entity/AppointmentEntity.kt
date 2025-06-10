@@ -50,7 +50,6 @@ data class AppointmentEntity(
     val id: String,
     val propertyId: String,
     val clientId: String,
-    val agentId: String,
     val title: String,
     val description: String?,
     val startTime: Long,
