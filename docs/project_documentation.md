@@ -1,4208 +1,796 @@
-# Документация проекта "RealEstateAssistant PRO"
+# RealEstateAssistant PRO - Техническая документация проекта
 
-## Содержание
+## 1. Обзор проекта
 
-1. [Общее описание приложения](#общее-описание-приложения)
-2. [Архитектура проекта](#архитектура-проекта)
-3. [Модули и основные компоненты](#модули-и-основные-компоненты)
-4. [Модель данных](#модель-данных)
-5. [Управление состоянием](#управление-состоянием)
-6. [Пользовательский интерфейс](#пользовательский-интерфейс)
-7. [Работа с изображениями](#работа-с-изображениями)
-8. [Работа с документами](#работа-с-документами)
-9. [Интеграция с картами](#интеграция-с-картами)
-10. [Безопасность и шифрование данных](#безопасность-и-шифрование-данных)
-11. [Управление зависимостями](#управление-зависимостями)
-12. [Навигация](#навигация)
-13. [Бронирования и календарь](#бронирования-и-календарь)
-14. [Технический долг и планы развития](#технический-долг-и-планы-развития)
+### 1.1. Назначение приложения
+RealEstateAssistant PRO - это профессиональное мобильное приложение для агентов по недвижимости, которое помогает управлять объектами недвижимости, клиентами и встречами. Приложение предназначено для оптимизации рабочих процессов риелторов и повышения эффективности их работы.
 
-## Общее описание приложения
+### 1.2. Архитектура
+Приложение разработано с использованием принципов Clean Architecture в сочетании с паттерном MVVM (Model-View-ViewModel), что обеспечивает четкое разделение ответственности и упрощает тестирование. Архитектура состоит из трех основных слоев:
+- **Presentation** (`app/src/main/java/com/realestateassistant/pro/presentation/`): пользовательский интерфейс, экраны, компоненты и ViewModels
+- **Domain** (`app/src/main/java/com/realestateassistant/pro/domain/`): бизнес-логика, модели предметной области и use cases
+- **Data** (`app/src/main/java/com/realestateassistant/pro/data/`): источники данных, репозитории и локальное хранилище
 
-**RealEstateAssistant PRO** - это профессиональное мобильное приложение для риелторов и агентов недвижимости, разработанное для эффективного управления объектами недвижимости, клиентами, встречами и бронированиями. Приложение предоставляет полноценное решение для ведения бизнеса в сфере недвижимости, включая поддержку как долгосрочной, так и посуточной аренды.
-
-### Основные функции
-
-- Создание и редактирование карточек объектов недвижимости с детальной информацией
-- Управление фотографиями и документами для объектов недвижимости
-- Ведение базы данных клиентов с детальной информацией о предпочтениях
-- Планирование и отслеживание встреч и просмотров объектов
-- Управление бронированиями с календарём занятости
-- Быстрый поиск и фильтрация объектов и клиентов
-- Панель управления с аналитикой и ключевыми показателями
-- Система рекомендаций объектов для клиентов
-
-## Архитектура проекта
-
-Проект реализован с использованием архитектурного паттерна **Clean Architecture** и **MVVM** (Model-View-ViewModel). Приложение разделено на следующие основные слои:
-
-### Слои приложения
-
-1. **Presentation layer (UI)**
-   - `presentation/screens` - экраны приложения с Jetpack Compose
-   - `presentation/components` - переиспользуемые UI-компоненты
-   - `presentation/viewmodels` - ViewModel-компоненты для связи UI и бизнес-логики
-   - `presentation/state` - состояния UI для различных экранов
-   - `presentation/theme` - темизация приложения (Material 3)
-
-2. **Domain layer**
-   - `domain/model` - бизнес-модели данных
-   - `domain/usecase` - интерактеры (юзкейсы) для бизнес-логики
-   - `domain/repository` - интерфейсы репозиториев
-
-3. **Data layer**
-   - `data/repository` - имплементации репозиториев
-   - `data/local` - источники данных (Room Database)
-     - `data/local/dao` - объекты доступа к данным
-     - `data/local/entity` - сущности базы данных
-     - `data/local/converter` - конвертеры типов для Room
-     - `data/local/database` - класс базы данных
-     - `data/local/security` - шифрование базы данных
-   - `data/mapper` - преобразователи между различными моделями
-   - `data/service` - сервисы для работы с внешними API
-
-4. **Core layer**
-   - `core/analytics` - аналитика и мониторинг
-   - `core/date` - утилиты для работы с датами
-   - `core/error` - обработка ошибок
-   - `core/file` - работа с файловой системой
-   - `core/image` - обработка изображений
-   - `core/localization` - локализация
-   - `core/logging` - логирование
-   - `core/navigation` - настройки навигации
-   - `core/network` - сетевые компоненты
-   - `core/permission` - управление разрешениями
-   - `core/resource` - доступ к ресурсам
-   - `core/result` - обертка результатов операций
-   - `core/security` - безопасность и шифрование
-   - `core/settings` - настройки приложения
-   - `core/state` - управление состоянием
-   - `core/theme` - базовые компоненты темы
-   - `core/util` - общие утилиты
-   - `core/validation` - валидация данных
-   - `core/viewmodel` - базовый функционал ViewModel
-
-### Инфраструктура
-
-- **Dependency Injection**: Dagger Hilt
-- **UI Framework**: Jetpack Compose
-- **Persistence**: Room Database с шифрованием SQLCipher
-- **Асинхронность**: Kotlin Coroutines и Flow
-- **Обработка изображений**: Coil
-- **Навигация**: Jetpack Navigation Compose
-- **Геолокация и карты**: Yandex MapKit
-
-## Модули и основные компоненты
-
-### Модуль недвижимости
-
-#### Модели
-- `Property` - модель данных объекта недвижимости
-- `PropertyEntity` - сущность базы данных для объекта недвижимости
-- `PropertyFormState` - состояние формы редактирования/создания объекта
-- `PropertyTypeCharacteristics` - определяет характеристики для разных типов недвижимости
-
-#### Use Cases
-- `AddPropertyUseCase` - добавление нового объекта
-- `UpdatePropertyUseCase` - обновление объекта
-- `DeletePropertyUseCase` - удаление объекта
-- `GetPropertyUseCase` - получение детальной информации об объекте
-- `GetAllPropertiesUseCase` - получение списка всех объектов
-- `ObservePropertiesUseCase` - наблюдение за списком объектов в реальном времени
-
-#### Репозитории
-- `PropertyRepository` - интерфейс репозитория для работы с объектами
-- `PropertyRepositoryImpl` - имплементация репозитория
-
-#### UI компоненты
-- `PropertyListScreen` - экран списка объектов недвижимости
-- `PropertyDetailScreen` - экран детальной информации об объекте
-- `AddPropertyScreen` - экран добавления нового объекта
-- `EditPropertyScreen` - экран редактирования объекта
-- `PropertyCard` - компонент для отображения карточки объекта в списке
-- `PropertyFilter` - компонент для фильтрации списка объектов
-- `PhotoGallery` - компонент для отображения галереи фотографий
-
-### Модуль клиентов
-
-#### Модели
-- `Client` - модель данных клиента
-- `ClientEntity` - сущность базы данных для клиента
-- `ClientFormState` - состояние формы редактирования/создания клиента
-
-#### Use Cases
-- `AddClientUseCase` - добавление нового клиента
-- `UpdateClientUseCase` - обновление данных клиента
-- `DeleteClientUseCase` - удаление клиента
-- `GetClientUseCase` - получение информации о клиенте
-- `GetAllClientsUseCase` - получение списка всех клиентов
-- `GetClientsByRentalTypeUseCase` - получение клиентов по типу аренды
-
-#### Репозитории
-- `ClientRepository` - интерфейс репозитория для работы с клиентами
-- `ClientRepositoryImpl` - имплементация репозитория
-
-#### UI компоненты
-- `ClientListScreen` - экран списка клиентов
-- `ClientDetailScreen` - экран детальной информации о клиенте
-- `AddClientScreen` - экран добавления нового клиента
-- `EditClientScreen` - экран редактирования клиента
-- `ClientCard` - компонент карточки клиента
-- `ClientSearchBar` - компонент поиска клиентов
-
-### Модуль встреч
-
-#### Модели
-- `Appointment` - модель данных встречи
-- `AppointmentEntity` - сущность базы данных для встречи
-- `AppointmentStatus` - статусы встреч (запланирована, завершена, отменена)
-- `AppointmentType` - типы встреч (показ, осмотр, подписание, другое)
-
-#### Use Cases
-- `CreateAppointmentUseCase` - создание новой встречи
-- `UpdateAppointmentUseCase` - обновление встречи
-- `DeleteAppointmentUseCase` - удаление встречи
-- `GetAppointmentUseCase` - получение детальной информации о встрече
-- `GetAppointmentsByDateUseCase` - получение встреч на определенную дату
-- `ObserveAppointmentsByDateRangeUseCase` - наблюдение за встречами в периоде
-
-#### Репозитории
-- `AppointmentRepository` - интерфейс репозитория для работы с встречами
-- `AppointmentRepositoryImpl` - имплементация репозитория
-
-#### UI компоненты
-- `AppointmentScreen` - экран списка встреч
-- `AppointmentDetailScreen` - экран детальной информации о встрече
-- `AddAppointmentScreen` - экран добавления новой встречи
-- `EditAppointmentScreen` - экран редактирования встречи
-- `CalendarView` - календарь для выбора даты встречи
-
-### Модуль бронирований
-
-#### Модели
-- `Booking` - модель данных бронирования
-- `BookingEntity` - сущность базы данных для бронирования
-- `BookingStatus` - статусы бронирования (ожидание, подтверждено, отменено)
-- `PaymentStatus` - статусы оплаты (не оплачено, частично оплачено, полностью оплачено)
-- `AdditionalService` - дополнительные услуги для бронирования
-
-#### Use Cases
-- `AddBookingUseCase` - добавление нового бронирования
-- `UpdateBookingUseCase` - обновление бронирования с проверкой конфликтов дат (исключая текущее бронирование)
-- `DeleteBookingUseCase` - удаление бронирования
-- `GetBookingUseCase` - получение детальной информации о бронировании
-- `HasBookingConflictsUseCase` - проверка на конфликты дат бронирования
-- `ObserveBookingsByPropertyUseCase` - наблюдение за бронированиями объекта
-
-#### Репозитории
-- `BookingRepository` - интерфейс репозитория для работы с бронированиями
-  - `hasBookingConflicts` - проверка конфликтов для нового бронирования
-  - `hasBookingConflictsExcludingBooking` - проверка конфликтов при редактировании (исключая текущее бронирование)
-- `BookingRepositoryImpl` - имплементация репозитория
-
-#### UI компоненты
-- `BookingCalendarScreen` - экран календаря бронирований
-- `BookingListScreen` - экран списка бронирований
-- `BookingDetailDialog` - диалог с деталями бронирования
-- `BookingFormDialog` - диалог для создания/редактирования бронирования
-
-#### UpdateBookingUseCase
-
-```kotlin
-class UpdateBookingUseCase @Inject constructor(
-    private val bookingRepository: BookingRepository
-) {
-    /**
-     * Обновляет существующее бронирование с проверкой на конфликты
-     * При проверке конфликтов дат исключает текущее бронирование, чтобы избежать 
-     * ложного обнаружения конфликта с самим собой при редактировании
-     * 
-     * @param booking Бронирование для обновления
-     * @return Result с успехом или ошибкой
-     */
-    suspend operator fun invoke(booking: Booking): Result<Unit> {
-        // Получаем текущее бронирование для проверки
-        val currentBookingResult = bookingRepository.getBooking(booking.id)
-        if (currentBookingResult.isFailure) {
-            return Result.failure(currentBookingResult.exceptionOrNull() 
-                ?: IllegalStateException("Не удалось найти бронирование для обновления"))
-        }
-        
-        val currentBooking = currentBookingResult.getOrThrow()
-        
-        // Если даты изменились, проверяем наличие конфликтов
-        if (currentBooking.startDate != booking.startDate || currentBooking.endDate != booking.endDate) {
-            val hasConflicts = bookingRepository.hasBookingConflictsExcludingBooking(
-                propertyId = booking.propertyId,
-                fromDate = booking.startDate,
-                toDate = booking.endDate,
-                excludeBookingId = booking.id
-            ).getOrNull() ?: false
-            
-            // Если есть конфликты, возвращаем ошибку
-            if (hasConflicts) {
-                return Result.failure(IllegalStateException("Выбранные даты уже заняты для этого объекта недвижимости"))
-            }
-        }
-        
-        // Если нет конфликтов, обновляем бронирование
-        return bookingRepository.updateBooking(booking)
-    }
-}
+### 1.3. Структура проекта
+```
+app/src/main/java/com/realestateassistant/pro/
+├── core/                 # Базовые компоненты и утилиты
+│   ├── analytics/        # Аналитика
+│   ├── date/             # Утилиты для работы с датами
+│   ├── error/            # Обработка ошибок
+│   ├── file/             # Работа с файлами
+│   ├── image/            # Работа с изображениями
+│   ├── logging/          # Логирование
+│   ├── navigation/       # Базовые компоненты навигации
+│   ├── network/          # Сетевые компоненты
+│   ├── permission/       # Управление разрешениями
+│   ├── resource/         # Работа с ресурсами
+│   ├── result/           # Результаты операций
+│   ├── security/         # Компоненты безопасности
+│   ├── settings/         # Настройки приложения
+│   ├── state/            # Управление состоянием
+│   ├── theme/            # Темизация
+│   ├── util/             # Общие утилиты
+│   └── viewmodel/        # Базовый функционал ViewModel
+├── data/                 # Слой данных
+│   ├── api/              # API интерфейсы и реализации
+│   ├── local/            # Локальное хранилище
+│   │   ├── converter/    # Конвертеры типов Room
+│   │   ├── dao/          # Data Access Objects
+│   │   ├── database/     # Конфигурация базы данных
+│   │   ├── entity/       # Entity классы
+│   │   ├── mapper/       # Мапперы для преобразования Entity в Domain
+│   │   ├── preferences/  # Настройки приложения
+│   │   └── security/     # Шифрование базы данных
+│   ├── mapper/           # Преобразование моделей между слоями
+│   ├── model/            # Модели данных для слоя Data
+│   ├── remote/           # Удаленные источники данных
+│   ├── repository/       # Реализации репозиториев
+│   ├── service/          # Сервисы для работы с данными
+│   ├── sync/             # Синхронизация данных
+│   └── worker/           # Фоновые задачи
+├── di/                   # Dependency Injection
+│   ├── AppModule.kt
+│   ├── AppointmentModule.kt
+│   ├── BookingModule.kt
+│   ├── ClientModule.kt
+│   ├── DatabaseModule.kt
+│   ├── DocumentModule.kt
+│   ├── PropertyModule.kt
+│   ├── RepositoryModule.kt
+│   ├── UseCaseModule.kt
+│   ├── ValidationModule.kt
+│   └── WorkerModule.kt
+├── domain/               # Доменный слой
+│   ├── model/            # Доменные модели
+│   │   ├── dashboard/    # Модели для дашборда
+│   │   └── validation/   # Модели для валидации
+│   ├── repository/       # Интерфейсы репозиториев
+│   └── usecase/          # Use cases
+│       ├── appointment/  # Use cases для встреч
+│       ├── booking/      # Use cases для бронирований
+│       ├── client/       # Use cases для клиентов
+│       ├── dashboard/    # Use cases для дашборда
+│       ├── document/     # Use cases для документов
+│       ├── property/     # Use cases для объектов недвижимости
+│       └── recommendation/ # Use cases для рекомендаций
+├── navigation/           # Навигация
+│   ├── components/       # Компоненты навигации
+│   ├── graphs/           # Навигационные графы
+│   ├── model/            # Модели для навигации
+│   ├── routes/           # Маршруты
+│   └── utils/            # Утилиты для навигации
+├── presentation/         # Слой представления
+│   ├── components/       # UI-компоненты
+│   │   ├── appointment/  # Компоненты для встреч
+│   │   ├── calendar/     # Календарные компоненты
+│   │   ├── client/       # Компоненты для клиентов
+│   │   ├── common/       # Общие компоненты
+│   │   ├── dashboard/    # Компоненты для дашборда
+│   │   ├── drawer/       # Компоненты для бокового меню
+│   │   ├── map/          # Компоненты для карты
+│   │   ├── photo/        # Компоненты для работы с фото
+│   │   └── property/     # Компоненты для объектов недвижимости
+│   ├── model/            # Модели UI слоя
+│   ├── screens/          # Экраны приложения
+│   │   ├── about/        # Экран "О приложении"
+│   │   ├── appointment/  # Экраны для встреч
+│   │   ├── booking/      # Экраны для бронирований
+│   │   ├── calendar/     # Экраны календаря
+│   │   ├── client/       # Экраны для клиентов
+│   │   ├── dashboard/    # Экран дашборда
+│   │   ├── help/         # Экран помощи
+│   │   ├── property/     # Экраны для объектов недвижимости
+│   │   ├── recommendation/ # Экраны рекомендаций
+│   │   └── settings/     # Экран настроек
+│   ├── state/            # Состояния UI
+│   ├── theme/            # Темы приложения
+│   ├── utils/            # Утилиты для UI
+│   └── viewmodel/        # ViewModels
+└── ui/                   # Базовые UI-компоненты
+    ├── icons/            # Иконки
+    └── theme/            # Базовые темы и стили
 ```
 
-### BookingRepository
+### 1.4. Основные модули
+1. **Управление объектами недвижимости**: добавление, редактирование, просмотр и фильтрация объектов
+2. **Управление клиентами**: работа с базой данных клиентов, их предпочтениями и требованиями
+3. **Встречи и показы**: планирование и управление встречами с клиентами
+4. **Бронирования**: управление бронированиями для краткосрочной аренды
+5. **Дэшборд**: обзорная панель с ключевыми метриками и предстоящими событиями
 
-Репозиторий бронирований предоставляет два метода для проверки конфликтов дат:
+### 1.5. Технологический стек
+- **Язык программирования**: Kotlin 1.9.0
+- **Минимальная версия SDK**: 26 (Android 8.0)
+- **Целевая версия SDK**: 35 (Android 15)
+- **UI Framework**: Jetpack Compose 1.6.0
+- **Архитектура**: Clean Architecture + MVVM
+- **Dependency Injection**: Dagger Hilt 2.48
+- **База данных**: Room 2.6.1 + SQLCipher 4.5.4
+- **Асинхронное программирование**: Kotlin Coroutines и Flow
+- **Навигация**: Navigation Compose 2.8.5
+- **Постоянное хранилище**: DataStore Preferences 1.0.0
+- **Работа с изображениями**: Coil 2.5.0
+- **Геолокация и карты**: Yandex MapKit 4.15.0-lite
+- **Работа с файлами**: Android FileProvider, Security-Crypto 1.1.0-alpha06
+- **Логирование**: Timber 4.7.1
+- **Фоновые задачи**: WorkManager 2.9.0
+- **Календарь**: Calendar Compose 2.5.0
+- **Компоненты Jetpack**: 
+  - Core-KTX
+  - Lifecycle Runtime KTX
+  - Activity Compose
+  - Material 3
 
+## 2. Подробная архитектура
+
+### 2.1. Слой представления (Presentation)
+Расположен в `app/src/main/java/com/realestateassistant/pro/presentation/` и отвечает за отображение данных и взаимодействие с пользователем. Разработан на основе Jetpack Compose.
+
+#### 2.1.1. MVVM паттерн
+- **ViewModel** (`app/src/main/java/com/realestateassistant/pro/presentation/viewmodels/`): 
+  - Содержит бизнес-логику для управления состоянием UI
+  - Наследуется от базового класса `BaseViewModel` (`app/src/main/java/com/realestateassistant/pro/core/viewmodel/BaseViewModel.kt`)
+  - Получает данные через use cases и публикует их в виде состояний через StateFlow
+  - Пример: `PropertyViewModel` (`app/src/main/java/com/realestateassistant/pro/presentation/viewmodels/PropertyViewModel.kt`)
+  
+- **Screens** (`app/src/main/java/com/realestateassistant/pro/presentation/screens/`): 
+  - Экраны приложения, реализованные с помощью Jetpack Compose
+  - Организованы по функциональным модулям
+  - Пример: `PropertyDetailScreen` (`app/src/main/java/com/realestateassistant/pro/presentation/screens/PropertyDetailScreen.kt`)
+  
+- **Components** (`app/src/main/java/com/realestateassistant/pro/presentation/components/`):
+  - Переиспользуемые UI-компоненты
+  - Организованы по функциональным модулям
+  - Пример: `PropertyCard` (`app/src/main/java/com/realestateassistant/pro/presentation/components/property/PropertyCard.kt`)
+
+- **State** (`app/src/main/java/com/realestateassistant/pro/presentation/state/`):
+  - Классы, представляющие состояние UI
+  - Пример: `AppointmentState` (`app/src/main/java/com/realestateassistant/pro/presentation/state/appointment/AppointmentState.kt`)
+
+#### 2.1.2. Навигация
+Реализована с использованием Navigation Compose. Структура включает:
+
+- **Маршруты** (`app/src/main/java/com/realestateassistant/pro/navigation/routes/AppRoutes.kt`):
+  - Определяют пути навигации в приложении
+  - Включают паттерн для параметризованных маршрутов
+
+- **Навигационные графы** (`app/src/main/java/com/realestateassistant/pro/navigation/graphs/`):
+  - Организуют экраны в логические группы
+  - Основной граф: `AppNavHost` (`app/src/main/java/com/realestateassistant/pro/navigation/AppNavHost.kt`)
+
+- **Навигационные компоненты** (`app/src/main/java/com/realestateassistant/pro/navigation/components/`):
+  - Включают боковое меню (`DrawerContent.kt`)
+  - Нижнюю навигацию (`BottomNavBar.kt`)
+  - Верхнюю панель приложения (`AppTopBar.kt`)
+
+#### 2.1.3. Состояния экранов
+Для каждого экрана определены специальные классы состояний:
+
+- **Состояния форм**:
+  - `PropertyFormState` (`app/src/main/java/com/realestateassistant/pro/presentation/state/property/PropertyFormState.kt`) - состояние формы редактирования объекта
+  - `ClientFormState` (`app/src/main/java/com/realestateassistant/pro/presentation/state/client/ClientFormState.kt`) - состояние формы редактирования клиента
+
+- **Состояния списков**:
+  - `PropertyListState` (`app/src/main/java/com/realestateassistant/pro/presentation/state/property/PropertyListState.kt`) - состояние списка объектов
+  - `ClientListState` (`app/src/main/java/com/realestateassistant/pro/presentation/state/client/ClientListState.kt`) - состояние списка клиентов
+  
+- **Состояния детальных экранов**:
+  - `PropertyDetailState` (`app/src/main/java/com/realestateassistant/pro/presentation/state/property/PropertyDetailState.kt`) - состояние детального просмотра объекта
+  - `AppointmentState` (`app/src/main/java/com/realestateassistant/pro/presentation/state/appointment/AppointmentState.kt`) - состояние встречи
+
+Состояния публикуются через StateFlow в ViewModel:
 ```kotlin
-interface BookingRepository {
-    // ... существующие методы ...
-    
-    /**
-     * Проверяет, есть ли конфликты бронирований для указанного объекта в указанном диапазоне дат
-     * Возвращает true, если есть конфликты
-     */
-    suspend fun hasBookingConflicts(propertyId: String, fromDate: Long, toDate: Long): Result<Boolean>
-    
-    /**
-     * Проверяет, есть ли конфликты бронирований для указанного объекта в указанном диапазоне дат,
-     * исключая указанное бронирование (для редактирования)
-     * Возвращает true, если есть конфликты
-     */
-    suspend fun hasBookingConflictsExcludingBooking(propertyId: String, fromDate: Long, toDate: Long, excludeBookingId: String): Result<Boolean>
-    
-    // ... другие методы ...
-}
+// Пример из PropertyViewModel.kt
+private val _propertyDetailState = MutableStateFlow(PropertyDetailState())
+val propertyDetailState: StateFlow<PropertyDetailState> = _propertyDetailState.asStateFlow()
 ```
 
-### BookingDao
-
-DAO для работы с бронированиями предоставляет SQL-запросы для проверки конфликтов:
-
+И собираются экранами с помощью `collectAsState()`:
 ```kotlin
-interface BookingDao {
-    // ... существующие методы ...
-    
-    /**
-     * Проверяет, есть ли конфликты бронирований для указанного объекта в указанном диапазоне дат
-     * Возвращает количество конфликтующих бронирований
-     */
-    @Query("SELECT COUNT(*) FROM bookings WHERE propertyId = :propertyId AND status != 'CANCELLED' AND status != 'EXPIRED' AND ((startDate BETWEEN :fromDate AND :toDate) OR (endDate BETWEEN :fromDate AND :toDate) OR (:fromDate BETWEEN startDate AND endDate))")
-    suspend fun countBookingConflicts(propertyId: String, fromDate: Long, toDate: Long): Int
-    
-    /**
-     * Проверяет, есть ли конфликты бронирований для указанного объекта в указанном диапазоне дат,
-     * исключая указанное бронирование по id (для редактирования)
-     * Возвращает количество конфликтующих бронирований
-     */
-    @Query("SELECT COUNT(*) FROM bookings WHERE propertyId = :propertyId AND id != :excludeBookingId AND status != 'CANCELLED' AND status != 'EXPIRED' AND ((startDate BETWEEN :fromDate AND :toDate) OR (endDate BETWEEN :fromDate AND :toDate) OR (:fromDate BETWEEN startDate AND endDate))")
-    suspend fun countBookingConflictsExcludingBooking(propertyId: String, fromDate: Long, toDate: Long, excludeBookingId: String): Int
-    
-    // ... другие методы ...
-}
+// Пример из PropertyDetailScreen.kt
+val state by viewModel.propertyDetailState.collectAsState()
 ```
 
-### Модуль изображений
+### 2.2. Доменный слой (Domain)
+Расположен в `app/src/main/java/com/realestateassistant/pro/domain/`. Содержит бизнес-логику и правила приложения, не зависит от конкретных реализаций фреймворков.
 
-#### Модели и компоненты
-- `ImageRepository` - интерфейс для работы с изображениями
-- `ImageRepositoryImpl` - реализация репозитория изображений
-- `ImageUseCases` - юзкейсы для работы с изображениями
-- `CoilUtils` - утилиты для оптимизации загрузки изображений
-- Компоненты UI для отображения и управления изображениями
+#### 2.2.1. Модели (Models)
+Основные сущности предметной области (`app/src/main/java/com/realestateassistant/pro/domain/model/`):
 
-### Модуль документов
-
-#### Модели и компоненты
-- `DocumentRepository` - интерфейс для работы с документами
-- `DocumentRepositoryImpl` - реализация репозитория документов
-- `DocumentUseCases` - юзкейсы для работы с документами
-- `DocumentViewModel` - ViewModel для управления документами
-- `DocumentItem` - UI компонент для отображения документа в списке
-
-### Модуль панели управления
-
-#### Модели и компоненты
-- `DashboardSummary` - модель данных для сводки на панели управления
-- `DashboardState` - состояние UI для экрана панели управления
-- `GetDashboardSummaryUseCase` - получение данных для панели управления
-- `DashboardViewModel` - ViewModel для управления панелью
-- `DashboardScreen` - главный экран с панелью управления
-- `StatisticCard` - компонент для отображения статистических данных
-
-## Модель данных
-
-### Property (Объект недвижимости)
-
+- **Property** (`app/src/main/java/com/realestateassistant/pro/domain/model/Property.kt`): 
 ```kotlin
 data class Property(
     val id: String = "",
-    
-    // Контактная информация
-    val contactName: String = "",
-    val contactPhone: List<String> = emptyList(),
-    val additionalContactInfo: String? = null,
-    
-    // Общая информация
-    val propertyType: String = "",
+      val ownerName: String = "",
+      val ownerContacts: List<String> = emptyList(),
     val address: String = "",
     val district: String = "",
-    val nearbyObjects: List<String> = emptyList(),
-    val views: List<String> = emptyList(),
-    val area: Double = 0.0,
-    val roomsCount: Int = 0,
-    val isStudio: Boolean = false,
-    val layout: String = "",
-    val floor: Int = 0,
-    val totalFloors: Int = 0,
-    val description: String? = null,
-    val management: List<String> = emptyList(),
-    
-    // Координаты для карты
-    val latitude: Double? = null,
-    val longitude: Double? = null,
-    
-    // Поля для разных типов недвижимости
-    val levelsCount: Int = 0,
-    val landArea: Double = 0.0,
-    val hasGarage: Boolean = false,
-    val garageSpaces: Int = 0,
-    val hasBathhouse: Boolean = false,
-    val hasPool: Boolean = false,
-    val poolType: String = "",
-    
-    // Характеристики объекта
-    val repairState: String = "",
-    val bedsCount: Int? = null,
-    val bathroomsCount: Int? = null,
-    val bathroomType: String = "",
-    val noFurniture: Boolean = false,
-    val hasAppliances: Boolean = false,
-    val heatingType: String = "",
-    val balconiesCount: Int = 0,
-    val elevatorsCount: Int? = null,
-    val hasParking: Boolean = false,
-    val parkingType: String? = null,
-    val parkingSpaces: Int? = null,
-    val amenities: List<String> = emptyList(),
-    val smokingAllowed: Boolean = false,
-    
-    // Условия проживания
-    val childrenAllowed: Boolean = false,
-    val minChildAge: Int? = null,
-    val maxChildrenCount: Int? = null,
-    val petsAllowed: Boolean = false,
-    val maxPetsCount: Int? = null,
-    val allowedPetTypes: List<String> = emptyList(),
-    
-    // Для долгосрочной аренды
-    val monthlyRent: Double? = null,
-    val winterMonthlyRent: Double? = null,
-    val summerMonthlyRent: Double? = null,
-    val utilitiesIncluded: Boolean = false,
-    val utilitiesCost: Double? = null,
-    val minRentPeriod: String? = null,
-    val maxRentPeriod: Int? = null,
-    val depositMonths: String? = null,
-    val depositCustomAmount: Double? = null,
-    
-    // Для посуточной аренды
-    val dailyPrice: Double? = null,
-    val minStayDays: Int? = null,
-    val maxStayDays: Int? = null,
-    val maxGuests: Int? = null,
-    val checkInTime: String? = null,
-    val checkOutTime: String? = null,
-    val shortTermDeposit: Double? = null,
-    val seasonalPrices: List<SeasonalPrice> = emptyList(),
-    
-    // Дополнительная информация
-    val photos: List<String> = emptyList(),
-    val documents: List<String> = emptyList(),
-    
-    // Метаданные
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
-)
-```
+      val coordinates: LatLng? = null,
+      val propertyType: PropertyType = PropertyType.APARTMENT,
+      val rentalType: RentalType = RentalType.LONG_TERM,
+      val status: PropertyStatus = PropertyStatus.AVAILABLE,
+      // ... другие свойства объекта недвижимости
+  )
+  ```
 
-### Client (Клиент)
-
+- **Client** (`app/src/main/java/com/realestateassistant/pro/domain/model/Client.kt`):
 ```kotlin
 data class Client(
     val id: String = "",
     val fullName: String = "",
-    val phone: List<String> = emptyList(),
-    val email: String? = null,
-    val rentalType: String = "", // "long_term", "short_term", "both"
-    val propertyTypeInterests: List<String> = emptyList(),
-    val districtInterests: List<String> = emptyList(),
-    val priceRange: PriceRange? = null,
-    val minArea: Double? = null,
-    val minRooms: Int? = null,
-    val additionalRequirements: String? = null,
-    val source: String? = null, // Откуда пришел клиент
-    val status: String = "active", // active, inactive, deal_completed
-    val notes: String? = null,
-    
-    // Информация о клиенте
-    val familyComposition: String? = null,
-    val peopleCount: Int? = null,
-    val childrenCount: Int? = null,
-    val childrenAges: List<Int> = emptyList(),
-    val hasPets: Boolean = false,
-    val petTypes: List<String> = emptyList(),
-    val petCount: Int? = null,
-    val occupation: String? = null,
-    val isSmokingClient: Boolean = false,
-    
-    // Дополнительные предпочтения
-    val preferredAmenities: List<String> = emptyList(),
-    val preferredViews: List<String> = emptyList(),
-    val preferredNearbyObjects: List<String> = emptyList(),
-    val preferredRepairState: String? = null,
-    val preferredFloorMin: Int? = null,
-    val preferredFloorMax: Int? = null,
-    val needsElevator: Boolean? = null,
-    val preferredBalconiesCount: Int? = null,
-    val preferredBathroomsCount: Int? = null,
-    val preferredBathroomType: String? = null,
-    val needsFurniture: Boolean? = null,
-    val needsAppliances: Boolean? = null,
-    val preferredHeatingType: String? = null,
-    val needsParking: Boolean? = null,
-    val preferredParkingType: String? = null,
-    
-    // Метаданные
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
-)
+      val phones: List<String> = emptyList(),
+      val email: String = "",
+      val preferredCommunication: CommunicationType = CommunicationType.PHONE,
+      val rentalType: RentalType = RentalType.LONG_TERM,
+      val desiredPropertyTypes: List<PropertyType> = emptyList(),
+      val preferredDistricts: List<String> = emptyList(),
+      // ... другие свойства клиента
+  )
+  ```
 
-/**
- * Ценовой диапазон для клиента
- */
-data class PriceRange(
-    val min: Double = 0.0,
-    val max: Double = 0.0
-)
-```
-
-### Appointment (Встреча)
-
+- **Appointment** (`app/src/main/java/com/realestateassistant/pro/domain/model/Appointment.kt`):
 ```kotlin
 data class Appointment(
     val id: String = "",
-    val propertyId: String = "",
-    val clientId: String = "",
-    val agentId: String? = null,
     val title: String = "",
-    val description: String? = null,
-    val startTime: Long = 0L,
-    val endTime: Long = 0L,
-    val status: AppointmentStatus = AppointmentStatus.SCHEDULED,
+      val description: String = "",
+      val startTime: Long = 0,  // Unix timestamp
+      val endTime: Long = 0,    // Unix timestamp
+      val location: String = "",
+      val clientId: String? = null,
+      val propertyId: String? = null,
+      val status: AppointmentStatus = AppointmentStatus.PLANNED,
     val type: AppointmentType = AppointmentType.SHOWING,
-    val location: String? = null,
-    val notes: String? = null,
-    val reminderTime: Long? = null,
-    val isAllDay: Boolean = false,
-    val isRecurring: Boolean = false,
-    val recurrenceRule: String? = null,
-    val color: String? = null,
-    val attachments: List<String> = emptyList(),
-    val participants: List<String> = emptyList(),
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
-)
+      // ... другие свойства встречи
+  )
+  ```
 
-enum class AppointmentStatus {
-    SCHEDULED,
-    COMPLETED,
-    CANCELLED,
-    RESCHEDULED,
-    NO_SHOW
-}
-
-enum class AppointmentType {
-    SHOWING,
-    INSPECTION,
-    SIGNING,
-    OTHER
-}
-```
-
-### Booking (Бронирование)
-
+- **Booking** (`app/src/main/java/com/realestateassistant/pro/domain/model/Booking.kt`):
 ```kotlin
 data class Booking(
     val id: String = "",
-    
-    // Связи с другими сущностями
-    val propertyId: String,
-    val clientId: String? = null, // Может быть null для предварительных бронирований
-    
-    // Общие поля для обоих типов аренды
-    val startDate: Long, // Дата заезда/начала аренды
-    val endDate: Long, // Дата выезда/окончания аренды
+      val propertyId: String = "",
+      val clientId: String? = null,
+      val clientName: String = "",
+      val startDate: Long = 0,  // Unix timestamp
+      val endDate: Long = 0,    // Unix timestamp
     val status: BookingStatus = BookingStatus.PENDING,
-    val paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
-    val totalAmount: Double, // Общая сумма бронирования
-    val depositAmount: Double? = null, // Сумма депозита
-    val notes: String? = null, // Дополнительные примечания
-    
-    // Поля для посуточной аренды
-    val guestsCount: Int? = null, // Количество гостей
-    val checkInTime: String? = null, // Время заезда
-    val checkOutTime: String? = null, // Время выезда
-    val includedServices: List<String> = emptyList(), // Включенные услуги
-    val additionalServices: List<AdditionalService> = emptyList(), // Дополнительные услуги
-    
-    // Поля для долгосрочной аренды
-    val rentPeriodMonths: Int? = null, // Срок аренды в месяцах
-    val monthlyPaymentAmount: Double? = null, // Ежемесячный платеж
-    val utilityPayments: Boolean? = null, // Включены ли коммунальные платежи
-    val contractType: String? = null, // Тип договора
-    
-    // Метаданные
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
-)
+      val totalPrice: Double = 0.0,
+      // ... другие свойства бронирования
+  )
+  ```
 
-enum class BookingStatus {
-    PENDING,
-    CONFIRMED,
-    CANCELLED,
-    COMPLETED,
-    NO_SHOW
-}
+- Дополнительные типы и константы:
+  - `PropertyType` (`app/src/main/java/com/realestateassistant/pro/domain/model/Property.kt`)
+  - `RentalType` (`app/src/main/java/com/realestateassistant/pro/domain/model/Property.kt`)
+  - `PropertyStatus` (`app/src/main/java/com/realestateassistant/pro/domain/model/PropertyStatus.kt`)
+  - `AppointmentStatus` (`app/src/main/java/com/realestateassistant/pro/domain/model/AppointmentStatus.kt`)
+  - `AppointmentType` (`app/src/main/java/com/realestateassistant/pro/domain/model/AppointmentType.kt`)
+  - `BookingStatus` (`app/src/main/java/com/realestateassistant/pro/domain/model/Booking.kt`)
 
-enum class PaymentStatus {
-    UNPAID,
-    PARTIALLY_PAID,
-    FULLY_PAID,
-    REFUNDED,
-    DEPOSIT_PAID
-}
+#### 2.2.2. Use Cases
+Бизнес-логика, инкапсулированная в виде отдельных операций (`app/src/main/java/com/realestateassistant/pro/domain/usecase/`):
 
-data class AdditionalService(
-    val name: String,
-    val price: Double,
-    val quantity: Int = 1,
-    val isIncluded: Boolean = false
-)
-```
-
-
-
-### SeasonalPrice (Сезонная цена)
-
+- **PropertyUseCases** (`app/src/main/java/com/realestateassistant/pro/domain/usecase/property/`):
+  - `AddPropertyUseCase` - добавление нового объекта
 ```kotlin
-data class SeasonalPrice(
-    val startDate: Long = 0L,
-    val endDate: Long = 0L,
-    val price: Double = 0.0
-)
-```
-
-### PropertyId (Идентификатор объекта)
-
-```kotlin
-data class PropertyId(
-    val id: String
-)
-```
-
-## Управление состоянием
-
-Управление состоянием в приложении реализовано с использованием ViewModel из библиотеки Jetpack и StateFlow/SharedFlow из Kotlin Coroutines. Это обеспечивает реактивное обновление UI при изменении данных.
-
-### Базовая структура состояния
-
-Для каждого экрана или функционального модуля создаются отдельные классы состояния, которые содержат все необходимые данные для отображения UI.
-
-```kotlin
-data class PropertyState(
-    val property: Property? = null,
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
-```
-
-Для более сложных экранов используются составные состояния, содержащие все аспекты UI:
-
-```kotlin
-data class BookingCalendarState(
-    val selectedPropertyId: String? = null,
-    val bookings: List<Booking> = emptyList(),
-    val clients: List<Client> = emptyList(),
-    val selectedBooking: Booking? = null,
-    val selectedStartDate: LocalDate? = null,
-    val selectedEndDate: LocalDate? = null,
-    val selectedClient: Client? = null,
-    val isSelectionMode: Boolean = false,
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val isBookingDialogVisible: Boolean = false,
-    val isInfoMode: Boolean = true,
-    val availableTimeSlots: List<AvailableTimeSlot> = emptyList(),
-    val allBookings: List<Booking> = emptyList(),
-    val filteredBookings: List<Booking> = emptyList(),
-    val allProperties: List<PropertyId> = emptyList()
-)
-```
-
-### События UI
-
-Для обработки пользовательских действий используются Sealed классы событий:
-
-```kotlin
-sealed class BookingCalendarEvent {
-    data class SelectProperty(val propertyId: String) : BookingCalendarEvent()
-    data class SelectDate(val date: LocalDate) : BookingCalendarEvent()
-    data class SelectClient(val client: Client) : BookingCalendarEvent()
-    data class SelectBooking(val booking: Booking) : BookingCalendarEvent()
-    data class UpdateDates(val start: LocalDate, val end: LocalDate) : BookingCalendarEvent()
-    data class CreateBooking(
-        val propertyId: String,
-        val clientId: String?,
-        val startDate: LocalDate,
-        val endDate: LocalDate,
-        val amount: Double,
-        val guestsCount: Int = 1,
-        val notes: String? = null
-    ) : BookingCalendarEvent()
-    // ... другие события
-}
-```
-
-### Основные ViewModel компоненты
-
-#### PropertyViewModel
-
-```kotlin
-@HiltViewModel
-class PropertyViewModel @Inject constructor(
-    private val propertyUseCases: PropertyUseCases,
-    private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
-    
-    private val _state = MutableStateFlow(PropertyState())
-    val state: StateFlow<PropertyState> = _state.asStateFlow()
-    
-    private val _eventFlow = MutableSharedFlow<UiEvent>()
-    val eventFlow = _eventFlow.asSharedFlow()
-    
-    init {
-        savedStateHandle.get<String>("propertyId")?.let { propertyId ->
-            if (propertyId.isNotBlank()) {
-                getProperty(propertyId)
-            }
+    class AddPropertyUseCase @Inject constructor(
+        private val repository: PropertyRepository,
+        private val imageStorage: ImageStorage
+    ) {
+        suspend operator fun invoke(property: Property, images: List<Uri>): Result<String> {
+            return try {
+                // Логика сохранения изображений и объекта недвижимости
+                val savedImagePaths = imageStorage.saveImages(images, "properties/${property.id}")
+                val propertyWithImages = property.copy(photos = savedImagePaths)
+                val id = repository.addProperty(propertyWithImages)
+                Result.Success(id)
+            } catch (e: Exception) {
+                Result.Error(e)
         }
     }
-    
-    fun onEvent(event: PropertyEvent) {
-        when(event) {
-            is PropertyEvent.SaveProperty -> {
-                viewModelScope.launch {
-                    // Логика сохранения объекта
-                }
-            }
-            is PropertyEvent.DeleteProperty -> {
-                viewModelScope.launch {
-                    // Логика удаления объекта
-                }
-            }
-            // Обработка других событий
-        }
-    }
-    
-    private fun getProperty(propertyId: String) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-            
-            propertyUseCases.getPropertyUseCase(propertyId)
-                .onSuccess { property ->
-                    _state.update { 
-                        it.copy(
-                            property = property,
-                            isLoading = false,
-                            error = null
-                        )
-                    }
-                }
-                .onFailure { exception ->
-                    _state.update { 
-                        it.copy(
-                            isLoading = false,
-                            error = exception.message ?: "Не удалось загрузить объект"
-                        )
-                    }
-                }
-        }
-    }
-    
-    // Другие методы для работы с объектами недвижимости
 }
 ```
+  - `UpdatePropertyUseCase` - обновление информации об объекте
+  - `GetPropertyUseCase` - получение объекта по ID
+  - `DeletePropertyUseCase` - удаление объекта
+  - `GetAllPropertiesUseCase` - получение всех объектов
+  - `ObserveAllPropertiesUseCase` - наблюдение за изменениями в списке объектов
+  - `GetPropertiesByStatusUseCase` - получение объектов по статусу
+  - `GetPropertiesWithBookingsUseCase` - получение объектов с бронированиями
+  - `UpdatePropertyStatusesUseCase` - обновление статусов объектов
+  - `FilterPropertiesUseCase` - фильтрация объектов
 
-#### BookingCalendarViewModel
+- **ClientUseCases** (`app/src/main/java/com/realestateassistant/pro/domain/usecase/client/`):
+  - `AddClientUseCase` - добавление нового клиента
+  - `UpdateClientUseCase` - обновление информации о клиенте
+  - `GetClientUseCase` - получение клиента по ID
+  - `GetAllClientsUseCase` - получение всех клиентов
+  - `SearchClientsUseCase` - поиск клиентов
+  - `DeleteClientUseCase` - удаление клиента
 
+- **AppointmentUseCases** (`app/src/main/java/com/realestateassistant/pro/domain/usecase/appointment/`):
+  - `AddAppointmentUseCase` - создание новой встречи
+  - `UpdateAppointmentUseCase` - обновление информации о встрече
+  - `GetAppointmentsForDateUseCase` - получение встреч на определенную дату
+  - `GetClientAppointmentsUseCase` - получение встреч для клиента
+  - `GetPropertyAppointmentsUseCase` - получение встреч для объекта
+  - `UpdateAppointmentStatusUseCase` - обновление статуса встречи
+
+- **BookingUseCases** (`app/src/main/java/com/realestateassistant/pro/domain/usecase/booking/`):
+  - `CreateBookingUseCase` - создание нового бронирования
+  - `UpdateBookingUseCase` - обновление информации о бронировании
+  - `GetBookingsForPropertyUseCase` - получение бронирований для объекта
+  - `CheckAvailabilityUseCase` - проверка доступности объекта
+  - `CancelBookingUseCase` - отмена бронирования
+
+- **RecommendationUseCases** (`app/src/main/java/com/realestateassistant/pro/domain/usecase/recommendation/`):
+  - `GetPropertiesForClientUseCase` - получение подходящих объектов для клиента
+  - `GetClientsForPropertyUseCase` - получение подходящих клиентов для объекта
+  - `CalculateMatchScoreUseCase` - расчет оценки соответствия
+
+#### 2.2.3. Репозитории (Interfaces)
+Абстракции для доступа к данным (`app/src/main/java/com/realestateassistant/pro/domain/repository/`):
+
+- **PropertyRepository** (`app/src/main/java/com/realestateassistant/pro/domain/repository/PropertyRepository.kt`):
 ```kotlin
-@HiltViewModel
-class BookingCalendarViewModel @Inject constructor(
-    private val bookingUseCases: BookingUseCases,
-    private val clientUseCases: ClientUseCases,
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
-    
-    private val _state = MutableStateFlow(BookingCalendarState())
-    val state: StateFlow<BookingCalendarState> = _state.asStateFlow()
-    
-    init {
-        loadClients()
-        loadAllBookings()
-        updateBookingStatusesAutomatically()
+  interface PropertyRepository {
+      suspend fun addProperty(property: Property): String
+      suspend fun updateProperty(property: Property)
+      suspend fun getProperty(id: String): Property?
+      suspend fun deleteProperty(id: String)
+      fun getAllProperties(): Flow<List<Property>>
+      fun getPropertiesByStatus(status: PropertyStatus): Flow<List<Property>>
+      suspend fun updatePropertyStatus(id: String, status: PropertyStatus)
+      // ... другие методы
+  }
+  ```
+
+- **ClientRepository** (`app/src/main/java/com/realestateassistant/pro/domain/repository/ClientRepository.kt`):
+```kotlin
+  interface ClientRepository {
+      suspend fun addClient(client: Client): String
+      suspend fun updateClient(client: Client)
+      suspend fun getClient(id: String): Client?
+      suspend fun deleteClient(id: String)
+      fun getAllClients(): Flow<List<Client>>
+      fun searchClients(query: String): Flow<List<Client>>
+      // ... другие методы
+  }
+  ```
+
+- **AppointmentRepository** (`app/src/main/java/com/realestateassistant/pro/domain/repository/AppointmentRepository.kt`):
+```kotlin
+  interface AppointmentRepository {
+      suspend fun addAppointment(appointment: Appointment): String
+      suspend fun updateAppointment(appointment: Appointment)
+      suspend fun getAppointment(id: String): Appointment?
+      suspend fun deleteAppointment(id: String)
+      fun getAllAppointments(): Flow<List<Appointment>>
+      fun getAppointmentsForDate(date: Long): Flow<List<Appointment>>
+      fun getAppointmentsForClient(clientId: String): Flow<List<Appointment>>
+      // ... другие методы
+  }
+  ```
+
+- **BookingRepository** (`app/src/main/java/com/realestateassistant/pro/domain/repository/BookingRepository.kt`):
+```kotlin
+  interface BookingRepository {
+      suspend fun createBooking(booking: Booking): String
+      suspend fun updateBooking(booking: Booking)
+      suspend fun getBooking(id: String): Booking?
+      suspend fun deleteBooking(id: String)
+      fun getBookingsForProperty(propertyId: String): Flow<List<Booking>>
+      fun getActiveBookings(): Flow<List<Booking>>
+      // ... другие методы
+  }
+  ```
+
+### 2.3. Слой данных (Data)
+Расположен в `app/src/main/java/com/realestateassistant/pro/data/`. Отвечает за получение и сохранение данных, реализует интерфейсы репозиториев из доменного слоя.
+
+#### 2.3.1. Локальное хранилище
+Локальное хранилище организовано с использованием Room и шифрования SQLCipher:
+
+- **Room Database** (`app/src/main/java/com/realestateassistant/pro/data/local/AppDatabase.kt`):
+```kotlin
+  @Database(
+      entities = [
+          PropertyEntity::class,
+          ClientEntity::class,
+          AppointmentEntity::class,
+          BookingEntity::class
+      ],
+      version = 12,
+      exportSchema = true
+  )
+  @TypeConverters(
+      ListStringConverter::class,
+      SeasonalPriceListConverter::class,
+      AppointmentStatusConverter::class,
+      AppointmentTypeConverter::class,
+      AppointmentConverters::class,
+      BookingConverters::class
+  )
+  abstract class AppDatabase : RoomDatabase() {
+      abstract fun propertyDao(): PropertyDao
+      abstract fun clientDao(): ClientDao
+      abstract fun appointmentDao(): AppointmentDao
+      abstract fun bookingDao(): BookingDao
+      
+      // ... инициализация и вспомогательные методы
+  }
+  ```
+
+- **Data Access Objects (DAO)** (`app/src/main/java/com/realestateassistant/pro/data/local/dao/`):
+  - `PropertyDao` (`app/src/main/java/com/realestateassistant/pro/data/local/dao/PropertyDao.kt`):
+```kotlin
+    @Dao
+    interface PropertyDao {
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        suspend fun insertProperty(property: PropertyEntity): Long
         
-        // Загрузка начального propertyId из аргументов
-        savedStateHandle.get<String>("propertyId")?.let { propertyId ->
-            if (propertyId.isNotBlank()) {
-                handleEvent(BookingCalendarEvent.SelectProperty(propertyId))
-            }
-        }
-    }
-    
-    fun handleEvent(event: BookingCalendarEvent) {
-        when (event) {
-            is BookingCalendarEvent.SelectProperty -> selectProperty(event.propertyId)
-            is BookingCalendarEvent.SelectDate -> selectDate(event.date)
-            is BookingCalendarEvent.UpdateDates -> updateDates(event.start, event.end)
-            is BookingCalendarEvent.CreateBooking -> createBooking(
-                event.propertyId,
-                event.clientId,
-                event.startDate,
-                event.endDate,
-                event.amount,
-                event.guestsCount,
-                event.notes
-            )
-            // Обработка других событий
-        }
-    }
-    
-    // Методы для работы с бронированиями
-}
-```
-
-#### ClientViewModel
-
-```kotlin
-@HiltViewModel
-class ClientViewModel @Inject constructor(
-    private val clientUseCases: ClientUseCases,
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
-    
-    private val _state = MutableStateFlow(ClientState())
-    val state: StateFlow<ClientState> = _state.asStateFlow()
-    
-    init {
-        savedStateHandle.get<String>("clientId")?.let { clientId ->
-            if (clientId.isNotBlank()) {
-                getClient(clientId)
-            }
-        } ?: run {
-            loadAllClients()
-        }
-    }
-    
-    // Методы для работы с клиентами
-}
-```
-
-#### AppointmentViewModel
-
-```kotlin
-@HiltViewModel
-class AppointmentViewModel @Inject constructor(
-    private val appointmentUseCases: AppointmentUseCases,
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
-    
-    private val _state = MutableStateFlow(AppointmentState())
-    val state: StateFlow<AppointmentState> = _state.asStateFlow()
-    
-    init {
-        savedStateHandle.get<String>("appointmentId")?.let { appointmentId ->
-            if (appointmentId.isNotBlank()) {
-                getAppointment(appointmentId)
-            }
-        }
-    }
-    
-    // Методы для работы с встречами
-}
-```
-
-#### DashboardViewModel
-
-```kotlin
-@HiltViewModel
-class DashboardViewModel @Inject constructor(
-    private val getDashboardSummaryUseCase: GetDashboardSummaryUseCase
-) : ViewModel() {
-
-    private val _state = MutableStateFlow(DashboardState())
-    val state: StateFlow<DashboardState> = _state
-
-    init {
-        loadDashboardData()
-    }
-
-    fun loadDashboardData() {
-        getDashboardSummaryUseCase()
-            .onStart {
-                _state.update { it.copy(isLoading = true) }
-            }
-            .onEach { dashboardSummary ->
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        dashboardSummary = dashboardSummary,
-                        error = null
-                    )
-                }
-            }
-            .catch { e ->
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Ошибка загрузки данных"
-                    )
-                }
-            }
-            .launchIn(viewModelScope)
-    }
-}
-```
-
-#### ImageViewModel и DocumentViewModel
-
-Эти ViewModel предоставляют методы для работы с изображениями и документами соответственно, оставаясь при этом достаточно простыми:
-
-```kotlin
-@HiltViewModel
-class DocumentViewModel @Inject constructor(
-    private val documentUseCases: DocumentUseCases
-) : ViewModel() {
-    
-    suspend fun saveDocument(uri: Uri): Result<String> {
-        return documentUseCases.saveDocument(uri)
-    }
-    
-    suspend fun openDocument(path: String): Result<Pair<Uri, String?>> {
-        return documentUseCases.openDocument(path)
-    }
-    
-    suspend fun deleteDocument(path: String): Result<Unit> {
-        return documentUseCases.deleteDocument(path)
-    }
-}
-```
-
-## Пользовательский интерфейс
-
-Пользовательский интерфейс приложения полностью реализован с использованием Jetpack Compose - современного декларативного инструментария для разработки UI на Android.
-
-### Основная структура UI
-
-Приложение использует Material 3 для дизайна и имеет навигационную структуру с боковым меню (Drawer) и основным навигационным контейнером:
-
-```kotlin
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AppScaffold(
-    navController: NavHostController = rememberNavController(),
-    startDestination: String = AppRoutes.DASHBOARD
-) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-    
-    // Получаем текущий маршрут для отображения заголовка
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    
-    // Определяем заголовок экрана
-    val screenTitle = when {
-        currentRoute == AppRoutes.DASHBOARD -> "Панель управления"
-        currentRoute == AppRoutes.PROPERTIES -> "Объекты недвижимости"
-        // ... другие заголовки
-        else -> "Real Estate Assistant Pro"
-    }
-    
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            AppDrawer(
-                navController = navController,
-                onCloseDrawer = {
-                    scope.launch {
-                        drawerState.close()
-                    }
-                }
-            )
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(screenTitle) },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch {
-                                drawerState.open()
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Меню"
-                            )
-                        }
-                    }
-                )
-            }
-        ) { paddingValues ->
-            AppNavHost(
-                navController = navController,
-                startDestination = startDestination,
-                modifier = Modifier.padding(paddingValues),
-                drawerState = drawerState
-            )
-        }
-    }
-}
-```
-
-### Основные экраны
-
-#### DashboardScreen
-
-```kotlin
-@Composable
-fun DashboardScreen(
-    navController: NavHostController,
-    drawerState: DrawerState?,
-    viewModel: DashboardViewModel = hiltViewModel()
-) {
-    val state by viewModel.state.collectAsState()
-    val scope = rememberCoroutineScope()
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Отображение статистики
-        if (state.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else if (state.error != null) {
-            ErrorView(
-                errorMessage = state.error!!,
-                onRetry = { viewModel.loadDashboardData() }
-            )
-        } else {
-            // Отображение карточек с ключевыми показателями
-            DashboardContent(
-                dashboardSummary = state.dashboardSummary,
-                onNavigateToProperties = {
-                    navController.navigate(AppRoutes.PROPERTIES)
-                },
-                onNavigateToClients = {
-                    navController.navigate(AppRoutes.CLIENTS)
-                },
-                onNavigateToAppointments = {
-                    navController.navigate(AppRoutes.APPOINTMENTS)
-                }
-            )
-        }
-    }
-}
-```
-
-#### PropertyListScreen
-
-```kotlin
-@Composable
-fun PropertyListScreen(
-    onNavigateToAddProperty: () -> Unit,
-    onNavigateToPropertyDetail: (String) -> Unit,
-    drawerState: DrawerState?,
-    viewModel: PropertyListViewModel = hiltViewModel()
-) {
-    val state by viewModel.state.collectAsState()
-    val scope = rememberCoroutineScope()
-    
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToAddProperty
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Добавить объект"
-                )
-            }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Фильтры для объектов
-            PropertyFilterTabs(
-                selectedFilter = state.selectedFilter,
-                onFilterSelected = { filter ->
-                    viewModel.onEvent(PropertyListEvent.FilterSelected(filter))
-                }
-            )
-            
-            // Список объектов
-            if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            } else if (state.error != null) {
-                ErrorView(
-                    errorMessage = state.error!!,
-                    onRetry = {
-                        viewModel.onEvent(PropertyListEvent.LoadProperties)
-                    }
-                )
-            } else if (state.properties.isEmpty()) {
-                EmptyView(
-                    message = "Нет объектов недвижимости",
-                    icon = Icons.Default.Home,
-                    onActionClick = onNavigateToAddProperty,
-                    actionText = "Добавить объект"
-                )
-            } else {
-                LazyColumn {
-                    items(state.properties) { property ->
-                        PropertyCard(
-                            property = property,
-                            onClick = {
-                                onNavigateToPropertyDetail(property.id)
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-```
-
-#### BookingCalendarScreen
-
-```kotlin
-@Composable
-fun BookingCalendarScreen(
-    propertyId: String,
-    onNavigateBack: () -> Unit,
-    viewModel: BookingCalendarViewModel = hiltViewModel()
-) {
-    val state by viewModel.state.collectAsState()
-    
-    LaunchedEffect(propertyId) {
-        viewModel.handleEvent(BookingCalendarEvent.SelectProperty(propertyId))
-    }
-    
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Календарь бронирований") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Назад"
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // UI для календаря бронирований
-            if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            } else {
-                // Компонент календаря
-                BookingCalendarView(
-                    bookings = state.bookings,
-                    selectedStartDate = state.selectedStartDate,
-                    selectedEndDate = state.selectedEndDate,
-                    onDateSelected = { date ->
-                        viewModel.handleEvent(BookingCalendarEvent.SelectDate(date))
-                    },
-                    onDateRangeConfirmed = {
-                        viewModel.handleEvent(BookingCalendarEvent.ConfirmDateSelection)
-                    }
-                )
-                
-                // Если выбрано бронирование, показываем его детали
-                state.selectedBooking?.let { booking ->
-                    BookingDetailCard(
-                        booking = booking,
-                        onEditClick = {
-                            viewModel.handleEvent(BookingCalendarEvent.SwitchToEditMode)
-                        },
-                        onDeleteClick = {
-                            viewModel.handleEvent(BookingCalendarEvent.DeleteBooking(booking.id))
-                        }
-                    )
-                }
-                
-                // Кнопка для создания нового бронирования
-                Button(
-                    onClick = {
-                        viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text("Создать бронирование")
-                }
-            }
-        }
+        @Update
+        suspend fun updateProperty(property: PropertyEntity)
         
-        // Диалог создания/редактирования бронирования
-        if (state.isBookingDialogVisible) {
-            BookingFormDialog(
-                propertyId = propertyId,
-                startDate = state.selectedStartDate,
-                endDate = state.selectedEndDate,
-                clients = state.clients,
-                selectedClient = state.selectedClient,
-                editing = !state.isInfoMode,
-                booking = state.selectedBooking,
-                onClientSelected = { client ->
-                    viewModel.handleEvent(BookingCalendarEvent.SelectClient(client))
-                },
-                onSave = { clientId, startDate, endDate, amount, guestsCount, notes ->
-                    if (state.selectedBooking != null && !state.isInfoMode) {
-                        viewModel.handleEvent(
-                            BookingCalendarEvent.UpdateBooking(
-                                state.selectedBooking!!.id,
-                                clientId,
-                                startDate,
-                                endDate,
-                                amount,
-                                guestsCount,
-                                notes
-                            )
-                        )
-                    } else {
-                        viewModel.handleEvent(
-                            BookingCalendarEvent.CreateBooking(
-                                propertyId,
-                                clientId,
-                                startDate,
-                                endDate,
-                                amount,
-                                guestsCount,
-                                notes
-                            )
-                        )
-                    }
-                },
-                onDismiss = {
-                    viewModel.handleEvent(BookingCalendarEvent.HideBookingDialog)
-                }
-            )
-        }
+        @Query("SELECT * FROM properties WHERE id = :propertyId")
+        suspend fun getProperty(propertyId: String): PropertyEntity?
+        
+        @Query("DELETE FROM properties WHERE id = :propertyId")
+        suspend fun deleteProperty(propertyId: String)
+        
+        @Query("SELECT * FROM properties")
+        fun getAllProperties(): Flow<List<PropertyEntity>>
+        
+        @Query("SELECT * FROM properties WHERE status = :status")
+        fun getPropertiesByStatus(status: PropertyStatus): Flow<List<PropertyEntity>>
+        
+        // ... другие методы
     }
-}
-```
+    ```
+  
+  - `ClientDao` (`app/src/main/java/com/realestateassistant/pro/data/local/dao/ClientDao.kt`)
+  - `AppointmentDao` (`app/src/main/java/com/realestateassistant/pro/data/local/dao/AppointmentDao.kt`)
+  - `BookingDao` (`app/src/main/java/com/realestateassistant/pro/data/local/dao/BookingDao.kt`)
 
-### Повторно используемые компоненты
-
-#### PropertyCard
-
+- **Entity классы** (`app/src/main/java/com/realestateassistant/pro/data/local/entity/`):
+  - `PropertyEntity` (`app/src/main/java/com/realestateassistant/pro/data/local/entity/PropertyEntity.kt`):
 ```kotlin
-@Composable
-fun PropertyCard(
-    property: Property,
-    onClick: () -> Unit = {}
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Миниатюра первого изображения объекта, если есть
-            if (property.photos.isNotEmpty()) {
-                AsyncImage(
-                    model = property.photos.first(),
-                    contentDescription = property.address,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                )
-            } else {
-                // Заглушка, если нет изображений
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Home,
-                        contentDescription = "Нет изображения",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(64.dp)
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Адрес объекта
-            Text(
-                text = property.address,
-                style = MaterialTheme.typography.titleLarge,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            // Информация о районе
-            Text(
-                text = property.district,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Основные характеристики
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Тип объекта
-                PropertyFeatureChip(
-                    icon = Icons.Default.Home,
-                    text = property.propertyType
-                )
-                
-                // Площадь
-                PropertyFeatureChip(
-                    icon = Icons.Default.SquareFoot,
-                    text = "${property.area} м²"
-                )
-                
-                // Количество комнат
-                PropertyFeatureChip(
-                    icon = Icons.Default.Door,
-                    text = if (property.isStudio) "Студия" else "${property.roomsCount} комн."
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Цена
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (property.monthlyRent != null) {
-                    Text(
-                        text = "${property.monthlyRent} ₽/мес",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                } else if (property.dailyPrice != null) {
-                    Text(
-                        text = "${property.dailyPrice} ₽/сутки",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-        }
-    }
-}
-```
-
-#### ClientCard
-
-```kotlin
-@Composable
-fun ClientCard(
-    client: Client,
-    onClick: () -> Unit = {}
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Аватар клиента
-            Box(
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = client.fullName.take(1).uppercase(),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                // Имя клиента
-                Text(
-                    text = client.fullName,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                // Телефон
-                if (client.phone.isNotEmpty()) {
-                    Text(
-                        text = client.phone.first(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                // Тип аренды
-                val rentalTypeText = when (client.rentalType) {
-                    "long_term" -> "Длительная аренда"
-                    "short_term" -> "Посуточная аренда"
-                    "both" -> "Длительная и посуточная аренда"
-                    else -> "Тип аренды не указан"
-                }
-                
-                Text(
-                    text = rentalTypeText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-            
-            // Статус клиента
-            ClientStatusChip(status = client.status)
-        }
-    }
-}
-```
-
-#### AppointmentCard
-
-```kotlin
-@Composable
-fun AppointmentCard(
-    appointment: Appointment,
-    property: Property?,
-    client: Client?,
-    onClick: () -> Unit = {}
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Заголовок и статус
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = appointment.title,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                
-                AppointmentStatusChip(status = appointment.status)
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Дата и время
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Schedule,
-                    contentDescription = "Время",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
-                val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-                
-                val startDateTime = LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(appointment.startTime),
-                    ZoneId.systemDefault()
-                )
-                val endDateTime = LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(appointment.endTime),
-                    ZoneId.systemDefault()
-                )
-                
-                Text(
-                    text = "${startDateTime.format(dateFormatter)}, " +
-                            "${startDateTime.format(timeFormatter)} - " +
-                            "${endDateTime.format(timeFormatter)}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Информация об объекте
-            property?.let {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Home,
-                        contentDescription = "Объект",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Spacer(modifier = Modifier.width(8.dp))
-                    
-                    Text(
-                        text = property.address,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-            
-            // Информация о клиенте
-            client?.let {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Клиент",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Spacer(modifier = Modifier.width(8.dp))
-                    
-                    Text(
-                        text = client.fullName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-            
-            // Примечания
-            appointment.notes?.let {
-                if (it.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        }
-    }
-}
-```
-
-### Темизация
-
-Приложение поддерживает светлую и темную темы с использованием Material 3, включая возможность адаптации к системным цветам на Android 12+ (dynamic colors):
-
-```kotlin
-private val LightColors = lightColorScheme(
-    primary = md_theme_light_primary,
-    onPrimary = md_theme_light_onPrimary,
-    primaryContainer = md_theme_light_primaryContainer,
-    onPrimaryContainer = md_theme_light_onPrimaryContainer,
-    secondary = md_theme_light_secondary,
-    // ...остальные цвета
-)
-
-private val DarkColors = darkColorScheme(
-    primary = md_theme_dark_primary,
-    onPrimary = md_theme_dark_onPrimary,
-    primaryContainer = md_theme_dark_primaryContainer,
-    onPrimaryContainer = md_theme_dark_onPrimaryContainer,
-    secondary = md_theme_dark_secondary,
-    // ...остальные цвета
-)
-
-@Composable
-fun RealEstateAssistantTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
-    
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        shapes = Shapes,
-        content = content
+    @Entity(tableName = "properties")
+    data class PropertyEntity(
+        @PrimaryKey
+        val id: String = UUID.randomUUID().toString(),
+        val ownerName: String = "",
+        val ownerContacts: List<String> = emptyList(),
+        val address: String = "",
+        val district: String = "",
+        val latitude: Double? = null,
+        val longitude: Double? = null,
+        val propertyType: PropertyType = PropertyType.APARTMENT,
+        val rentalType: RentalType = RentalType.LONG_TERM,
+        val status: PropertyStatus = PropertyStatus.AVAILABLE,
+        // ... другие поля объекта недвижимости
     )
-}
-```
+    ```
+  
+  - `ClientEntity` (`app/src/main/java/com/realestateassistant/pro/data/local/entity/ClientEntity.kt`)
+  - `AppointmentEntity` (`app/src/main/java/com/realestateassistant/pro/data/local/entity/AppointmentEntity.kt`)
+  - `BookingEntity` (`app/src/main/java/com/realestateassistant/pro/data/local/entity/BookingEntity.kt`)
+  - `SeasonalPriceEntity` (`app/src/main/java/com/realestateassistant/pro/data/local/entity/SeasonalPriceEntity.kt`)
 
-## Работа с изображениями
+- **Конвертеры типов** (`app/src/main/java/com/realestateassistant/pro/data/local/converter/` и `app/src/main/java/com/realestateassistant/pro/data/local/converters/`):
+  - `ListStringConverter` - конвертация списков строк
+  - `SeasonalPriceListConverter` - конвертация списков сезонных цен
+  - `AppointmentStatusConverter` - конвертация статусов встреч
+  - `AppointmentTypeConverter` - конвертация типов встреч
+  - `BookingConverters` - конвертация типов бронирований
 
-В приложении реализована комплексная система работы с изображениями, которая включает:
+- **Шифрование базы данных** (`app/src/main/java/com/realestateassistant/pro/data/local/security/`):
+  - `DatabaseEncryption` (`app/src/main/java/com/realestateassistant/pro/data/local/security/DatabaseEncryption.kt`) - класс для управления ключами шифрования
 
-### Репозиторий изображений
+- **Preferences** (`app/src/main/java/com/realestateassistant/pro/data/local/preferences/`):
+  - `AppPreferences` - интерфейс для работы с настройками приложения
+  - `AppPreferencesImpl` - реализация на DataStore Preferences
 
-Интерфейс `ImageRepository` и его реализация `ImageRepositoryImpl` предоставляют методы для:
-- Сохранения изображений с опциональным сжатием
-- Загрузки изображений из файловой системы
-- Удаления изображений
-- Проверки валидности URI изображений
-- Очистки кэша изображений
+#### 2.3.2. Репозитории (Implementations)
+Реализации интерфейсов репозиториев из доменного слоя (`app/src/main/java/com/realestateassistant/pro/data/repository/`):
 
+- **PropertyRepositoryImpl** (`app/src/main/java/com/realestateassistant/pro/data/repository/PropertyRepositoryImpl.kt`):
 ```kotlin
-interface ImageRepository {
-    suspend fun saveImage(uri: Uri, compress: Boolean = true, quality: Int = 80): Result<String>
-    suspend fun loadImage(path: String): Result<Bitmap>
-    suspend fun deleteImage(path: String): Result<Unit>
-    suspend fun isValidImageUri(uri: Uri): Boolean
-    suspend fun clearImageCache(): Result<Unit>
-}
-```
+  @Singleton
+  class PropertyRepositoryImpl @Inject constructor(
+      private val propertyDao: PropertyDao,
+      private val propertyMapper: PropertyMapper
+  ) : PropertyRepository {
+      
+      override suspend fun addProperty(property: Property): String {
+          val entity = propertyMapper.toEntity(property)
+          propertyDao.insertProperty(entity)
+          return entity.id
+      }
+      
+      override suspend fun updateProperty(property: Property) {
+          propertyDao.updateProperty(propertyMapper.toEntity(property))
+      }
+      
+      override suspend fun getProperty(id: String): Property? {
+          return propertyDao.getProperty(id)?.let { propertyMapper.mapToDomain(it) }
+      }
+      
+      override suspend fun deleteProperty(id: String) {
+          propertyDao.deleteProperty(id)
+      }
+      
+      override fun getAllProperties(): Flow<List<Property>> {
+          return propertyDao.getAllProperties().map { entities ->
+              entities.map { propertyMapper.mapToDomain(it) }
+          }
+      }
+      
+      override fun getPropertiesByStatus(status: PropertyStatus): Flow<List<Property>> {
+          return propertyDao.getPropertiesByStatus(status).map { entities ->
+              entities.map { propertyMapper.mapToDomain(it) }
+          }
+      }
+      
+      // ... другие методы
+  }
+  ```
+  
+- **ClientRepositoryImpl** (`app/src/main/java/com/realestateassistant/pro/data/repository/ClientRepositoryImpl.kt`)
+- **AppointmentRepositoryImpl** (`app/src/main/java/com/realestateassistant/pro/data/repository/AppointmentRepositoryImpl.kt`)
+- **BookingRepositoryImpl** (`app/src/main/java/com/realestateassistant/pro/data/repository/BookingRepositoryImpl.kt`)
 
-### Юзкейсы для работы с изображениями
+#### 2.3.3. Мапперы
+Классы для преобразования между Entity и Domain моделями (`app/src/main/java/com/realestateassistant/pro/data/mapper/`):
 
-- `SaveImage` - сохранение одного изображения
-- `SaveImages` - сохранение нескольких изображений
-- `LoadImage` - загрузка изображения
-- `DeleteImage` - удаление изображения
-- `ValidateImageUri` - проверка валидности URI
-- `ClearImageCache` - очистка кэша изображений
-
+- **PropertyMapper** (`app/src/main/java/com/realestateassistant/pro/data/mapper/PropertyMapper.kt`):
 ```kotlin
-data class ImageUseCases @Inject constructor(
-    val saveImage: SaveImage,
-    val saveImages: SaveImages,
-    val loadImage: LoadImage,
-    val deleteImage: DeleteImage,
-    val validateImageUri: ValidateImageUri,
-    val clearImageCache: ClearImageCache
-)
-```
-
-### Оптимизация загрузки изображений
-
-Класс `CoilUtils` содержит утилиты для оптимизации загрузки изображений с помощью библиотеки Coil:
-
-```kotlin
-object CoilUtils {
-    fun createImageLoader(
-        context: Context,
-        diskCacheSize: Long = 100 * 1024 * 1024,
-        memoryCacheSize: Int? = null
-    ): ImageLoader {
-        return ImageLoader.Builder(context)
-            .diskCache {
-                DiskCache.Builder()
-                    .directory(context.cacheDir.resolve("image_cache"))
-                    .maxSizeBytes(diskCacheSize)
-                    .build()
-            }
-            .memoryCache {
-                MemoryCache.Builder(context)
-                    .maxSizePercent(memoryCacheSize?.toFloat() ?: 0.25f)
-                    .build()
-            }
-            .respectCacheHeaders(false)
-            .build()
-    }
-    
-    fun createImageRequest(
-        context: Context,
-        data: Any,
-        size: Size = Size.ORIGINAL,
-        diskCachePolicy: CachePolicy = CachePolicy.ENABLED,
-        memoryCachePolicy: CachePolicy = CachePolicy.ENABLED
-    ): ImageRequest.Builder {
-        return ImageRequest.Builder(context)
-            .data(data)
-            .size(size)
-            .diskCachePolicy(diskCachePolicy)
-            .memoryCachePolicy(memoryCachePolicy)
-    }
-}
-```
-
-### UI компоненты для работы с изображениями
-
-#### PhotoGallery
-
-```kotlin
-@Composable
-fun PhotoGallery(
-    photos: List<String>,
-    modifier: Modifier = Modifier,
-    onPhotoClick: (String) -> Unit = {}
-) {
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp)
-    ) {
-        items(photos) { photoPath ->
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(photoPath)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Фото объекта",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(200.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onPhotoClick(photoPath) }
-            )
-        }
+  @Singleton
+  class PropertyMapper @Inject constructor() {
+      fun mapToDomain(entity: PropertyEntity): Property {
+          return Property(
+              id = entity.id,
+              ownerName = entity.ownerName,
+              ownerContacts = entity.ownerContacts,
+              address = entity.address,
+              district = entity.district,
+              coordinates = if (entity.latitude != null && entity.longitude != null) {
+                  LatLng(entity.latitude, entity.longitude)
+              } else null,
+              propertyType = entity.propertyType,
+              rentalType = entity.rentalType,
+              status = entity.status,
+              // ... маппинг других полей
+          )
+      }
+      
+      fun toEntity(domain: Property): PropertyEntity {
+          return PropertyEntity(
+              id = domain.id.ifEmpty { UUID.randomUUID().toString() },
+              ownerName = domain.ownerName,
+              ownerContacts = domain.ownerContacts,
+              address = domain.address,
+              district = domain.district,
+              latitude = domain.coordinates?.latitude,
+              longitude = domain.coordinates?.longitude,
+              propertyType = domain.propertyType,
+              rentalType = domain.rentalType,
+              status = domain.status,
+              // ... маппинг других полей
+          )
     }
 }
 ```
 
-#### FullscreenPhotoViewer
+- **ClientMapper** (`app/src/main/java/com/realestateassistant/pro/data/mapper/ClientMapper.kt`)
+- **AppointmentMapper** (`app/src/main/java/com/realestateassistant/pro/data/mapper/AppointmentMapper.kt`)
+- **BookingMapper** (`app/src/main/java/com/realestateassistant/pro/data/mapper/BookingMapper.kt`)
 
+#### 2.3.4. API и сетевые сервисы
+Сервисы для работы с внешними API (`app/src/main/java/com/realestateassistant/pro/data/api/` и `app/src/main/java/com/realestateassistant/pro/data/remote/`):
+
+- **YandexGeocoderService** (`app/src/main/java/com/realestateassistant/pro/data/api/YandexGeocoderService.kt`):
 ```kotlin
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FullscreenPhotoViewer(
-    photoPath: String,
-    onClose: () -> Unit
-) {
-    val context = LocalContext.current
-    val pagerState = rememberPagerState(initialPage = 0)
-    
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(
-            dismissOnClickOutside = true,
-            dismissOnBackPress = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-        ) {
-            // Изображение на весь экран
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(photoPath)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Фото объекта",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize()
-            )
-            
-            // Кнопка закрытия
-            IconButton(
-                onClick = onClose,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .background(
-                        color = Color.Black.copy(alpha = 0.5f),
-                        shape = CircleShape
-                    )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Закрыть",
-                    tint = Color.White
-                )
-            }
-        }
+  @Singleton
+  class YandexGeocoderService @Inject constructor(
+      private val client: OkHttpClient,
+      private val gson: Gson,
+      @Named("yandex_api_key") private val apiKey: String
+  ) {
+      private val baseUrl = "https://geocode-maps.yandex.ru/1.x/"
+      
+      suspend fun geocodeAddress(address: String): Result<LatLng> {
+          // Запрос к Yandex Geocoder API для получения координат по адресу
+      }
+      
+      suspend fun reverseGeocode(latitude: Double, longitude: Double): Result<String> {
+          // Запрос к Yandex Geocoder API для получения адреса по координатам
     }
 }
 ```
 
-#### MediaSection
-
-```kotlin
-@Composable
-fun MediaSection(
-    formState: PropertyFormState,
-    onFormStateChange: (PropertyFormState) -> Unit,
-    expandedSections: MutableMap<PropertySection, Boolean>,
-    imageViewModel: ImageViewModel = hiltViewModel()
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val isExpanded = expandedSections.getOrDefault(PropertySection.MEDIA, false)
-    
-    // Состояние для выбора изображений
-    val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents()
-    ) { uris ->
-        if (uris.isNotEmpty()) {
-            scope.launch {
-                try {
-                    // Сохраняем изображения
-                    val result = imageViewModel.saveImages(uris)
-                    result.onSuccess { paths ->
-                        // Обновляем состояние формы
-                        onFormStateChange(
-                            formState.copy(
-                                photos = formState.photos + paths
-                            )
-                        )
-                    }.onFailure { e ->
-                        // Показываем ошибку
-                        Toast.makeText(
-                            context,
-                            "Ошибка при сохранении изображений: ${e.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(
-                        context,
-                        "Ошибка при обработке изображений: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
-    }
-    
-    // Состояние для выбора документов
-    val documentPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents()
-    ) { uris ->
-        if (uris.isNotEmpty()) {
-            scope.launch {
-                try {
-                    // Обрабатываем каждый документ отдельно
-                    val documentViewModel: DocumentViewModel = hiltViewModel()
-                    val savedDocuments = mutableListOf<String>()
-                    
-                    uris.forEach { uri ->
-                        documentViewModel.saveDocument(uri).onSuccess { path ->
-                            savedDocuments.add(path)
-                        }
-                    }
-                    
-                    if (savedDocuments.isNotEmpty()) {
-                        onFormStateChange(
-                            formState.copy(
-                                documents = formState.documents + savedDocuments
-                            )
-                        )
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(
-                        context,
-                        "Ошибка при сохранении документов: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
-    }
-    
-    SectionCard(
-        title = "Медиафайлы",
-        icon = Icons.Default.Photo,
-        isExpanded = isExpanded,
-        onExpandToggle = {
-            expandedSections[PropertySection.MEDIA] = !isExpanded
-        }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            // Секция фотографий
-            Text(
-                text = "Фотографии",
-                style = MaterialTheme.typography.titleMedium
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Предпросмотр фотографий
-            if (formState.photos.isNotEmpty()) {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(formState.photos) { photoPath ->
-                        PhotoThumbnail(
-                            photoPath = photoPath,
-                            onDeleteClick = {
-                                onFormStateChange(
-                                    formState.copy(
-                                        photos = formState.photos - photoPath
-                                    )
-                                )
-                                scope.launch {
-                                    try {
-                                        imageViewModel.deleteImage(photoPath)
-                                    } catch (e: Exception) {
-                                        // Игнорируем ошибки при удалении
-                                    }
-                                }
-                            }
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            
-            // Кнопка добавления фотографий
-            Button(
-                onClick = {
-                    photoPickerLauncher.launch("image/*")
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AddAPhoto,
-                    contentDescription = "Добавить фото"
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Добавить фотографии")
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Секция документов
-            Text(
-                text = "Документы",
-                style = MaterialTheme.typography.titleMedium
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Список документов
-            if (formState.documents.isNotEmpty()) {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    formState.documents.forEachIndexed { index, documentPath ->
-                        DocumentItem(
-                            documentUri = documentPath,
-                            onDeleteClick = {
-                                onFormStateChange(
-                                    formState.copy(
-                                        documents = formState.documents - documentPath
-                                    )
-                                )
-                                scope.launch {
-                                    try {
-                                        val documentViewModel: DocumentViewModel = hiltViewModel()
-                                        documentViewModel.deleteDocument(documentPath)
-                                    } catch (e: Exception) {
-                                        // Игнорируем ошибки при удалении
-                                    }
-                                }
-                            },
-                            index = index + 1
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            
-            // Кнопка добавления документов
-            Button(
-                onClick = {
-                    documentPickerLauncher.launch("*/*")
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AttachFile,
-                    contentDescription = "Добавить документ"
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Добавить документы")
-            }
-        }
-    }
-}
-```
-
-## Работа с документами
-
-В приложении реализована система работы с документами, которая обеспечивает возможность сохранения, открытия и удаления различных типов документов для объектов недвижимости.
-
-### Репозиторий документов
-
-Интерфейс `DocumentRepository` и его реализация `DocumentRepositoryImpl` предоставляют методы для:
-- Сохранения документов из внешних источников
-- Получения URI документов для открытия во внешних приложениях
-- Удаления документов
-- Проверки валидности URI документов
-- Определения MIME-типа документов
-
-```kotlin
-interface DocumentRepository {
-    suspend fun saveDocument(uri: Uri): Result<String>
-    suspend fun getDocumentUri(path: String): Result<Uri>
-    suspend fun deleteDocument(path: String): Result<Unit>
-    suspend fun isValidDocumentUri(uri: Uri): Boolean
-    suspend fun getDocumentMimeType(path: String): String?
-}
-```
-
-### Юзкейсы для работы с документами
-
-```kotlin
-data class DocumentUseCases @Inject constructor(
-    val saveDocument: SaveDocument,
-    val getDocumentUri: GetDocumentUri,
-    val deleteDocument: DeleteDocument,
-    val openDocument: OpenDocument
-)
-
-class SaveDocument @Inject constructor(
-    private val repository: DocumentRepository
-) {
-    suspend operator fun invoke(uri: Uri): Result<String> {
-        return repository.saveDocument(uri)
-    }
-}
-
-class OpenDocument @Inject constructor(
-    private val repository: DocumentRepository
-) {
-    suspend operator fun invoke(path: String): Result<Pair<Uri, String?>> {
-        return repository.getDocumentUri(path).map { uri ->
-            val mimeType = repository.getDocumentMimeType(path)
-            uri to mimeType
-        }
-    }
-}
-```
-
-### UI компоненты для работы с документами
-
-#### DocumentItem
-
-```kotlin
-@Composable
-fun DocumentItem(
-    documentUri: String,
-    onDeleteClick: () -> Unit,
-    index: Int,
-    documentViewModel: DocumentViewModel = hiltViewModel()
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Иконка документа
-            Icon(
-                imageVector = Icons.Default.Description,
-                contentDescription = "Документ",
-                tint = MaterialTheme.colorScheme.primary
-            )
-            
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            // Название документа (или индекс)
-            Text(
-                text = "Документ $index",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f)
-            )
-            
-            // Кнопка открытия документа
-            IconButton(
-                onClick = {
-                    scope.launch {
-                        documentViewModel.openDocument(documentUri).onSuccess { (uri, mimeType) ->
-                            try {
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    setDataAndType(uri, mimeType ?: "application/octet-stream")
-                                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                }
-                                context.startActivity(intent)
-                            } catch (e: Exception) {
-                                Toast.makeText(
-                                    context,
-                                    "Не удалось открыть документ: ${e.message}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }.onFailure { e ->
-                            Toast.makeText(
-                                context,
-                                "Ошибка при открытии документа: ${e.message}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.OpenInNew,
-                    contentDescription = "Открыть документ"
-                )
-            }
-            
-            // Кнопка удаления документа
-            IconButton(
-                onClick = onDeleteClick
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Удалить документ",
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-    }
-}
-```
-
-## Интеграция с картами
-
-В приложении реализована интеграция с картами для отображения местоположения объектов недвижимости, что повышает наглядность и удобство работы с географической информацией.
-
-### Компоненты системы карт
-
-#### PropertyMapView
-
-```kotlin
-@Composable
-fun PropertyMapView(
-    address: String,
-    latitude: Double?,
-    longitude: Double?,
-    markerColor: Color = Color(0xFF2196F3),
-    modifier: Modifier = Modifier,
-    onLocationSelected: (Double, Double) -> Unit = { _, _ -> }
-) {
-    // Локальные состояния
-    val context = LocalContext.current
-    var mapView by remember { mutableStateOf<MapView?>(null) }
-    var mapInitialized by remember { mutableStateOf(false) }
-    var currentLatitude by remember { mutableStateOf(latitude) }
-    var currentLongitude by remember { mutableStateOf(longitude) }
-    val scope = rememberCoroutineScope()
-    
-    // Эффект для инициализации MapKit
-    DisposableEffect(Unit) {
-        MapKitFactory.initialize(context)
-        onDispose {
-            mapView?.onStop()
-            MapKitFactory.getInstance().onStop()
-        }
-    }
-    
-    // Эффект для автоматического геокодирования адреса
-    LaunchedEffect(address) {
-        if ((currentLatitude == null || currentLongitude == null) && address.isNotBlank()) {
-            scope.launch(Dispatchers.IO) {
-                YandexGeocoderService.getCoordinates(address)?.let { (lat, lon) ->
-                    currentLatitude = lat
-                    currentLongitude = lon
-                    withContext(Dispatchers.Main) {
-                        // Обновляем позицию на карте
-                        mapView?.map?.let { map ->
-                            val point = Point(lat, lon)
-                            map.move(
-                                CameraPosition(point, 15.0f, 0.0f, 0.0f),
-                                Animation(Animation.Type.SMOOTH, 1f),
-                                null
-                            )
-                        }
-                        // Вызываем колбэк
-                        onLocationSelected(lat, lon)
-                    }
-                }
-            }
-        }
-    }
-    
-    // Рендеринг карты
-    AndroidView(
-        factory = { ctx ->
-            // Создание и настройка MapView
-            MapView(ctx).apply {
-                mapView = this
-                this.onStart()
-                MapKitFactory.getInstance().onStart()
-                
-                val map = this.map
-                
-                // Настройка карты
-                map.isRotateGesturesEnabled = false
-                map.isZoomGesturesEnabled = true
-                map.isTiltGesturesEnabled = false
-                
-                // Если координаты уже известны, центрируем карту на них
-                if (currentLatitude != null && currentLongitude != null) {
-                    val point = Point(currentLatitude!!, currentLongitude!!)
-                    map.move(
-                        CameraPosition(point, 15.0f, 0.0f, 0.0f)
-                    )
-                    
-                    // Добавляем маркер
-                    val imageProvider = ImageProvider.fromResource(
-                        context,
-                        R.drawable.map_pin
-                    )
-                    val placemark = map.mapObjects.addPlacemark().apply {
-                        geometry = point
-                        setIcon(imageProvider)
-                    }
-                }
-                
-                // Обработка тапов по карте
-                map.addInputListener(object : InputListener {
-                    override fun onMapTap(map: Map, point: Point) {
-                        currentLatitude = point.latitude
-                        currentLongitude = point.longitude
-                        
-                        // Обновляем маркер
-                        map.mapObjects.clear()
-                        val imageProvider = ImageProvider.fromResource(
-                            context,
-                            R.drawable.map_pin
-                        )
-                        val placemark = map.mapObjects.addPlacemark().apply {
-                            geometry = point
-                            setIcon(imageProvider)
-                        }
-                        
-                        // Вызываем колбэк
-                        onLocationSelected(point.latitude, point.longitude)
-                    }
-                    
-                    override fun onMapLongTap(map: Map, point: Point) {
-                        // Ничего не делаем
-                    }
-                })
-                
-                mapInitialized = true
-            }
-        },
-        modifier = modifier
-            .fillMaxWidth()
-            .height(250.dp)
-            .clip(RoundedCornerShape(8.dp)),
-        update = { view ->
-            // Обновление при изменении координат
-            if (mapInitialized && currentLatitude != null && currentLongitude != null) {
-                view.map.mapObjects.clear()
-                val point = Point(currentLatitude!!, currentLongitude!!)
-                
-                // Добавляем маркер
-                val imageProvider = ImageProvider.fromResource(
-                    context,
-                    R.drawable.map_pin
-                )
-                val placemark = view.map.mapObjects.addPlacemark().apply {
-                    geometry = point
-                    setIcon(imageProvider)
-                }
-            }
-        }
-    )
-}
-```
-
-#### YandexGeocoderService
-
-```kotlin
-object YandexGeocoderService {
-    private const val API_KEY = "80b06c04-6156-4dfd-a086-2cee0b05fdb8"
-    private const val BASE_URL = "https://geocode-maps.yandex.ru/1.x/"
-    
-    // Кэш для геокодирования
-    private val geocodeCache = HashMap<String, Pair<Double, Double>>()
-    
-    /**
-     * Получает координаты (широта, долгота) по адресу
-     * Возвращает пару (latitude, longitude) или null, если адрес не найден
-     */
-    suspend fun getCoordinates(address: String): Pair<Double, Double>? = withContext(Dispatchers.IO) {
-        // Проверяем кэш
-        if (geocodeCache.containsKey(address)) {
-            return@withContext geocodeCache[address]
-        }
-        
-        // Формируем URL запроса
-        val encodedAddress = URLEncoder.encode(address, "UTF-8")
-        val url = "$BASE_URL?apikey=$API_KEY&format=json&geocode=$encodedAddress"
-        
-        try {
-            val connection = URL(url).openConnection() as HttpURLConnection
-            connection.requestMethod = "GET"
-            
-            val responseCode = connection.responseCode
-            if (responseCode == 200) {
-                val inputStream = connection.inputStream
-                val response = inputStream.bufferedReader().use { it.readText() }
-                
-                // Парсим ответ
-                val jsonObject = JSONObject(response)
-                val featureMember = jsonObject
-                    .getJSONObject("response")
-                    .getJSONObject("GeoObjectCollection")
-                    .getJSONArray("featureMember")
-                
-                if (featureMember.length() > 0) {
-                    val point = featureMember
-                        .getJSONObject(0)
-                        .getJSONObject("GeoObject")
-                        .getJSONObject("Point")
-                        .getString("pos")
-                    
-                    // В формате "долгота широта"
-                    val coordinates = point.split(" ")
-                    if (coordinates.size == 2) {
-                        val longitude = coordinates[0].toDouble()
-                        val latitude = coordinates[1].toDouble()
-                        
-                        // Сохраняем в кэш
-                        geocodeCache[address] = Pair(latitude, longitude)
-                        
-                        return@withContext Pair(latitude, longitude)
-                    }
-                }
-            }
-            
-            return@withContext null
-        } catch (e: Exception) {
-            Log.e("YandexGeocoderService", "Ошибка при геокодировании: ${e.message}")
-            return@withContext null
-        }
-    }
-}
-```
-
-## Навигация
-
-Навигация в приложении реализована с использованием Jetpack Navigation Compose с боковым меню (Drawer) и вложенными графами навигации.
-
-### Структура навигации
-
-Основная структура навигации определена в классе `AppNavHost`:
-
-```kotlin
-@Composable
-fun AppNavHost(
-    navController: NavHostController,
-    startDestination: String = AppRoutes.DASHBOARD,
-    modifier: Modifier = Modifier,
-    drawerState: DrawerState? = null
-) {
-    NavHost(
-        navController = navController,
-        startDestination = startDestination,
-        modifier = modifier
-    ) {
-        // Панель управления
-        composable(route = AppRoutes.DASHBOARD) {
-            DashboardScreen(
-                navController = navController,
-                drawerState = drawerState
-            )
-        }
-        
-        // Экраны объектов недвижимости
-        composable(route = AppRoutes.PROPERTIES) {
-            PropertyListScreen(
-                onNavigateToAddProperty = {
-                    navController.navigate(AppRoutes.ADD_PROPERTY)
-                },
-                onNavigateToPropertyDetail = { propertyId ->
-                    navController.navigate(AppRoutes.propertyDetail(propertyId))
-                },
-                drawerState = drawerState
-            )
-        }
-        
-        composable(route = AppRoutes.ADD_PROPERTY) {
-            AddPropertyScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-        
-        composable(
-            route = AppRoutes.PROPERTY_DETAIL,
-            arguments = listOf(
-                navArgument("propertyId") {
-                    type = NavType.StringType
-                }
-            )
-        ) { backStackEntry ->
-            val propertyId = backStackEntry.arguments?.getString("propertyId") ?: ""
-            PropertyDetailScreen(
-                propertyId = propertyId,
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
-                onNavigateToEdit = { id ->
-                    navController.navigate(AppRoutes.editProperty(id))
-                },
-                onNavigateToBookingCalendar = { id ->
-                    navController.navigate(AppRoutes.bookingCalendar(id))
-                }
-            )
-        }
-        
-        // Экраны клиентов
-        composable(route = AppRoutes.CLIENTS) {
-            ClientListScreen(
-                onNavigateToAddClient = {
-                    navController.navigate(AppRoutes.ADD_CLIENT)
-                },
-                onNavigateToClientDetail = { clientId ->
-                    navController.navigate(AppRoutes.clientDetail(clientId))
-                },
-                drawerState = drawerState
-            )
-        }
-        
-        // ... остальные экраны клиентов
-        
-        // Экраны встреч
-        composable(route = AppRoutes.APPOINTMENTS) {
-            AppointmentScreen(
-                onNavigateToAddAppointment = {
-                    navController.navigate(AppRoutes.ADD_APPOINTMENT)
-                },
-                onNavigateToAppointmentDetail = { appointmentId ->
-                    navController.navigate(AppRoutes.appointmentDetail(appointmentId))
-                },
-                drawerState = drawerState
-            )
-        }
-        
-        // ... остальные экраны встреч
-        
-        // Экраны бронирований
-        composable(route = AppRoutes.BOOKINGS) {
-            BookingListScreen(
-                onNavigateToPropertyDetail = { propertyId ->
-                    navController.navigate(AppRoutes.propertyDetail(propertyId))
-                },
-                onNavigateToClientDetail = { clientId ->
-                    navController.navigate(AppRoutes.clientDetail(clientId))
-                },
-                onNavigateToBookingCalendar = { propertyId ->
-                    navController.navigate(AppRoutes.bookingCalendar(propertyId))
-                },
-                drawerState = drawerState
-            )
-        }
-        
-        composable(
-            route = AppRoutes.BOOKING_CALENDAR,
-            arguments = listOf(
-                navArgument("propertyId") {
-                    type = NavType.StringType
-                }
-            )
-        ) { backStackEntry ->
-            val propertyId = backStackEntry.arguments?.getString("propertyId") ?: ""
-            BookingCalendarScreen(
-                propertyId = propertyId,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-        
-        // Экраны рекомендаций
-        composable(
-            route = AppRoutes.PROPERTY_RECOMMENDATIONS,
-            arguments = listOf(
-                navArgument("clientId") {
-                    type = NavType.StringType
-                }
-            )
-        ) { backStackEntry ->
-            val clientId = backStackEntry.arguments?.getString("clientId") ?: ""
-            PropertyRecommendationsScreen(
-                clientId = clientId,
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
-                onNavigateToPropertyDetail = { propertyId ->
-                    navController.navigate(AppRoutes.propertyDetail(propertyId))
-                }
-            )
-        }
-        
-        // Дополнительные экраны
-        composable(route = AppRoutes.HELP) {
-            HelpScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-        
-        composable(route = AppRoutes.ABOUT) {
-            AboutScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-    }
-}
-```
-
-### Маршруты навигации
-
-Все маршруты навигации определены в объекте `AppRoutes`:
-
-```kotlin
-object AppRoutes {
-    // Основные экраны
-    const val DASHBOARD = "dashboard"
-    const val PROPERTIES = "properties"
-    const val ADD_PROPERTY = "add_property"
-    const val PROPERTY_DETAIL = "property_detail/{propertyId}"
-    const val EDIT_PROPERTY = "edit_property/{propertyId}"
-    const val CLIENTS = "clients"
-    const val ADD_CLIENT = "add_client"
-    const val CLIENT_DETAIL = "client_detail/{clientId}"
-    const val EDIT_CLIENT = "edit_client/{clientId}"
-    const val APPOINTMENTS = "appointments"
-    const val ADD_APPOINTMENT = "add_appointment"
-    const val APPOINTMENT_DETAIL = "appointment_detail/{appointmentId}"
-    const val APPOINTMENT_EDIT = "appointment_edit/{appointmentId}"
-    const val BOOKING_CALENDAR = "booking_calendar/{propertyId}"
-    const val BOOKINGS = "bookings"
-    const val PROPERTY_RECOMMENDATIONS = "property_recommendations/{clientId}"
-    
-    // Дополнительные экраны
-    const val HELP = "help"
-    const val ABOUT = "about"
-    
-    // Функции для создания маршрутов с параметрами для объектов недвижимости
-    fun propertyDetail(propertyId: String) = "property_detail/$propertyId"
-    fun editProperty(propertyId: String) = "edit_property/$propertyId"
-    fun bookingCalendar(propertyId: String) = "booking_calendar/$propertyId"
-    
-    // Функции для создания маршрутов с параметрами для клиентов
-    fun clientDetail(clientId: String) = "client_detail/$clientId"
-    fun editClient(clientId: String) = "edit_client/$clientId"
-    fun propertyRecommendations(clientId: String) = "property_recommendations/$clientId"
-    
-    // Функции для создания маршрутов с параметрами для встреч
-    fun appointmentDetail(appointmentId: String) = "appointment_detail/$appointmentId"
-    fun appointmentEdit(appointmentId: String) = "appointment_edit/$appointmentId"
-}
-```
-
-### Боковое меню навигации
-
-Боковое меню навигации (Drawer) реализовано в компоненте `AppDrawer`:
-
-```kotlin
-@Composable
-fun AppDrawer(
-    navController: NavHostController,
-    onCloseDrawer: () -> Unit
-) {
-    val navBackStackEntry = navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry.value?.destination?.route
-    
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Шапка drawer с логотипом и информацией
-        DrawerHeader()
-        
-        // Разделитель
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
-        
-        // Основные пункты навигации
-        NavigationItems.mainItems.forEach { item ->
-            DrawerItem(
-                item = item,
-                isSelected = currentRoute == item.route,
-                onItemClick = {
-                    if (currentRoute != item.route) {
-                        navController.navigate(item.route) {
-                            popUpTo(AppRoutes.DASHBOARD) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                    onCloseDrawer()
-                }
-            )
-        }
-        
-        Spacer(modifier = Modifier.weight(1f))
-        
-        // Разделитель
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
-        
-        // Дополнительные пункты навигации (в нижней части drawer)
-        NavigationItems.bottomItems.forEach { item ->
-            DrawerItem(
-                item = item,
-                isSelected = currentRoute == item.route,
-                onItemClick = {
-                    if (currentRoute != item.route) {
-                        navController.navigate(item.route) {
-                            launchSingleTop = true
-                        }
-                    }
-                    onCloseDrawer()
-                }
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-    }
-}
-```
-
-### Элементы навигации
-
-Элементы навигации для бокового меню определены в объекте `NavigationItems`:
-
-```kotlin
-object NavigationItems {
-    // Основные пункты меню
-    val mainItems = listOf(
-        NavigationItem(
-            route = AppRoutes.DASHBOARD,
-            title = "Панель управления",
-            icon = Icons.Default.Dashboard,
-            contentDescription = "Панель управления"
-        ),
-        NavigationItem(
-            route = AppRoutes.PROPERTIES,
-            title = "Объекты",
-            icon = Icons.Default.Home,
-            contentDescription = "Список объектов недвижимости"
-        ),
-        NavigationItem(
-            route = AppRoutes.CLIENTS,
-            title = "Клиенты",
-            icon = Icons.Default.Person,
-            contentDescription = "Список клиентов"
-        ),
-        NavigationItem(
-            route = AppRoutes.BOOKINGS,
-            title = "Бронирования",
-            icon = Icons.Default.BookOnline,
-            contentDescription = "Список бронирований"
-        ),
-        NavigationItem(
-            route = AppRoutes.APPOINTMENTS,
-            title = "Встречи",
-            icon = Icons.Default.DateRange,
-            contentDescription = "Список встреч"
-        )
-    )
-    
-    // Дополнительные пункты меню (нижняя часть drawer)
-    val bottomItems = listOf(
-        NavigationItem(
-            route = AppRoutes.HELP,
-            title = "Помощь",
-            icon = Icons.Default.Help,
-            contentDescription = "Помощь и инструкции"
-        ),
-        NavigationItem(
-            route = AppRoutes.ABOUT,
-            title = "О приложении",
-            icon = Icons.Default.Info,
-            contentDescription = "Информация о приложении"
-        )
-    )
-}
-```
-
-## Бронирования и календарь
-
-В приложении реализована система бронирования и управления календарем для объектов недвижимости.
-
-### Модели бронирования
-
-- `Booking` - модель данных бронирования
-- `BookingEntity` - сущность базы данных для бронирования
-- `BookingStatus` - статусы бронирования (ожидание, подтверждено, отменено)
-- `PaymentStatus` - статусы оплаты (не оплачено, частично оплачено, полностью оплачено)
-- `AdditionalService` - дополнительные услуги для бронирования
-
-### Модели календаря
-
-- `CalendarView` - компонент календаря для выбора даты
-- `BookingCalendarScreen` - экран календаря бронирований с отображением адреса выбранного объекта в заголовке
-- `BookingListScreen` - экран списка бронирований с фильтрацией и сортировкой
-
-### Компоненты календаря
-
-В календаре бронирований используются следующие компоненты:
-
-```kotlin
-@Composable
-fun BookingCalendarCompat(
-    bookings: List<Booking>,
-    selectedDate: LocalDate? = null,
-    selectedEndDate: LocalDate? = null,
-    onDateSelected: (LocalDate) -> Unit,
-    onBookingSelected: (Booking) -> Unit,
-    modifier: Modifier = Modifier
-)
-```
-
-Для удобства пользователей реализована возможность отображения адреса объекта недвижимости в заголовке экрана календаря:
-
-```kotlin
-// Отображение адреса объекта в заголовке экрана календаря бронирований
-TopAppBar(
-    title = { 
-        Column {
-            Text("Календарь бронирований") 
-            val property = state.selectedProperty
-            if (property != null) {
-                Text(
-                    text = property.address,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-    },
-    navigationIcon = {
-        IconButton(onClick = onNavigateBack) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
-        }
-    }
-)
-```
-
-### Улучшенная работа с объектами в бронировании
-
-#### Поиск объектов в диалоге выбора
-
-Для удобства работы с большим количеством объектов недвижимости реализован диалог с функцией поиска:
-
-```kotlin
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PropertySelectorDialog(
-    properties: List<Property>,
-    onPropertySelected: (String?) -> Unit,
-    onDismiss: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.9f),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // Заголовок диалога
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Выберите объект",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Закрыть")
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Поле поиска
-                var searchQuery by remember { mutableStateOf("") }
-                val filteredProperties = remember(searchQuery, properties) {
-                    if (searchQuery.isBlank()) {
-                        properties
-                    } else {
-                        properties.filter { property ->
-                            property.address.contains(searchQuery, ignoreCase = true)
-                        }
-                    }
-                }
-                
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Поиск по адресу") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Очистить")
-                            }
-                        }
-                    },
-                    singleLine = true
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Кнопка "Все объекты"
-                OutlinedButton(
-                    onClick = { 
-                        onPropertySelected(null)
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Все объекты")
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Список объектов
-                if (filteredProperties.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Нет объектов, соответствующих запросу",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    ) {
-                        items(filteredProperties) { property ->
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                                    .clickable {
-                                        onPropertySelected(property.id)
-                                        onDismiss()
-                                    },
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp)
-                                ) {
-                                    Text(
-                                        text = property.address,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        // Цена
-                                        val price = property.dailyPrice ?: property.monthlyRent
-                                        if (price != null) {
-                                            Text(
-                                                text = "${price.toInt()} ₽" + 
-                                                      if (property.dailyPrice != null) "/сутки" else "/месяц",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                        
-                                        // Площадь и комнаты
-                                        Text(
-                                            text = "${property.area} м² • ${property.roomsCount} комн.",
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-```
-
-Данный компонент позволяет:
-- Осуществлять поиск объектов по адресу
-- Выбирать опцию "Все объекты" для сброса фильтра
-- Просматривать расширенную информацию об объекте (адрес, цена, площадь, количество комнат)
-- Получать уведомление, если по поисковому запросу ничего не найдено
-
-## Интеграция с картами Яндекс
-
-Приложение интегрирует Yandex MapKit для отображения местоположения объектов недвижимости на карте. Интеграция осуществлена с использованием Jetpack Compose.
-
-### Инициализация MapKit
-
-В основном классе приложения инициализируется MapKit с использованием API-ключа:
-
-```kotlin
-// RealEstateApplication.kt
-override fun onCreate() {
-    // ...
-    
-    // Инициализация Yandex MapKit
-    MapKitFactory.setApiKey("80b06c04-6156-4dfd-a086-2cee0b05fdb8")
-    
-    // ...
-}
-```
-
-### Компоненты карты
-
-#### PropertyMapView
-
-Основной компонент для отображения объекта недвижимости на карте:
-
-```kotlin
-@Composable
-fun PropertyMapView(
-    address: String,
-    latitude: Double?,
-    longitude: Double?,
-    markerColor: Color = Color(0xFF2196F3),
-    modifier: Modifier = Modifier
-) {
-    // Реализация компонента с Yandex MapKit
-}
-```
-
-#### Геокодирование адресов
-
-Для преобразования адресов в координаты используется сервис геокодирования:
-
-```kotlin
-object YandexGeocoderService {
-    private const val API_KEY = "80b06c04-6156-4dfd-a086-2cee0b05fdb8"
-    private const val BASE_URL = "https://geocode-maps.yandex.ru/1.x/"
-    
-    // Кэш для геокодирования
-    private val geocodeCache = HashMap<String, Pair<Double, Double>>()
-    
-    /**
-     * Получает координаты (широта, долгота) по адресу
-     * Возвращает пару (latitude, longitude) или null, если адрес не найден
-     */
-    suspend fun getCoordinates(address: String): Pair<Double, Double>? {
-        // ... реализация геокодирования
-    }
-}
-```
-
-### Интеграция с объектами недвижимости
-
-При создании и редактировании объектов недвижимости карта помогает визуализировать местоположение и уточнять координаты:
-
-```kotlin
-// При изменении адреса автоматически выполняется геокодирование
-LaunchedEffect(address) {
-    if (property.latitude == null && property.longitude == null && address.isNotEmpty()) {
-        try {
-            val coordinates = YandexGeocoderService.getCoordinates(address)
-            coordinates?.let {
-                latitude = it.first
-                longitude = it.second
-            }
-        } catch (e: Exception) {
-            // Обработка ошибки
-        }
-    }
-}
-```
-
-## Экспорт данных в PDF
-
-Приложение поддерживает экспорт данных об объектах недвижимости в формат PDF для создания отчетов и коммерческих предложений.
-
-### Архитектура системы экспорта PDF
-
-#### PdfExportService
-
-Основной сервис для формирования PDF-документов:
-
+- **YandexSuggestService** (`app/src/main/java/com/realestateassistant/pro/data/api/YandexSuggestService.kt`):
 ```kotlin
 @Singleton
-class PdfExportService @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
-    /**
-     * Формирует содержимое PDF-документа с данными объекта недвижимости
-     */
-    fun drawPropertyContent(document: PdfDocument, property: Property, images: List<Bitmap>) {
-        // ... реализация генерации PDF
-    }
-    
-    /**
-     * Рисует шапку документа
-     */
-    private fun drawHeader(canvas: Canvas, title: String, date: String, startY: Float, pageNumber: Int): Float {
-        // ... реализация отрисовки шапки
-    }
-    
-    // Другие вспомогательные методы
-}
-```
-
-#### ExportPropertyToPdfUseCase
-
-Use case для экспорта объекта недвижимости в PDF:
-
-```kotlin
-class ExportPropertyToPdfUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val imageRepository: ImageRepository,
-    private val documentRepository: DocumentRepository,
-    private val pdfExportService: PdfExportService,
-    private val storageHelper: StorageHelper
-) {
-    /**
-     * Генерирует PDF-документ с информацией о объекте недвижимости.
-     *
-     * @param property Объект недвижимости
-     * @return Result, содержащий Uri для доступа к сгенерированному PDF файлу, либо ошибку
-     */
-    suspend fun invoke(property: Property): Result<Uri> = withContext(Dispatchers.IO) {
-        // ... реализация экспорта в PDF
-    }
-    
-    /**
-     * Генерирует имя файла на основе характеристик объекта
-     */
-    private fun generateFileName(property: Property): String {
-        // ... генерация имени файла
+  class YandexSuggestService @Inject constructor(
+      private val client: OkHttpClient,
+      private val gson: Gson,
+      @Named("yandex_api_key") private val apiKey: String
+  ) {
+      private val baseUrl = "https://suggest-maps.yandex.ru/v1/suggest"
+      
+      suspend fun getSuggestions(query: String): Result<List<AddressSuggestion>> {
+          // Запрос к Yandex Suggest API для получения подсказок адресов
     }
 }
 ```
 
-#### PdfExportViewModel
+#### 2.3.5. Фоновые задачи и синхронизация
+Классы для выполнения фоновых задач (`app/src/main/java/com/realestateassistant/pro/data/worker/`):
 
-ViewModel для управления экспортом из UI:
-
+- **PropertyStatusUpdateWorker** (`app/src/main/java/com/realestateassistant/pro/data/worker/PropertyStatusUpdateWorker.kt`):
 ```kotlin
-@HiltViewModel
-class PdfExportViewModel @Inject constructor(
-    private val exportPropertyToPdfUseCase: ExportPropertyToPdfUseCase
-) : ViewModel() {
-    
-    /**
-     * Состояния процесса экспорта PDF
-     */
-    sealed class ExportState {
-        object Initial : ExportState()
-        object Loading : ExportState()
-        data class Success(val uri: Uri) : ExportState()
-        data class Error(val message: String) : ExportState()
-    }
-    
-    // Состояние экспорта
-    private val _exportState = MutableStateFlow<ExportState>(ExportState.Initial)
-    val exportState: StateFlow<ExportState> = _exportState
-    
-    /**
-     * Экспортирует информацию об объекте недвижимости в PDF
-     *
-     * @param property Объект недвижимости для экспорта
-     */
-    fun exportPropertyToPdf(property: Property) {
-        // ... инициирование экспорта и обновление состояний
-    }
-}
-```
-
-### Структура PDF-документа
-
-Сгенерированный PDF-документ содержит:
-
-1. Шапку с логотипом, датой и номером страницы
-2. Общую информацию об объекте (адрес, тип, площадь, цена)
-3. Фотографии объекта недвижимости
-4. Подробные характеристики объекта
-5. Дополнительную информацию (описание, заметки)
-6. Контактную информацию агента
-7. Подвал с QR-кодом для быстрого доступа
-
-### Поддержка платформ и разрешений
-
-Экспорт PDF поддерживает различные версии Android:
-- Для Android 10+ используется API MediaStore для сохранения в общую директорию Downloads
-- Для более ранних версий используются стандартные методы сохранения файлов
-- Имеется встроенный менеджер разрешений для запроса доступа к хранилищу
-
-### Предоставление доступа к PDF
-
-После генерации PDF файла приложение предлагает пользователю открыть его:
-
-```kotlin
-fun openPdfFile(context: Context, uri: Uri) {
-    val intent = Intent(Intent.ACTION_VIEW).apply {
-        setDataAndType(uri, "application/pdf")
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
-    }
-    
-    val chooserIntent = Intent.createChooser(intent, "Открыть PDF с помощью")
-    chooserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-    context.startActivity(chooserIntent)
-}
-```
-
-### Улучшенное открытие PDF и работа с уведомлениями
-
-В приложении реализован надежный механизм открытия PDF файлов, в том числе из уведомлений, что решает проблему "device has no application to view" при попытке открыть файл:
-
-```kotlin
-/**
- * Открывает сгенерированный PDF файл, используя наиболее совместимый подход
- */
-fun openPdf(context: Context, uri: Uri) {
-    Log.d("PdfExportViewModel", "Пытаемся открыть PDF: $uri")
-    
-    // Пробуем разные подходы последовательно
-    if (!tryOpenWithExplicitChooser(context, uri) && 
-        !tryOpenWithGenericIntent(context, uri) &&
-        !tryOpenWithSendAction(context, uri)) {
-        
-        // Если все методы не сработали, сообщаем пользователю
-        Toast.makeText(
-            context,
-            "На устройстве не найдено приложение для просмотра PDF. Установите PDF-ридер.",
-            Toast.LENGTH_LONG
-        ).show()
-    }
-}
-
-/**
- * Пытается открыть PDF с явным выбором приложения
- */
-private fun tryOpenWithExplicitChooser(context: Context, uri: Uri): Boolean {
+  class PropertyStatusUpdateWorker @AssistedInject constructor(
+      @Assisted context: Context,
+      @Assisted params: WorkerParameters,
+      private val updatePropertyStatusesUseCase: UpdatePropertyStatusesUseCase
+  ) : CoroutineWorker(context, params) {
+  
+      override suspend fun doWork(): Result {
     return try {
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/pdf")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        
-        val chooserIntent = Intent.createChooser(intent, "Открыть PDF с помощью")
-        chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        
-        context.startActivity(chooserIntent)
-        Log.d("PdfExportViewModel", "PDF открыт через явный выбор приложения")
-        true
+              // Обновление статусов объектов на основе текущих бронирований
+              updatePropertyStatusesUseCase()
+              Result.success()
     } catch (e: Exception) {
-        Log.e("PdfExportViewModel", "Ошибка при открытии PDF через выбор приложения", e)
-        false
-    }
-}
-```
-
-Система также обеспечивает корректное открытие PDF файлов из уведомлений:
-
-1. Используется FileProvider для предоставления доступа к файлам через провайдер контента
-2. Добавлены корректные флаги для Intent: `FLAG_GRANT_READ_URI_PERMISSION`
-3. Реализована проверка наличия приложений для открытия PDF
-4. Добавлена иерархия запасных методов открытия файлов
-
-#### Конфигурация FileProvider
-
-В AndroidManifest.xml настроен FileProvider для безопасного доступа к PDF файлам:
-
-```xml
-<provider
-    android:name="androidx.core.content.FileProvider"
-    android:authorities="${applicationId}.fileprovider"
-    android:exported="false"
-    android:grantUriPermissions="true">
-    <meta-data
-        android:name="android.support.FILE_PROVIDER_PATHS"
-        android:resource="@xml/file_paths" />
-</provider>
-```
-
-А в файле `file_paths.xml` определены доступные пути:
-
-```xml
-<paths>
-    <external-path name="external_files" path="." />
-    <external-files-path name="external_files_path" path="." />
-    <cache-path name="cached_files" path="." />
-    <files-path name="files" path="." />
-    <external-cache-path name="external_cache" path="." />
-</paths>
-```
-
-#### Взаимодействие с уведомлениями
-
-При генерации PDF из уведомления:
-
-1. Уведомление передает идентификатор объекта недвижимости
-2. Система загружает данные объекта с помощью соответствующих репозиториев
-3. Генерируется PDF с помощью `ExportPropertyToPdfUseCase`
-4. Полученный URI (path) файла конвертируется в URI контент-провайдера
-5. Intent для открытия PDF формируется с правильными флагами и типом
-
-Это обеспечивает бесшовное взаимодействие между компонентами приложения и системными компонентами Android, гарантируя надежное открытие PDF файлов на всех поддерживаемых версиях Android.
-
-## Система логирования и отладки
-
-В приложении реализована комплексная система логирования и отладки, которая помогает обнаруживать и исправлять проблемы в различных средах выполнения.
-
-### Timber для управления логами
-
-Проект использует библиотеку Timber для упрощения управления логами:
-
-```kotlin
-// Инициализация Timber в Application классе
-override fun onCreate() {
-    // ...
-    
-    // Инициализация логирования с Timber
-    if (DEBUG) {
-        Timber.plant(Timber.DebugTree())
-    }
-}
-```
-
-Основные преимущества использования Timber:
-
-1. Автоматическое определение тегов на основе имен классов
-2. Отсутствие логов в релизных версиях
-3. Простой синтаксис для логирования
-
-```kotlin
-// Пример использования Timber в репозитории
-override suspend fun addBooking(booking: Booking): Result<Booking> {
-    return try {
-        val bookingEntity = BookingMapper.toEntity(booking)
-        bookingDao.insertBooking(bookingEntity)
-        Result.success(BookingMapper.toDomain(bookingEntity))
-    } catch (e: Exception) {
-        Timber.e(e, "Ошибка при добавлении бронирования")
-        Result.failure(e)
-    }
-}
-```
-
-### StrictMode для выявления проблем производительности
-
-Приложение использует StrictMode для выявления потенциальных проблем производительности и потоков во время разработки:
-
-```kotlin
-/**
- * Включает строгий режим для обнаружения блокировок основного потока и других проблем
- * Используется только в режиме отладки
- */
-private fun enableStrictModeForDebug() {
-    Log.d(TAG, "Включение StrictMode для отладки потоков")
-    
-    // Настройка политики для потоков - обнаруживает блокирующие операции в основном потоке
-    StrictMode.setThreadPolicy(
-        StrictMode.ThreadPolicy.Builder()
-            .detectDiskReads()
-            .detectDiskWrites()
-            .detectNetwork()
-            .detectCustomSlowCalls()
-            .permitDiskReads() // Разрешаем чтение с диска для предотвращения блокировок UI
-            .penaltyLog() // Записываем нарушения в logcat
+              Log.e(TAG, "Error updating property statuses", e)
+              Result.retry()
+          }
+      }
+      
+      companion object {
+          private const val TAG = "PropertyStatusWorker"
+          
+          fun schedulePeriodicWork(workManager: WorkManager) {
+              val constraints = Constraints.Builder()
+                  .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+                  .setRequiresBatteryNotLow(true)
             .build()
-    )
-    
-    // Настройка политики для виртуальной машины - обнаруживает утечки ресурсов
-    StrictMode.setVmPolicy(
-        StrictMode.VmPolicy.Builder()
-            .detectLeakedSqlLiteObjects()
-            .detectLeakedClosableObjects()
-            .detectLeakedRegistrationObjects()
-            .detectActivityLeaks()
-            .detectCleartextNetwork()
-            .detectContentUriWithoutPermission()
-            .detectUnsafeIntentLaunch()
-            .penaltyLog()
-            .build()
-    )
-}
-```
-
-### Правила логирования
-
-В приложении применяются следующие правила для логирования:
-
-1. Использование префикса `REA_` для тегов логов для простоты фильтрации
-2. Разделение логов по уровням: DEBUG, INFO, WARNING, ERROR
-3. Логирование ключевых событий и операций:
-   - Критические ошибки и исключения
-   - Важные пользовательские действия
-   - Время загрузки экранов и компонентов
-   - Использование основных функций
-
-### Конфиденциальность в логировании
-
-Для обеспечения безопасности данных применяются следующие практики:
-
-1. Никогда не логировать личные данные пользователей и клиентов
-2. Анонимизировать идентификаторы в логах, когда это необходимо
-3. Предоставлять возможность отключения сбора аналитических данных
-4. Использовать обобщенные сообщения для логирования ошибок аутентификации
-
-### Асинхронная инициализация компонентов
-
-Для ускорения запуска приложения и предотвращения блокировки основного потока в проекте используется асинхронная инициализация тяжелых компонентов с помощью Jetpack App Startup:
-
-```kotlin
-/**
- * Инициализатор приложения для Jetpack App Startup.
- * Выполняет инициализацию базы данных и других критических компонентов
- * в фоновом потоке при запуске приложения.
- */
-class ApplicationInitializer : Initializer<Unit> {
-    private val initializerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    
-    override fun create(context: Context) {
-        // Запуск инициализации в фоновом потоке
-        initializerScope.launch {
-            // Инициализация базы данных
-            val entryPoint = EntryPointAccessors.fromApplication(
-                context, 
-                ApplicationInitializerEntryPoint::class.java
-            )
-            
-            try {
-                // Получение и инициализация компонентов
-                val database = AppDatabase.getInstance(
-                    context,
-                    entryPoint.databaseEncryption()
-                )
-                
-                // Проверка связи с базой данных
-                database.openHelper.readableDatabase
-                Log.d(TAG, "База данных успешно инициализирована")
-            } catch (e: Exception) {
-                Log.e(TAG, "Ошибка при инициализации базы данных", e)
-                // Обработка ошибок инициализации
-            }
-        }
+              
+              val request = PeriodicWorkRequestBuilder<PropertyStatusUpdateWorker>(
+                  4, TimeUnit.HOURS,  // Периодичность выполнения
+                  30, TimeUnit.MINUTES // Гибкий интервал
+              )
+              .setConstraints(constraints)
+                    .build()
+              
+              workManager.enqueueUniquePeriodicWork(
+                  "property_status_update",
+                  ExistingPeriodicWorkPolicy.UPDATE,
+                  request
+              )
+          }
+      }
+      
+      @Factory
+      interface PropertyStatusUpdateWorkerFactory {
+          fun create(context: Context, params: WorkerParameters): PropertyStatusUpdateWorker
     }
-    
-    override fun dependencies(): List<Class<out Initializer<*>>> = emptyList()
 }
 ```
 
-Эти инструменты и практики обеспечивают стабильную и безопасную работу приложения, упрощают процесс отладки и позволяют оперативно выявлять потенциальные проблемы на этапе разработки.
+### 2.4. Система безопасности и шифрования
+Расположена в различных директориях, в основном в `app/src/main/java/com/realestateassistant/pro/data/local/security/` и `app/src/main/java/com/realestateassistant/pro/core/security/`.
 
-## Технический долг и планы развития
+#### 2.4.1. Шифрование базы данных
+Приложение использует SQLCipher для шифрования локальной базы данных, что обеспечивает защиту конфиденциальной информации о клиентах и объектах недвижимости:
 
-### Технический долг
-
-1. **Оптимизация производительности**
-   - Оптимизация загрузки и кэширования изображений для более быстрого отображения
-   - Внедрение пагинации для больших списков объектов и клиентов
-   - Оптимизация главного экрана для улучшения скорости загрузки и уменьшения использования ресурсов
-
-2. **Улучшение UI/UX**
-   - Доработка отзывчивости UI для разных размеров экранов
-   - Улучшение доступности приложения
-   - Добавление анимаций для улучшения UX
-
-3. **Тесты**
-   - Покрытие основных компонентов UI тестами
-   - Написание unit-тестов для репозиториев и юзкейсов
-   - Интеграционные тесты для проверки работы базы данных
-
-### Планы развития
-
-1. **Разработка полноценных модулей для клиентов и показов**
-   - Реализация полного функционала раздела клиентов по аналогии с объектами:
-     - Создание детальной формы добавления/редактирования клиентов
-     - Разработка удобных карточек клиентов для списка
-     - Детальная страница с информацией о клиенте
-     - Система связи клиентов с подходящими объектами
-   - Разработка модуля показов/встреч:
-     - Форма создания и редактирования показов
-     - Календарь показов с разными представлениями
-     - Карточки показов с возможностью быстрого доступа
-     - Система уведомлений о предстоящих показах
-
-2. **Новые функции**
-   - Добавление аналитического модуля для отслеживания эффективности работы
-   - Экспорт данных в различные форматы (PDF, Excel)
-
-3. **Улучшение существующих функций**
-   - Расширенный поиск и фильтрация объектов
-   - Интеллектуальный поиск по всем сущностям приложения
-   - Система тегов для объектов, клиентов и встреч
-   - Продвинутая сортировка с возможностью настройки пользователем
-   - Улучшенный календарь встреч с напоминаниями
-   - Система заметок для объектов и клиентов
-   - Чек-листы для просмотров объектов
-   - Расширение функциональности карт с возможностью поиска объектов на карте
-
-4. **Технические улучшения**
-   - Реализация синхронизации данных с облаком (Supabase):
-     - Настройка API для синхронизации
-     - Механизм разрешения конфликтов при синхронизации
-     - Возможность работы в офлайн-режиме с последующей синхронизацией
-   - Внедрение многопользовательского режима
-   - Улучшение безопасности и защиты данных
-
-## Безопасность и шифрование данных
-
-В приложении реализована система безопасности для защиты конфиденциальных данных пользователей и объектов недвижимости.
-
-### Шифрование базы данных
-
-Основой системы безопасности является шифрование локальной базы данных с использованием SQLCipher:
-
+- **DatabaseEncryption** (`app/src/main/java/com/realestateassistant/pro/data/local/security/DatabaseEncryption.kt`):
 ```kotlin
-// Пример конфигурации шифрованной базы данных в AppDatabase
-val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
-val factory = SupportFactory(passphrase)
-
-Room.databaseBuilder(
-    context.applicationContext,
-    AppDatabase::class.java,
-    DATABASE_NAME
-)
-.openHelperFactory(factory)
-.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-.build()
-```
-
-### Компоненты безопасности
-
-- `DatabaseEncryption` - класс для управления ключами шифрования и паролями базы данных
-- Интеграция с Android Keystore для безопасного хранения криптографических ключей
-- Механизмы восстановления при повреждении ключей шифрования
-
-```kotlin
+  @Singleton
 class DatabaseEncryption @Inject constructor(
-    private val context: Context
-) {
-    companion object {
-        private const val KEY_ALIAS = "database_encryption_key"
-        private const val PREF_NAME = "database_security_prefs"
-        private const val PREF_PASSWORD = "database_password"
-        private const val DEFAULT_PASSWORD = "default_secure_password"
-    }
-    
-    private val keyStore by lazy {
-        KeyStore.getInstance("AndroidKeyStore").apply {
-            load(null)
-        }
-    }
-    
-    private val securePreferences by lazy {
+      private val context: Context,
+      private val securityManager: SecurityManager
+  ) {
+      private val securePrefs by lazy {
+          try {
         EncryptedSharedPreferences.create(
-            PREF_NAME,
-            MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build(),
-            context,
+                  "secure_database_prefs",
+                  MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
+                            context,
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
-    }
-    
-    /**
-     * Получает пароль для шифрования базы данных
+                } catch (e: Exception) {
+              // Если криптографические ключи повреждены, используем обычные SharedPreferences
+              // как запасной вариант
+              Log.e(TAG, "Failed to create EncryptedSharedPreferences, using regular SharedPreferences", e)
+              context.getSharedPreferences("database_backup_prefs", Context.MODE_PRIVATE)
+          }
+      }
+      
+      /**
+       * Получает пароль для базы данных
+       * При первом запуске генерирует надежный пароль и сохраняет его
      */
     fun getDatabasePassword(): String {
-        // Если пароль уже сохранен, возвращаем его
-        if (securePreferences.contains(PREF_PASSWORD)) {
-            return securePreferences.getString(PREF_PASSWORD, DEFAULT_PASSWORD) ?: DEFAULT_PASSWORD
-        }
-        
-        // Генерируем новый пароль и сохраняем его
-        val password = generateSecurePassword()
-        securePreferences.edit().putString(PREF_PASSWORD, password).apply()
+          var password = securePrefs.getString(KEY_DATABASE_PASSWORD, null)
+          
+          if (password == null) {
+              // Генерация нового пароля при первом запуске
+              password = generateSecurePassword()
+              securePrefs.edit().putString(KEY_DATABASE_PASSWORD, password).apply()
+              
+              // Сохраняем копию пароля в обычных SharedPreferences как резервный вариант
+              val backupPrefs = context.getSharedPreferences("database_backup_prefs", Context.MODE_PRIVATE)
+              backupPrefs.edit().putString(KEY_DATABASE_PASSWORD_BACKUP, password).apply()
+          }
+          
         return password
     }
     
     /**
-     * Генерирует криптографически стойкий пароль
-     */
-    private fun generateSecurePassword(): String {
-        val bytes = ByteArray(32)
-        SecureRandom().nextBytes(bytes)
-        return Base64.encodeToString(bytes, Base64.NO_WRAP)
-    }
-    
-    /**
-     * Сбрасывает пароль и ключи шифрования в случае проблем
+       * Сбрасывает ключи шифрования при критических ошибках
      */
     fun resetSecurityKeys() {
         try {
-            // Удаляем ключ из KeyStore
-            if (keyStore.containsAlias(KEY_ALIAS)) {
-                keyStore.deleteEntry(KEY_ALIAS)
-            }
+              securePrefs.edit().clear().apply()
             
-            // Сбрасываем пароль
-            securePreferences.edit().remove(PREF_PASSWORD).apply()
+              val backupPrefs = context.getSharedPreferences("database_backup_prefs", Context.MODE_PRIVATE)
+              backupPrefs.edit().clear().apply()
             
-            // Генерируем новый пароль
+              // Генерация нового пароля
             val newPassword = generateSecurePassword()
-            securePreferences.edit().putString(PREF_PASSWORD, newPassword).apply()
-        } catch (e: Exception) {
-            Log.e("DatabaseEncryption", "Ошибка при сбросе ключей безопасности", e)
-            
-            // В случае фатальной ошибки пытаемся сбросить все настройки
-            context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-                .edit().clear().apply()
-        }
+              securePrefs.edit().putString(KEY_DATABASE_PASSWORD, newPassword).apply()
+              backupPrefs.edit().putString(KEY_DATABASE_PASSWORD_BACKUP, newPassword).apply()
+              
+              Log.i(TAG, "Security keys reset successfully")
+                                    } catch (e: Exception) {
+              Log.e(TAG, "Error resetting security keys", e)
+          }
+      }
+      
+      /**
+       * Генерирует криптографически стойкий пароль
+       */
+      private fun generateSecurePassword(): String {
+          val random = SecureRandom()
+          val bytes = ByteArray(32)
+          random.nextBytes(bytes)
+          return Base64.encodeToString(bytes, Base64.NO_WRAP)
+      }
+      
+      companion object {
+          private const val TAG = "DatabaseEncryption"
+          private const val KEY_DATABASE_PASSWORD = "db_password"
+          private const val KEY_DATABASE_PASSWORD_BACKUP = "db_password_backup"
     }
 }
 ```
 
-### Защита конфиденциальных данных
-
-Приложение обеспечивает безопасность через:
-
-- Шифрование всех конфиденциальных данных в базе данных с использованием SQLCipher
-- Использование EncryptedSharedPreferences для хранения чувствительных настроек
-- Механизмы очистки кэша и временных файлов при выходе из приложения
-- Защиту от экспорта незашифрованных данных
-
-### Безопасность медиафайлов
-
-Для защиты фотографий и документов применяются следующие меры:
-
-- Хранение в приватной директории приложения, недоступной другим приложениям
-- Контролируемый доступ к файлам через FileProvider
-- Безопасное удаление файлов при удалении связанных с ними записей
-- Шифрование особо важных документов с помощью AES шифрования
-
-### Аварийное восстановление
-
-В приложении реализован механизм восстановления при нарушении целостности криптографических ключей или повреждении базы данных:
-
+- **Интеграция SQLCipher** в `DatabaseModule` (`app/src/main/java/com/realestateassistant/pro/di/DatabaseModule.kt`):
 ```kotlin
-try {
-    // Используем зашифрованную базу данных
-    database.openHelper.readableDatabase
-} catch (e: Exception) {
-    // Обрабатываем ошибки целостности ключей
-    if (e is AEADBadTagException || e.cause is AEADBadTagException) {
-        // Сброс повреждённых ключей и восстановление хранилища
-        databaseEncryption.resetSecurityKeys()
-        
-        // Пытаемся пересоздать базу данных
-        resetDatabaseFiles(context)
-        
-        // Создаем новый экземпляр базы данных с новыми ключами
-        createDatabaseWithNewKeys(context, databaseEncryption)
-    } else {
-        // Обработка других ошибок базы данных
-        Log.e(TAG, "Ошибка при доступе к базе данных", e)
-        
-        // Регистрируем ошибку в системе аналитики
-        reportDatabaseError(e)
-        
-        // Уведомляем пользователя о проблеме
-        showDatabaseErrorNotification(context)
-    }
-}
-```
-
-## Бронирования и календарь
-
-Модуль бронирований предоставляет функциональность для управления бронированиями объектов недвижимости как для долгосрочной, так и для посуточной аренды.
-
-### Модель бронирования
-
-Модель `Booking` объединяет информацию о бронировании, включая даты, статус, клиента и финансовую информацию:
-
-```kotlin
-data class Booking(
-    val id: String = "",
-    val propertyId: String,
-    val clientId: String? = null,
-    val startDate: Long,
-    val endDate: Long,
-    val status: BookingStatus = BookingStatus.PENDING,
-    val paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
-    val totalAmount: Double,
-    val depositAmount: Double? = null,
-    val notes: String? = null,
-    val guestsCount: Int? = null,
-    val checkInTime: String? = null,
-    val checkOutTime: String? = null,
-    val includedServices: List<String> = emptyList(),
-    val additionalServices: List<AdditionalService> = emptyList(),
-    val rentPeriodMonths: Int? = null,
-    val monthlyPaymentAmount: Double? = null,
-    val utilityPayments: Boolean? = null,
-    val contractType: String? = null,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
-)
-```
-
-### Статусы бронирования
-
-```kotlin
-enum class BookingStatus {
-    PENDING,    // Ожидает подтверждения
-    CONFIRMED,  // Подтверждено
-    CANCELLED,  // Отменено
-    COMPLETED,  // Завершено
-    NO_SHOW     // Клиент не явился
-}
-
-enum class PaymentStatus {
-    UNPAID,         // Не оплачено
-    PARTIALLY_PAID, // Частично оплачено
-    FULLY_PAID,     // Полностью оплачено
-    REFUNDED,       // Возвращено
-    DEPOSIT_PAID    // Оплачен только депозит
-}
-```
-
-### Репозиторий бронирований
-
-Интерфейс `BookingRepository` предоставляет методы для работы с бронированиями:
-
-```kotlin
-interface BookingRepository {
-    suspend fun addBooking(booking: Booking): Result<Booking>
-    suspend fun updateBooking(booking: Booking): Result<Unit>
-    suspend fun deleteBooking(bookingId: String): Result<Unit>
-    suspend fun getBooking(bookingId: String): Result<Booking>
-    suspend fun getAllBookings(): Result<List<Booking>>
-    fun observeAllBookings(): Flow<List<Booking>>
-    fun observeBookingsByProperty(propertyId: String): Flow<List<Booking>>
-    fun observeBookingsByClient(clientId: String): Flow<List<Booking>>
-    fun observeBookingsInDateRange(fromDate: Long, toDate: Long): Flow<List<Booking>>
-    fun observeBookingsForPropertyInDateRange(propertyId: String, fromDate: Long, toDate: Long): Flow<List<Booking>>
-    suspend fun hasBookingConflicts(propertyId: String, fromDate: Long, toDate: Long): Result<Boolean>
-    suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<Unit>
-    suspend fun updatePaymentStatus(bookingId: String, status: PaymentStatus): Result<Unit>
-    suspend fun autoUpdateBookingStatuses(): Result<Int>
-}
-```
-
-### Календарь бронирований
-
-Календарь бронирований позволяет визуализировать занятые и свободные даты для объектов недвижимости, а также создавать и управлять бронированиями.
-
-#### BookingCalendarScreen
-
-```kotlin
-@Composable
-fun BookingCalendarScreen(
-    propertyId: String,
-    onNavigateBack: () -> Unit,
-    viewModel: BookingCalendarViewModel = hiltViewModel()
-) {
-    val state by viewModel.state.collectAsState()
-    
-    // Загружаем бронирования для выбранного объекта
-    LaunchedEffect(propertyId) {
-        viewModel.handleEvent(BookingCalendarEvent.SelectProperty(propertyId))
-    }
-    
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Календарь бронирований") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Назад")
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Отображение календаря с отмеченными датами бронирований
-            BookingCalendarView(
-                bookings = state.bookings,
-                selectedStartDate = state.selectedStartDate,
-                selectedEndDate = state.selectedEndDate,
-                onDateSelected = { date ->
-                    viewModel.handleEvent(BookingCalendarEvent.SelectDate(date))
-                },
-                onDateRangeConfirmed = {
-                    viewModel.handleEvent(BookingCalendarEvent.ConfirmDateSelection)
-                }
-            )
-            
-            // Отображение доступных окон для бронирования
-            if (state.availableTimeSlots.isNotEmpty()) {
-                Text(
-                    text = "Доступные периоды для бронирования:",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-                
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    items(state.availableTimeSlots) { slot ->
-                        AvailableTimeSlotItem(
-                            slot = slot,
-                            onClick = {
-                                viewModel.handleEvent(
-                                    BookingCalendarEvent.UpdateDates(
-                                        start = slot.startDate,
-                                        end = slot.endDate
-                                    )
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // Список бронирований для выбранного объекта
-            Text(
-                text = "Бронирования:",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            
-            if (state.bookings.isEmpty()) {
-                Text(
-                    text = "Нет активных бронирований",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .align(Alignment.CenterHorizontally)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    items(state.bookings) { booking ->
-                        BookingListItem(
-                            booking = booking,
-                            onClick = {
-                                viewModel.handleEvent(BookingCalendarEvent.SelectBooking(booking))
-                                viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // Кнопка создания бронирования
-            Button(
-                onClick = {
-                    viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Создать бронирование")
-            }
-        }
-        
-        // Диалог создания/редактирования бронирования
-        if (state.isBookingDialogVisible) {
-            BookingFormDialog(
-                propertyId = propertyId,
-                startDate = state.selectedStartDate,
-                endDate = state.selectedEndDate,
-                clients = state.clients,
-                selectedClient = state.selectedClient,
-                editing = !state.isInfoMode,
-                booking = state.selectedBooking,
-                onClientSelected = { client ->
-                    viewModel.handleEvent(BookingCalendarEvent.SelectClient(client))
-                },
-                onSave = { clientId, startDate, endDate, amount, guestsCount, notes ->
-                    if (state.selectedBooking != null && !state.isInfoMode) {
-                        viewModel.handleEvent(
-                            BookingCalendarEvent.UpdateBooking(
-                                state.selectedBooking.id,
-                                clientId,
-                                startDate,
-                                endDate,
-                                amount,
-                                guestsCount,
-                                notes
-                            )
-                        )
-                    } else {
-                        viewModel.handleEvent(
-                            BookingCalendarEvent.CreateBooking(
-                                propertyId,
-                                clientId,
-                                startDate,
-                                endDate,
-                                amount,
-                                guestsCount,
-                                notes
-                            )
-                        )
-                    }
-                },
-                onDelete = {
-                    state.selectedBooking?.let { booking ->
-                        viewModel.handleEvent(BookingCalendarEvent.DeleteBooking(booking.id))
-                    }
-                },
-                onDismiss = {
-                    viewModel.handleEvent(BookingCalendarEvent.HideBookingDialog)
-                }
-            )
-        }
-    }
-}
-```
-
-#### BookingCalendarView
-
-```kotlin
-@Composable
-fun BookingCalendarView(
-    bookings: List<Booking>,
-    selectedStartDate: LocalDate?,
-    selectedEndDate: LocalDate?,
-    onDateSelected: (LocalDate) -> Unit,
-    onDateRangeConfirmed: () -> Unit
-) {
-    val currentMonth = remember { mutableStateOf(YearMonth.now()) }
-    
-    Column(modifier = Modifier.fillMaxWidth()) {
-        // Заголовок с навигацией по месяцам
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = {
-                    currentMonth.value = currentMonth.value.minusMonths(1)
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ChevronLeft,
-                    contentDescription = "Предыдущий месяц"
-                )
-            }
-            
-            Text(
-                text = currentMonth.value.format(DateTimeFormatter.ofPattern("LLLL yyyy")),
-                style = MaterialTheme.typography.titleMedium
-            )
-            
-            IconButton(
-                onClick = {
-                    currentMonth.value = currentMonth.value.plusMonths(1)
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "Следующий месяц"
-                )
-            }
-        }
-        
-        // Дни недели
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            val daysOfWeek = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
-            daysOfWeek.forEach { day ->
-                Text(
-                    text = day,
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-        
-        // Календарная сетка
-        val firstDayOfMonth = currentMonth.value.atDay(1)
-        val lastDayOfMonth = currentMonth.value.atEndOfMonth()
-        
-        // Определяем первый день для отображения (может быть из предыдущего месяца)
-        val firstDay = firstDayOfMonth.minusDays(
-            (firstDayOfMonth.dayOfWeek.value - 1).toLong()
-        )
-        
-        // Создаем список всех дней для отображения
-        val calendarDays = mutableListOf<LocalDate>()
-        var day = firstDay
-        while (day.isBefore(lastDayOfMonth) || day.isEqual(lastDayOfMonth) || calendarDays.size % 7 != 0) {
-            calendarDays.add(day)
-            day = day.plusDays(1)
-        }
-        
-        // Преобразуем бронирования в множество дат
-        val bookedDates = bookings.flatMap { booking ->
-            val start = LocalDate.ofEpochDay(booking.startDate / (24 * 60 * 60 * 1000))
-            val end = LocalDate.ofEpochDay(booking.endDate / (24 * 60 * 60 * 1000))
-            start.datesUntil(end.plusDays(1)).collect(Collectors.toList())
-        }.toSet()
-        
-        // Отображаем календарь
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(7),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(320.dp)
-                .padding(16.dp)
-        ) {
-            items(calendarDays) { date ->
-                val isCurrentMonth = date.month == currentMonth.value.month
-                val isBooked = date in bookedDates
-                val isSelected = (selectedStartDate != null && selectedEndDate != null && 
-                    (date.isEqual(selectedStartDate) || date.isEqual(selectedEndDate) || 
-                    (date.isAfter(selectedStartDate) && date.isBefore(selectedEndDate))))
-                val isSelectionStart = date == selectedStartDate
-                val isSelectionEnd = date == selectedEndDate
-                
-                Box(
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .padding(2.dp)
-                        .clip(CircleShape)
-                        .background(
-                            when {
-                                isSelected -> MaterialTheme.colorScheme.primaryContainer
-                                isBooked -> MaterialTheme.colorScheme.errorContainer
-                                else -> Color.Transparent
-                            }
-                        )
-                        .border(
-                            width = if (isSelectionStart || isSelectionEnd) 2.dp else 0.dp,
-                            color = if (isSelectionStart || isSelectionEnd) 
-                                MaterialTheme.colorScheme.primary else Color.Transparent,
-                            shape = CircleShape
-                        )
-                        .clickable(
-                            enabled = !isBooked,
-                            onClick = {
-                                onDateSelected(date)
-                            }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = date.dayOfMonth.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = when {
-                            !isCurrentMonth -> MaterialTheme.colorScheme.outline
-                            isBooked -> MaterialTheme.colorScheme.onErrorContainer
-                            isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
-                            else -> MaterialTheme.colorScheme.onSurface
-                        }
-                    )
-                }
-            }
-        }
-        
-        // Кнопки для подтверждения выбора дат
-        if (selectedStartDate != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        onDateSelected(LocalDate.now()) // Сбрасываем выбор
-                    }
-                ) {
-                    Text("Отменить")
-                }
-                
-                Button(
-                    onClick = onDateRangeConfirmed,
-                    enabled = selectedStartDate != null && selectedEndDate != null
-                ) {
-                    Text("Подтвердить")
-                }
-            }
-        }
-    }
-}
-```
-
-### Автоматическое обновление статусов
-
-Приложение включает в себя механизм автоматического обновления статусов бронирований в зависимости от текущей даты:
-
-```kotlin
-class AutoUpdateBookingStatusesUseCase @Inject constructor(
-    private val repository: BookingRepository
-) {
-    suspend operator fun invoke(): Result<Int> {
-        return repository.autoUpdateBookingStatuses()
-    }
-}
-
-// Реализация в репозитории
-override suspend fun autoUpdateBookingStatuses(): Result<Int> = withContext(Dispatchers.IO) {
-    try {
-        val allBookings = bookingDao.getAllBookings()
-        val currentTime = System.currentTimeMillis()
-        var updatedCount = 0
-        
-        allBookings.forEach { bookingEntity ->
-            val newStatus = when {
-                // Если дата окончания в прошлом и статус не COMPLETED или CANCELLED, меняем на COMPLETED
-                bookingEntity.endDate < currentTime && 
-                bookingEntity.status != BookingStatus.COMPLETED.name && 
-                bookingEntity.status != BookingStatus.CANCELLED.name -> {
-                    updatedCount++
-                    BookingStatus.COMPLETED.name
-                }
-                // Если дата начала в прошлом, но до даты окончания, и статус PENDING, меняем на CONFIRMED
-                bookingEntity.startDate < currentTime && 
-                bookingEntity.endDate > currentTime && 
-                bookingEntity.status == BookingStatus.PENDING.name -> {
-                    updatedCount++
-                    BookingStatus.CONFIRMED.name
-                }
-                else -> null
-            }
-            
-            newStatus?.let { status ->
-                bookingDao.updateBookingStatus(bookingEntity.id, status)
-            }
-        }
-        
-        Result.success(updatedCount)
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
-}
-```
-
-## Управление зависимостями
-
-Для управления зависимостями в проекте используется Dagger Hilt. Основные модули:
-
-### AppModule
-
-Предоставляет основные зависимости приложения:
-
-```kotlin
-@Module
-@InstallIn(SingletonComponent::class)
-object AppModule {
-    @Provides
-    @Singleton
-    fun provideClientRepository(clientDao: ClientDao): ClientRepository {
-        return ClientRepositoryImpl(clientDao)
-    }
-    
-    @Provides
-    @Singleton
-    fun providePropertyRepository(propertyDao: PropertyDao): PropertyRepository {
-        return PropertyRepositoryImpl(propertyDao)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideAppointmentRepository(appointmentDao: AppointmentDao): AppointmentRepository {
-        return AppointmentRepositoryImpl(appointmentDao)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideBookingRepository(bookingDao: BookingDao): BookingRepository {
-        return BookingRepositoryImpl(bookingDao)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideImageRepository(@ApplicationContext context: Context): ImageRepository {
-        return ImageRepositoryImpl(context)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideDocumentRepository(@ApplicationContext context: Context): DocumentRepository {
-        return DocumentRepositoryImpl(context)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideDatabaseEncryption(@ApplicationContext context: Context): DatabaseEncryption {
-        return DatabaseEncryption(context)
-    }
-    
-    // Предоставление юзкейсов
-    @Provides
-    @Singleton
-    fun provideClientUseCases(repository: ClientRepository): ClientUseCases {
-        return ClientUseCases(
-            addClient = AddClientUseCase(repository),
-            updateClient = UpdateClientUseCase(repository),
-            deleteClient = DeleteClientUseCase(repository),
-            getClient = GetClientUseCase(repository),
-            getAllClients = GetAllClientsUseCase(repository),
-            getClientsByRentalType = GetClientsByRentalTypeUseCase(repository)
-        )
-    }
-    
-    @Provides
-    @Singleton
-    fun providePropertyUseCases(repository: PropertyRepository): PropertyUseCases {
-        return PropertyUseCases(
-            addProperty = AddPropertyUseCase(repository),
-            updateProperty = UpdatePropertyUseCase(repository),
-            deleteProperty = DeletePropertyUseCase(repository),
-            getProperty = GetPropertyUseCase(repository),
-            getAllProperties = GetAllPropertiesUseCase(repository),
-            observeAllProperties = ObserveAllPropertiesUseCase(repository),
-            observePropertiesByType = ObservePropertiesByTypeUseCase(repository)
-        )
-    }
-    
-    // Остальные юзкейсы...
-}
-```
-
-### DatabaseModule
-
-Предоставляет компоненты базы данных:
-
-```kotlin
-@Module
-@InstallIn(SingletonComponent::class)
-object DatabaseModule {
-    private const val DATABASE_NAME = "realestate_assistant_db"
-    
     @Provides
     @Singleton
     fun provideAppDatabase(
@@ -4218,2006 +806,1123 @@ object DatabaseModule {
                 AppDatabase::class.java,
                 DATABASE_NAME
             )
-            .openHelperFactory(factory)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+          .openHelperFactory(factory)  // Интеграция SQLCipher
+          .addMigrations(MIGRATION_1_2, ..., MIGRATION_11_12)
             .build()
         } catch (e: Exception) {
             // Обработка ошибок инициализации базы данных
-            Log.e("DatabaseModule", "Ошибка при инициализации базы данных", e)
+          Log.e(TAG, "Ошибка при инициализации базы данных", e)
             
-            // Сброс ключей шифрования и повторная попытка
+          // В случае критической ошибки, сбрасываем ключи и создаем новую БД
             databaseEncryption.resetSecurityKeys()
             
-            // Создаем новую базу данных с новыми ключами
-            val newPassphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
-            val newFactory = SupportFactory(newPassphrase)
-            
+          // Создаем БД без шифрования как запасной вариант
             return Room.databaseBuilder(
                 context.applicationContext,
                 AppDatabase::class.java,
                 DATABASE_NAME
             )
-            .openHelperFactory(newFactory)
             .fallbackToDestructiveMigration()
             .build()
-        }
-    }
-    
-    @Provides
-    @Singleton
-    fun providePropertyDao(database: AppDatabase): PropertyDao {
-        return database.propertyDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideClientDao(database: AppDatabase): ClientDao {
-        return database.clientDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideAppointmentDao(database: AppDatabase): AppointmentDao {
-        return database.appointmentDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideBookingDao(database: AppDatabase): BookingDao {
-        return database.bookingDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideUserDao(database: AppDatabase): UserDao {
-        return database.userDao()
     }
 }
 ```
 
-## Технический долг и планы развития
+#### 2.4.2. Защищенное хранилище
+Компоненты для безопасного хранения данных:
 
-### Технический долг
-
-1. **Оптимизация производительности**
-   - Оптимизация загрузки и кэширования изображений для более быстрого отображения
-   - Внедрение пагинации для больших списков объектов и клиентов
-   - Оптимизация главного экрана для улучшения скорости загрузки и уменьшения использования ресурсов
-
-2. **Улучшение UI/UX**
-   - Доработка отзывчивости UI для разных размеров экранов
-   - Улучшение доступности приложения
-   - Добавление анимаций для улучшения UX
-
-3. **Тесты**
-   - Покрытие основных компонентов UI тестами
-   - Написание unit-тестов для репозиториев и юзкейсов
-   - Интеграционные тесты для проверки работы базы данных
-
-### Планы развития
-
-1. **Разработка полноценных модулей для клиентов и показов**
-   - Реализация полного функционала раздела клиентов по аналогии с объектами:
-     - Создание детальной формы добавления/редактирования клиентов
-     - Разработка удобных карточек клиентов для списка
-     - Детальная страница с информацией о клиенте
-     - Система связи клиентов с подходящими объектами
-   - Разработка модуля показов/встреч:
-     - Форма создания и редактирования показов
-     - Календарь показов с разными представлениями
-     - Карточки показов с возможностью быстрого доступа
-     - Система уведомлений о предстоящих показах
-
-2. **Новые функции**
-   - Добавление аналитического модуля для отслеживания эффективности работы
-   - Экспорт данных в различные форматы (PDF, Excel)
-
-3. **Улучшение существующих функций**
-   - Расширенный поиск и фильтрация объектов
-   - Интеллектуальный поиск по всем сущностям приложения
-   - Система тегов для объектов, клиентов и встреч
-   - Продвинутая сортировка с возможностью настройки пользователем
-   - Улучшенный календарь встреч с напоминаниями
-   - Система заметок для объектов и клиентов
-   - Чек-листы для просмотров объектов
-   - Расширение функциональности карт с возможностью поиска объектов на карте
-
-4. **Технические улучшения**
-   - Реализация синхронизации данных с облаком (Supabase):
-     - Настройка API для синхронизации
-     - Механизм разрешения конфликтов при синхронизации
-     - Возможность работы в офлайн-режиме с последующей синхронизацией
-   - Внедрение многопользовательского режима
-   - Улучшение безопасности и защиты данных
-
-## Безопасность и шифрование данных
-
-В приложении реализована система безопасности для защиты конфиденциальных данных пользователей и объектов недвижимости.
-
-### Шифрование базы данных
-
-Основой системы безопасности является шифрование локальной базы данных с использованием SQLCipher:
-
+- **EncryptedSharedPreferences** (`app/src/main/java/com/realestateassistant/pro/data/local/preferences/SecureAppPreferences.kt`):
 ```kotlin
-// Пример конфигурации шифрованной базы данных в AppDatabase
-val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
-val factory = SupportFactory(passphrase)
-
-Room.databaseBuilder(
-    context.applicationContext,
-    AppDatabase::class.java,
-    DATABASE_NAME
-)
-.openHelperFactory(factory)
-.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-.build()
-```
-
-### Компоненты безопасности
-
-- `DatabaseEncryption` - класс для управления ключами шифрования и паролями базы данных
-- Интеграция с Android Keystore для безопасного хранения криптографических ключей
-- Механизмы восстановления при повреждении ключей шифрования
-
-```kotlin
-class DatabaseEncryption @Inject constructor(
+  @Singleton
+  class SecureAppPreferences @Inject constructor(
     private val context: Context
-) {
-    companion object {
-        private const val KEY_ALIAS = "database_encryption_key"
-        private const val PREF_NAME = "database_security_prefs"
-        private const val PREF_PASSWORD = "database_password"
-        private const val DEFAULT_PASSWORD = "default_secure_password"
-    }
-    
-    private val keyStore by lazy {
-        KeyStore.getInstance("AndroidKeyStore").apply {
-            load(null)
-        }
-    }
-    
-    private val securePreferences by lazy {
+  ) : AppPreferences {
+      private val encryptedPreferences by lazy {
+          try {
+              val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+              
         EncryptedSharedPreferences.create(
-            PREF_NAME,
-            MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build(),
+                  "secure_app_preferences",
+                  masterKeyAlias,
             context,
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
+                            } catch (e: Exception) {
+              Log.e(TAG, "Failed to create encrypted preferences", e)
+              // Резервное хранилище
+              context.getSharedPreferences("fallback_preferences", Context.MODE_PRIVATE)
+          }
+      }
+      
+      // Реализация методов интерфейса AppPreferences
+      override suspend fun saveString(key: String, value: String) {
+          withContext(Dispatchers.IO) {
+              encryptedPreferences.edit().putString(key, value).apply()
+          }
+      }
+      
+      override fun getString(key: String, defaultValue: String): Flow<String> {
+          return callbackFlow {
+              val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, k ->
+                  if (k == key) {
+                      trySend(encryptedPreferences.getString(key, defaultValue) ?: defaultValue)
+                  }
+              }
+              
+              encryptedPreferences.registerOnSharedPreferenceChangeListener(listener)
+              trySend(encryptedPreferences.getString(key, defaultValue) ?: defaultValue)
+              
+              awaitClose {
+                  encryptedPreferences.unregisterOnSharedPreferenceChangeListener(listener)
+              }
+          }.flowOn(Dispatchers.IO)
+      }
+      
+      // Другие методы для различных типов данных
+      
+      companion object {
+          private const val TAG = "SecureAppPreferences"
     }
-    
-    /**
-     * Получает пароль для шифрования базы данных
-     */
-    fun getDatabasePassword(): String {
-        // Если пароль уже сохранен, возвращаем его
-        if (securePreferences.contains(PREF_PASSWORD)) {
-            return securePreferences.getString(PREF_PASSWORD, DEFAULT_PASSWORD) ?: DEFAULT_PASSWORD
-        }
-        
-        // Генерируем новый пароль и сохраняем его
-        val password = generateSecurePassword()
-        securePreferences.edit().putString(PREF_PASSWORD, password).apply()
-        return password
-    }
-    
-    /**
-     * Генерирует криптографически стойкий пароль
-     */
-    private fun generateSecurePassword(): String {
-        val bytes = ByteArray(32)
-        SecureRandom().nextBytes(bytes)
-        return Base64.encodeToString(bytes, Base64.NO_WRAP)
-    }
-    
-    /**
-     * Сбрасывает пароль и ключи шифрования в случае проблем
-     */
-    fun resetSecurityKeys() {
-        try {
-            // Удаляем ключ из KeyStore
-            if (keyStore.containsAlias(KEY_ALIAS)) {
-                keyStore.deleteEntry(KEY_ALIAS)
-            }
-            
-            // Сбрасываем пароль
-            securePreferences.edit().remove(PREF_PASSWORD).apply()
-            
-            // Генерируем новый пароль
-            val newPassword = generateSecurePassword()
-            securePreferences.edit().putString(PREF_PASSWORD, newPassword).apply()
+}
+```
+
+- **Security-Crypto** для файлов (`app/src/main/java/com/realestateassistant/pro/core/file/FileEncryptionManager.kt`):
+```kotlin
+  @Singleton
+  class FileEncryptionManager @Inject constructor(
+      private val context: Context
+  ) {
+      private val securityManager = SecurityManager()
+      
+      /**
+       * Шифрует файл и сохраняет его в приватной директории приложения
+       */
+      suspend fun encryptFile(inputFile: File, fileName: String): Result<File> = withContext(Dispatchers.IO) {
+          try {
+              val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+              val encryptedFile = EncryptedFile.Builder(
+                  File(context.filesDir, fileName),
+                  context,
+                  masterKeyAlias,
+                  EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
+              ).build()
+              
+              encryptedFile.openFileOutput().use { outputStream ->
+                  inputFile.inputStream().use { inputStream ->
+                      inputStream.copyTo(outputStream)
+                  }
+              }
+              
+              Result.Success(encryptedFile.file)
         } catch (e: Exception) {
-            Log.e("DatabaseEncryption", "Ошибка при сбросе ключей безопасности", e)
-            
-            // В случае фатальной ошибки пытаемся сбросить все настройки
-            context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-                .edit().clear().apply()
-        }
+              Log.e(TAG, "Error encrypting file", e)
+              Result.Error(e)
+          }
+      }
+      
+      /**
+       * Расшифровывает файл
+       */
+      suspend fun decryptFile(encryptedFileName: String): Result<ByteArray> = withContext(Dispatchers.IO) {
+          try {
+              val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+              val encryptedFile = EncryptedFile.Builder(
+                  File(context.filesDir, encryptedFileName),
+                  context,
+                  masterKeyAlias,
+                  EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
+              ).build()
+              
+              val bytes = encryptedFile.openFileInput().use { inputStream ->
+                  inputStream.readBytes()
+              }
+              
+              Result.Success(bytes)
+          } catch (e: Exception) {
+              Log.e(TAG, "Error decrypting file", e)
+              Result.Error(e)
+          }
+      }
+      
+      companion object {
+          private const val TAG = "FileEncryptionManager"
     }
 }
 ```
 
-### Защита конфиденциальных данных
+#### 2.4.3. Механизмы восстановления
+Реализованы в основном в классах, упомянутых выше:
 
-Приложение обеспечивает безопасность через:
+- **Автоматическое восстановление ключей** при повреждении криптографических ключей:
+  - Резервное копирование ключей в обычных SharedPreferences
+  - Автоматическое восстановление при проблемах с EncryptedSharedPreferences
+  - Обработка исключений для минимизации риска потери данных
 
-- Шифрование всех конфиденциальных данных в базе данных с использованием SQLCipher
-- Использование EncryptedSharedPreferences для хранения чувствительных настроек
-- Механизмы очистки кэша и временных файлов при выходе из приложения
-- Защиту от экспорта незашифрованных данных
+- **Полный сброс хранилища** при критических ошибках:
+  - Метод `resetDatabaseFiles()` в `DatabaseModule`
+  - Метод `resetSecurityKeys()` в `DatabaseEncryption`
+  - Резервный режим без шифрования для крайних случаев
 
-### Безопасность медиафайлов
+- **Механизмы миграции базы данных**:
+  - Набор миграций для обновления схемы данных
+  - Обработка случаев, когда миграция невозможна
+  - Сохранение и восстановление данных при необходимости пересоздания базы
 
-Для защиты фотографий и документов применяются следующие меры:
+### 2.5 Dependency Injection
+Внедрение зависимостей реализовано с использованием Dagger Hilt и расположено в `app/src/main/java/com/realestateassistant/pro/di/`.
 
-- Хранение в приватной директории приложения, недоступной другим приложениям
-- Контролируемый доступ к файлам через FileProvider
-- Безопасное удаление файлов при удалении связанных с ними записей
-- Шифрование особо важных документов с помощью AES шифрования
-
-### Аварийное восстановление
-
-В приложении реализован механизм восстановления при нарушении целостности криптографических ключей или повреждении базы данных:
-
-```kotlin
-try {
-    // Используем зашифрованную базу данных
-    database.openHelper.readableDatabase
-} catch (e: Exception) {
-    // Обрабатываем ошибки целостности ключей
-    if (e is AEADBadTagException || e.cause is AEADBadTagException) {
-        // Сброс повреждённых ключей и восстановление хранилища
-        databaseEncryption.resetSecurityKeys()
-        
-        // Пытаемся пересоздать базу данных
-        resetDatabaseFiles(context)
-        
-        // Создаем новый экземпляр базы данных с новыми ключами
-        createDatabaseWithNewKeys(context, databaseEncryption)
-    } else {
-        // Обработка других ошибок базы данных
-        Log.e(TAG, "Ошибка при доступе к базе данных", e)
-        
-        // Регистрируем ошибку в системе аналитики
-        reportDatabaseError(e)
-        
-        // Уведомляем пользователя о проблеме
-        showDatabaseErrorNotification(context)
-    }
-}
-```
-
-## Бронирования и календарь
-
-Модуль бронирований предоставляет функциональность для управления бронированиями объектов недвижимости как для долгосрочной, так и для посуточной аренды.
-
-### Модель бронирования
-
-Модель `Booking` объединяет информацию о бронировании, включая даты, статус, клиента и финансовую информацию:
-
-```kotlin
-data class Booking(
-    val id: String = "",
-    val propertyId: String,
-    val clientId: String? = null,
-    val startDate: Long,
-    val endDate: Long,
-    val status: BookingStatus = BookingStatus.PENDING,
-    val paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
-    val totalAmount: Double,
-    val depositAmount: Double? = null,
-    val notes: String? = null,
-    val guestsCount: Int? = null,
-    val checkInTime: String? = null,
-    val checkOutTime: String? = null,
-    val includedServices: List<String> = emptyList(),
-    val additionalServices: List<AdditionalService> = emptyList(),
-    val rentPeriodMonths: Int? = null,
-    val monthlyPaymentAmount: Double? = null,
-    val utilityPayments: Boolean? = null,
-    val contractType: String? = null,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
-)
-```
-
-### Статусы бронирования
-
-```kotlin
-enum class BookingStatus {
-    PENDING,    // Ожидает подтверждения
-    CONFIRMED,  // Подтверждено
-    CANCELLED,  // Отменено
-    COMPLETED,  // Завершено
-    NO_SHOW     // Клиент не явился
-}
-
-enum class PaymentStatus {
-    UNPAID,         // Не оплачено
-    PARTIALLY_PAID, // Частично оплачено
-    FULLY_PAID,     // Полностью оплачено
-    REFUNDED,       // Возвращено
-    DEPOSIT_PAID    // Оплачен только депозит
-}
-```
-
-### Репозиторий бронирований
-
-Интерфейс `BookingRepository` предоставляет методы для работы с бронированиями:
-
-```kotlin
-interface BookingRepository {
-    suspend fun addBooking(booking: Booking): Result<Booking>
-    suspend fun updateBooking(booking: Booking): Result<Unit>
-    suspend fun deleteBooking(bookingId: String): Result<Unit>
-    suspend fun getBooking(bookingId: String): Result<Booking>
-    suspend fun getAllBookings(): Result<List<Booking>>
-    fun observeAllBookings(): Flow<List<Booking>>
-    fun observeBookingsByProperty(propertyId: String): Flow<List<Booking>>
-    fun observeBookingsByClient(clientId: String): Flow<List<Booking>>
-    fun observeBookingsInDateRange(fromDate: Long, toDate: Long): Flow<List<Booking>>
-    fun observeBookingsForPropertyInDateRange(propertyId: String, fromDate: Long, toDate: Long): Flow<List<Booking>>
-    suspend fun hasBookingConflicts(propertyId: String, fromDate: Long, toDate: Long): Result<Boolean>
-    suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<Unit>
-    suspend fun updatePaymentStatus(bookingId: String, status: PaymentStatus): Result<Unit>
-    suspend fun autoUpdateBookingStatuses(): Result<Int>
-}
-```
-
-### Календарь бронирований
-
-Календарь бронирований позволяет визуализировать занятые и свободные даты для объектов недвижимости, а также создавать и управлять бронированиями.
-
-#### BookingCalendarScreen
-
-```kotlin
-@Composable
-fun BookingCalendarScreen(
-    propertyId: String,
-    onNavigateBack: () -> Unit,
-    viewModel: BookingCalendarViewModel = hiltViewModel()
-) {
-    val state by viewModel.state.collectAsState()
-    
-    // Загружаем бронирования для выбранного объекта
-    LaunchedEffect(propertyId) {
-        viewModel.handleEvent(BookingCalendarEvent.SelectProperty(propertyId))
-    }
-    
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Календарь бронирований") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Назад")
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Отображение календаря с отмеченными датами бронирований
-            BookingCalendarView(
-                bookings = state.bookings,
-                selectedStartDate = state.selectedStartDate,
-                selectedEndDate = state.selectedEndDate,
-                onDateSelected = { date ->
-                    viewModel.handleEvent(BookingCalendarEvent.SelectDate(date))
-                },
-                onDateRangeConfirmed = {
-                    viewModel.handleEvent(BookingCalendarEvent.ConfirmDateSelection)
-                }
-            )
-            
-            // Отображение доступных окон для бронирования
-            if (state.availableTimeSlots.isNotEmpty()) {
-                Text(
-                    text = "Доступные периоды для бронирования:",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-                
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    items(state.availableTimeSlots) { slot ->
-                        AvailableTimeSlotItem(
-                            slot = slot,
-                            onClick = {
-                                viewModel.handleEvent(
-                                    BookingCalendarEvent.UpdateDates(
-                                        start = slot.startDate,
-                                        end = slot.endDate
-                                    )
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // Список бронирований для выбранного объекта
-            Text(
-                text = "Бронирования:",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            
-            if (state.bookings.isEmpty()) {
-                Text(
-                    text = "Нет активных бронирований",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .align(Alignment.CenterHorizontally)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    items(state.bookings) { booking ->
-                        BookingListItem(
-                            booking = booking,
-                            onClick = {
-                                viewModel.handleEvent(BookingCalendarEvent.SelectBooking(booking))
-                                viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // Кнопка создания бронирования
-            Button(
-                onClick = {
-                    viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Создать бронирование")
-            }
-        }
-        
-        // Диалог создания/редактирования бронирования
-        if (state.isBookingDialogVisible) {
-            BookingFormDialog(
-                propertyId = propertyId,
-                startDate = state.selectedStartDate,
-                endDate = state.selectedEndDate,
-                clients = state.clients,
-                selectedClient = state.selectedClient,
-                editing = !state.isInfoMode,
-                booking = state.selectedBooking,
-                onClientSelected = { client ->
-                    viewModel.handleEvent(BookingCalendarEvent.SelectClient(client))
-                },
-                onSave = { clientId, startDate, endDate, amount, guestsCount, notes ->
-                    if (state.selectedBooking != null && !state.isInfoMode) {
-                        viewModel.handleEvent(
-                            BookingCalendarEvent.UpdateBooking(
-                                state.selectedBooking.id,
-                                clientId,
-                                startDate,
-                                endDate,
-                                amount,
-                                guestsCount,
-                                notes
-                            )
-                        )
-                    } else {
-                        viewModel.handleEvent(
-                            BookingCalendarEvent.CreateBooking(
-                                propertyId,
-                                clientId,
-                                startDate,
-                                endDate,
-                                amount,
-                                guestsCount,
-                                notes
-                            )
-                        )
-                    }
-                },
-                onDelete = {
-                    state.selectedBooking?.let { booking ->
-                        viewModel.handleEvent(BookingCalendarEvent.DeleteBooking(booking.id))
-                    }
-                },
-                onDismiss = {
-                    viewModel.handleEvent(BookingCalendarEvent.HideBookingDialog)
-                }
-            )
-        }
-    }
-}
-```
-
-#### BookingCalendarView
-
-```kotlin
-@Composable
-fun BookingCalendarView(
-    bookings: List<Booking>,
-    selectedStartDate: LocalDate?,
-    selectedEndDate: LocalDate?,
-    onDateSelected: (LocalDate) -> Unit,
-    onDateRangeConfirmed: () -> Unit
-) {
-    val currentMonth = remember { mutableStateOf(YearMonth.now()) }
-    
-    Column(modifier = Modifier.fillMaxWidth()) {
-        // Заголовок с навигацией по месяцам
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = {
-                    currentMonth.value = currentMonth.value.minusMonths(1)
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ChevronLeft,
-                    contentDescription = "Предыдущий месяц"
-                )
-            }
-            
-            Text(
-                text = currentMonth.value.format(DateTimeFormatter.ofPattern("LLLL yyyy")),
-                style = MaterialTheme.typography.titleMedium
-            )
-            
-            IconButton(
-                onClick = {
-                    currentMonth.value = currentMonth.value.plusMonths(1)
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "Следующий месяц"
-                )
-            }
-        }
-        
-        // Дни недели
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            val daysOfWeek = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
-            daysOfWeek.forEach { day ->
-                Text(
-                    text = day,
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-        
-        // Календарная сетка
-        val firstDayOfMonth = currentMonth.value.atDay(1)
-        val lastDayOfMonth = currentMonth.value.atEndOfMonth()
-        
-        // Определяем первый день для отображения (может быть из предыдущего месяца)
-        val firstDay = firstDayOfMonth.minusDays(
-            (firstDayOfMonth.dayOfWeek.value - 1).toLong()
-        )
-        
-        // Создаем список всех дней для отображения
-        val calendarDays = mutableListOf<LocalDate>()
-        var day = firstDay
-        while (day.isBefore(lastDayOfMonth) || day.isEqual(lastDayOfMonth) || calendarDays.size % 7 != 0) {
-            calendarDays.add(day)
-            day = day.plusDays(1)
-        }
-        
-        // Преобразуем бронирования в множество дат
-        val bookedDates = bookings.flatMap { booking ->
-            val start = LocalDate.ofEpochDay(booking.startDate / (24 * 60 * 60 * 1000))
-            val end = LocalDate.ofEpochDay(booking.endDate / (24 * 60 * 60 * 1000))
-            start.datesUntil(end.plusDays(1)).collect(Collectors.toList())
-        }.toSet()
-        
-        // Отображаем календарь
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(7),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(320.dp)
-                .padding(16.dp)
-        ) {
-            items(calendarDays) { date ->
-                val isCurrentMonth = date.month == currentMonth.value.month
-                val isBooked = date in bookedDates
-                val isSelected = (selectedStartDate != null && selectedEndDate != null && 
-                    (date.isEqual(selectedStartDate) || date.isEqual(selectedEndDate) || 
-                    (date.isAfter(selectedStartDate) && date.isBefore(selectedEndDate))))
-                val isSelectionStart = date == selectedStartDate
-                val isSelectionEnd = date == selectedEndDate
-                
-                Box(
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .padding(2.dp)
-                        .clip(CircleShape)
-                        .background(
-                            when {
-                                isSelected -> MaterialTheme.colorScheme.primaryContainer
-                                isBooked -> MaterialTheme.colorScheme.errorContainer
-                                else -> Color.Transparent
-                            }
-                        )
-                        .border(
-                            width = if (isSelectionStart || isSelectionEnd) 2.dp else 0.dp,
-                            color = if (isSelectionStart || isSelectionEnd) 
-                                MaterialTheme.colorScheme.primary else Color.Transparent,
-                            shape = CircleShape
-                        )
-                        .clickable(
-                            enabled = !isBooked,
-                            onClick = {
-                                onDateSelected(date)
-                            }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = date.dayOfMonth.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = when {
-                            !isCurrentMonth -> MaterialTheme.colorScheme.outline
-                            isBooked -> MaterialTheme.colorScheme.onErrorContainer
-                            isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
-                            else -> MaterialTheme.colorScheme.onSurface
-                        }
-                    )
-                }
-            }
-        }
-        
-        // Кнопки для подтверждения выбора дат
-        if (selectedStartDate != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        onDateSelected(LocalDate.now()) // Сбрасываем выбор
-                    }
-                ) {
-                    Text("Отменить")
-                }
-                
-                Button(
-                    onClick = onDateRangeConfirmed,
-                    enabled = selectedStartDate != null && selectedEndDate != null
-                ) {
-                    Text("Подтвердить")
-                }
-            }
-        }
-    }
-}
-```
-
-### Автоматическое обновление статусов
-
-Приложение включает в себя механизм автоматического обновления статусов бронирований в зависимости от текущей даты:
-
-```kotlin
-class AutoUpdateBookingStatusesUseCase @Inject constructor(
-    private val repository: BookingRepository
-) {
-    suspend operator fun invoke(): Result<Int> {
-        return repository.autoUpdateBookingStatuses()
-    }
-}
-
-// Реализация в репозитории
-override suspend fun autoUpdateBookingStatuses(): Result<Int> = withContext(Dispatchers.IO) {
-    try {
-        val allBookings = bookingDao.getAllBookings()
-        val currentTime = System.currentTimeMillis()
-        var updatedCount = 0
-        
-        allBookings.forEach { bookingEntity ->
-            val newStatus = when {
-                // Если дата окончания в прошлом и статус не COMPLETED или CANCELLED, меняем на COMPLETED
-                bookingEntity.endDate < currentTime && 
-                bookingEntity.status != BookingStatus.COMPLETED.name && 
-                bookingEntity.status != BookingStatus.CANCELLED.name -> {
-                    updatedCount++
-                    BookingStatus.COMPLETED.name
-                }
-                // Если дата начала в прошлом, но до даты окончания, и статус PENDING, меняем на CONFIRMED
-                bookingEntity.startDate < currentTime && 
-                bookingEntity.endDate > currentTime && 
-                bookingEntity.status == BookingStatus.PENDING.name -> {
-                    updatedCount++
-                    BookingStatus.CONFIRMED.name
-                }
-                else -> null
-            }
-            
-            newStatus?.let { status ->
-                bookingDao.updateBookingStatus(bookingEntity.id, status)
-            }
-        }
-        
-        Result.success(updatedCount)
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
-}
-```
-
-## Управление зависимостями
-
-Для управления зависимостями в проекте используется Dagger Hilt. Основные модули:
-
-### AppModule
-
-Предоставляет основные зависимости приложения:
-
+#### 2.5.1. Основные модули DI
+- **AppModule** (`app/src/main/java/com/realestateassistant/pro/di/AppModule.kt`):
 ```kotlin
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
     @Provides
     @Singleton
-    fun provideClientRepository(clientDao: ClientDao): ClientRepository {
-        return ClientRepositoryImpl(clientDao)
+      fun provideContext(@ApplicationContext context: Context): Context {
+          return context
     }
     
     @Provides
     @Singleton
-    fun providePropertyRepository(propertyDao: PropertyDao): PropertyRepository {
-        return PropertyRepositoryImpl(propertyDao)
+      fun provideOkHttpClient(): OkHttpClient {
+          return OkHttpClient.Builder()
+              .connectTimeout(30, TimeUnit.SECONDS)
+              .readTimeout(30, TimeUnit.SECONDS)
+              .writeTimeout(30, TimeUnit.SECONDS)
+              .build()
     }
     
     @Provides
     @Singleton
-    fun provideAppointmentRepository(appointmentDao: AppointmentDao): AppointmentRepository {
-        return AppointmentRepositoryImpl(appointmentDao)
+      fun provideGson(): Gson {
+          return GsonBuilder()
+              .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+              .create()
     }
     
     @Provides
-    @Singleton
-    fun provideBookingRepository(bookingDao: BookingDao): BookingRepository {
-        return BookingRepositoryImpl(bookingDao)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideImageRepository(@ApplicationContext context: Context): ImageRepository {
-        return ImageRepositoryImpl(context)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideDocumentRepository(@ApplicationContext context: Context): DocumentRepository {
-        return DocumentRepositoryImpl(context)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideDatabaseEncryption(@ApplicationContext context: Context): DatabaseEncryption {
-        return DatabaseEncryption(context)
-    }
-    
-    // Предоставление юзкейсов
-    @Provides
-    @Singleton
-    fun provideClientUseCases(repository: ClientRepository): ClientUseCases {
-        return ClientUseCases(
-            addClient = AddClientUseCase(repository),
-            updateClient = UpdateClientUseCase(repository),
-            deleteClient = DeleteClientUseCase(repository),
-            getClient = GetClientUseCase(repository),
-            getAllClients = GetAllClientsUseCase(repository),
-            getClientsByRentalType = GetClientsByRentalTypeUseCase(repository)
-        )
-    }
-    
-    @Provides
-    @Singleton
-    fun providePropertyUseCases(repository: PropertyRepository): PropertyUseCases {
-        return PropertyUseCases(
-            addProperty = AddPropertyUseCase(repository),
-            updateProperty = UpdatePropertyUseCase(repository),
-            deleteProperty = DeletePropertyUseCase(repository),
-            getProperty = GetPropertyUseCase(repository),
-            getAllProperties = GetAllPropertiesUseCase(repository),
-            observeAllProperties = ObserveAllPropertiesUseCase(repository),
-            observePropertiesByType = ObservePropertiesByTypeUseCase(repository)
-        )
-    }
-    
-    // Остальные юзкейсы...
-}
-```
+      @Named("yandex_api_key")
+      fun provideYandexApiKey(): String {
+          return BuildConfig.YANDEX_API_KEY
+      }
+      
+      // ... другие зависимости
+  }
+  ```
 
-### DatabaseModule
+- **DatabaseModule** (`app/src/main/java/com/realestateassistant/pro/di/DatabaseModule.kt`):
+```kotlin
+  @Module
+  @InstallIn(SingletonComponent::class)
+  object DatabaseModule {
+      private const val DATABASE_NAME = "realestate_assistant_db"
+      
+      // ... предоставление базы данных (код приведен выше)
+    
+    @Provides
+    @Singleton
+      fun providePropertyDao(appDatabase: AppDatabase): PropertyDao {
+          return appDatabase.propertyDao()
+    }
+    
+    @Provides
+    @Singleton
+      fun provideClientDao(appDatabase: AppDatabase): ClientDao {
+          return appDatabase.clientDao()
+    }
+    
+    @Provides
+    @Singleton
+      fun provideAppointmentDao(appDatabase: AppDatabase): AppointmentDao {
+          return appDatabase.appointmentDao()
+    }
+    
+    @Provides
+    @Singleton
+      fun provideBookingDao(appDatabase: AppDatabase): BookingDao {
+          return appDatabase.bookingDao()
+      }
+      
+      // ... миграции и другие зависимости
+  }
+  ```
 
-Предоставляет компоненты базы данных:
-
+- **RepositoryModule** (`app/src/main/java/com/realestateassistant/pro/di/RepositoryModule.kt`):
 ```kotlin
 @Module
 @InstallIn(SingletonComponent::class)
-object DatabaseModule {
-    private const val DATABASE_NAME = "realestate_assistant_db"
+  abstract class RepositoryModule {
+      @Binds
+      @Singleton
+      abstract fun bindPropertyRepository(
+          impl: PropertyRepositoryImpl
+      ): PropertyRepository
+      
+      @Binds
+    @Singleton
+      abstract fun bindClientRepository(
+          impl: ClientRepositoryImpl
+      ): ClientRepository
+      
+      @Binds
+      @Singleton
+      abstract fun bindAppointmentRepository(
+          impl: AppointmentRepositoryImpl
+      ): AppointmentRepository
+      
+      @Binds
+      @Singleton
+      abstract fun bindBookingRepository(
+          impl: BookingRepositoryImpl
+      ): BookingRepository
+      
+      // ... другие привязки репозиториев
+  }
+  ```
+
+- **UseCaseModule** (`app/src/main/java/com/realestateassistant/pro/di/UseCaseModule.kt`):
+```kotlin
+  @Module
+  @InstallIn(SingletonComponent::class)
+  object UseCaseModule {
+      // Используем @Provides вместо @Binds, так как некоторые use cases могут требовать
+      // дополнительную логику при создании
     
     @Provides
     @Singleton
-    fun provideAppDatabase(
-        @ApplicationContext context: Context,
-        databaseEncryption: DatabaseEncryption
-    ): AppDatabase {
-        try {
-            val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
-            val factory = SupportFactory(passphrase)
-            
-            return Room.databaseBuilder(
-                context.applicationContext,
-                AppDatabase::class.java,
-                DATABASE_NAME
-            )
-            .openHelperFactory(factory)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-            .build()
-        } catch (e: Exception) {
-            // Обработка ошибок инициализации базы данных
-            Log.e("DatabaseModule", "Ошибка при инициализации базы данных", e)
-            
-            // Сброс ключей шифрования и повторная попытка
-            databaseEncryption.resetSecurityKeys()
-            
-            // Создаем новую базу данных с новыми ключами
-            val newPassphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
-            val newFactory = SupportFactory(newPassphrase)
-            
-            return Room.databaseBuilder(
-                context.applicationContext,
-                AppDatabase::class.java,
-                DATABASE_NAME
-            )
-            .openHelperFactory(newFactory)
-            .fallbackToDestructiveMigration()
-            .build()
-        }
+      fun provideAddPropertyUseCase(
+          repository: PropertyRepository,
+          imageStorage: ImageStorage
+      ): AddPropertyUseCase {
+          return AddPropertyUseCase(repository, imageStorage)
+      }
+      
+      // ... другие use cases
+  }
+  ```
+
+- **PropertyModule** (`app/src/main/java/com/realestateassistant/pro/di/PropertyModule.kt`):
+```kotlin
+  @Module
+  @InstallIn(SingletonComponent::class)
+  object PropertyModule {
+    @Provides
+    @Singleton
+      fun providePropertyValidator(): PropertyValidator {
+          return PropertyValidator()
     }
     
     @Provides
     @Singleton
-    fun providePropertyDao(database: AppDatabase): PropertyDao {
-        return database.propertyDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideClientDao(database: AppDatabase): ClientDao {
-        return database.clientDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideAppointmentDao(database: AppDatabase): AppointmentDao {
-        return database.appointmentDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideBookingDao(database: AppDatabase): BookingDao {
-        return database.bookingDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideUserDao(database: AppDatabase): UserDao {
-        return database.userDao()
+      fun providePropertyImageProcessor(
+          context: Context,
+          fileManager: FileManager
+      ): PropertyImageProcessor {
+          return PropertyImageProcessor(context, fileManager)
+      }
+      
+      // ... другие зависимости для работы с объектами недвижимости
+  }
+  ```
+
+- **ClientModule** (`app/src/main/java/com/realestateassistant/pro/di/ClientModule.kt`):
+```kotlin
+  @Module
+  @InstallIn(SingletonComponent::class)
+  object ClientModule {
+      @Provides
+@Singleton
+      fun provideClientValidator(): ClientValidator {
+          return ClientValidator()
+      }
+      
+      @Provides
+      @Singleton
+      fun provideClientMatcher(
+          propertyRepository: PropertyRepository
+      ): ClientPropertyMatcher {
+          return ClientPropertyMatcher(propertyRepository)
+      }
+      
+      // ... другие зависимости для работы с клиентами
+  }
+  ```
+
+- **AppointmentModule** (`app/src/main/java/com/realestateassistant/pro/di/AppointmentModule.kt`):
+```kotlin
+  @Module
+  @InstallIn(SingletonComponent::class)
+  object AppointmentModule {
+      @Provides
+      @Singleton
+      fun provideAppointmentScheduler(
+          context: Context,
+          repository: AppointmentRepository
+      ): AppointmentScheduler {
+          return AppointmentScheduler(context, repository)
+      }
+      
+      @Provides
+      @Singleton
+      fun provideAppointmentReminder(
+          context: Context,
+          notificationManager: NotificationManager
+      ): AppointmentReminder {
+          return AppointmentReminder(context, notificationManager)
+      }
+      
+      // ... другие зависимости для работы с встречами
+  }
+  ```
+
+#### 2.5.2. Специфичные модули
+- **WorkerModule** (`app/src/main/java/com/realestateassistant/pro/di/WorkerModule.kt`):
+```kotlin
+  @Module
+  @InstallIn(SingletonComponent::class)
+  interface WorkerModule {
+      @Binds
+      @IntoMap
+      @WorkerKey(PropertyStatusUpdateWorker::class)
+      fun bindPropertyStatusUpdateWorkerFactory(
+          factory: PropertyStatusUpdateWorker.PropertyStatusUpdateWorkerFactory
+      ): ChildWorkerFactory
+  }
+  
+  // Вспомогательные классы для интеграции Hilt с WorkManager
+  @MapKey
+  @Target(AnnotationTarget.FUNCTION)
+  @Retention(AnnotationRetention.RUNTIME)
+  annotation class WorkerKey(val value: KClass<out CoroutineWorker>)
+  
+  interface ChildWorkerFactory {
+      fun create(context: Context, params: WorkerParameters): CoroutineWorker
+  }
+  
+  class PropertyWorkerFactory @Inject constructor(
+      private val workerFactories: Map<Class<out CoroutineWorker>, @JvmSuppressWildcards ChildWorkerFactory>
+  ) : WorkerFactory() {
+      override fun createWorker(
+          context: Context,
+          workerClassName: String,
+          workerParameters: WorkerParameters
+      ): ListenableWorker? {
+          // ... логика создания рабочих на основе переданного имени класса
+      }
+  }
+  ```
+
+- **ValidationModule** (`app/src/main/java/com/realestateassistant/pro/di/ValidationModule.kt`):
+```kotlin
+  @Module
+  @InstallIn(SingletonComponent::class)
+  object ValidationModule {
+      @Provides
+      @Singleton
+      fun provideAddressValidator(): AddressValidator {
+          return AddressValidator()
+      }
+      
+      @Provides
+      @Singleton
+      fun providePhoneValidator(): PhoneValidator {
+          return PhoneValidator()
+      }
+      
+      @Provides
+      @Singleton
+      fun provideEmailValidator(): EmailValidator {
+          return EmailValidator()
+      }
+      
+      // ... другие валидаторы
+  }
+  ```
+
+- **DocumentModule** (`app/src/main/java/com/realestateassistant/pro/di/DocumentModule.kt`):
+```kotlin
+  @Module
+  @InstallIn(SingletonComponent::class)
+  object DocumentModule {
+      @Provides
+      @Singleton
+      fun providePdfGenerator(
+          context: Context
+      ): PdfGenerator {
+          return PdfGenerator(context)
+      }
+      
+      @Provides
+      @Singleton
+      fun provideDocumentStorage(
+          context: Context,
+          fileEncryptionManager: FileEncryptionManager
+      ): DocumentStorage {
+          return DocumentStorage(context, fileEncryptionManager)
+      }
+      
+      // ... другие зависимости для работы с документами
+  }
+  ```
+
+- **InitializationModule** (`app/src/main/java/com/realestateassistant/pro/di/ApplicationInitializer.kt`):
+```kotlin
+  @Module
+  @InstallIn(SingletonComponent::class)
+  class ApplicationInitializerImpl @Inject constructor(
+      @ApplicationContext private val context: Context,
+      private val workManager: WorkManager,
+      private val databaseEncryption: DatabaseEncryption
+  ) : Initializer<AppDatabase> {
+      override fun create(context: Context): AppDatabase {
+          // Настройка Timber
+          if (BuildConfig.DEBUG) {
+              Timber.plant(Timber.DebugTree())
+          }
+          
+          // Инициализация фоновых задач
+          PropertyStatusUpdateWorker.schedulePeriodicWork(workManager)
+          
+          // Создание базы данных
+          return createDatabaseAsync(context, databaseEncryption)
+      }
+      
+      override fun dependencies(): List<Class<out Initializer<*>>> {
+          // Зависимости, которые должны быть инициализированы перед этим инициализатором
+          return emptyList()
+      }
+      
+      private suspend fun createDatabaseAsync(context: Context, databaseEncryption: DatabaseEncryption): AppDatabase {
+          // Асинхронная инициализация базы данных
     }
 }
 ```
 
-## Технический долг и планы развития
-
-### Технический долг
-
-1. **Оптимизация производительности**
-   - Оптимизация загрузки и кэширования изображений для более быстрого отображения
-   - Внедрение пагинации для больших списков объектов и клиентов
-   - Оптимизация главного экрана для улучшения скорости загрузки и уменьшения использования ресурсов
-
-2. **Улучшение UI/UX**
-   - Доработка отзывчивости UI для разных размеров экранов
-   - Улучшение доступности приложения
-   - Добавление анимаций для улучшения UX
-
-3. **Тесты**
-   - Покрытие основных компонентов UI тестами
-   - Написание unit-тестов для репозиториев и юзкейсов
-   - Интеграционные тесты для проверки работы базы данных
-
-### Планы развития
-
-1. **Разработка полноценных модулей для клиентов и показов**
-   - Реализация полного функционала раздела клиентов по аналогии с объектами:
-     - Создание детальной формы добавления/редактирования клиентов
-     - Разработка удобных карточек клиентов для списка
-     - Детальная страница с информацией о клиенте
-     - Система связи клиентов с подходящими объектами
-   - Разработка модуля показов/встреч:
-     - Форма создания и редактирования показов
-     - Календарь показов с разными представлениями
-     - Карточки показов с возможностью быстрого доступа
-     - Система уведомлений о предстоящих показах
-
-2. **Новые функции**
-   - Добавление аналитического модуля для отслеживания эффективности работы
-   - Экспорт данных в различные форматы (PDF, Excel)
-
-3. **Улучшение существующих функций**
-   - Расширенный поиск и фильтрация объектов
-   - Интеллектуальный поиск по всем сущностям приложения
-   - Система тегов для объектов, клиентов и встреч
-   - Продвинутая сортировка с возможностью настройки пользователем
-   - Улучшенный календарь встреч с напоминаниями
-   - Система заметок для объектов и клиентов
-   - Чек-листы для просмотров объектов
-   - Расширение функциональности карт с возможностью поиска объектов на карте
-
-4. **Технические улучшения**
-   - Реализация синхронизации данных с облаком (Supabase):
-     - Настройка API для синхронизации
-     - Механизм разрешения конфликтов при синхронизации
-     - Возможность работы в офлайн-режиме с последующей синхронизацией
-   - Внедрение многопользовательского режима
-   - Улучшение безопасности и защиты данных
-
-## Безопасность и шифрование данных
-
-В приложении реализована система безопасности для защиты конфиденциальных данных пользователей и объектов недвижимости.
-
-### Шифрование базы данных
-
-Основой системы безопасности является шифрование локальной базы данных с использованием SQLCipher:
-
-```kotlin
-// Пример конфигурации шифрованной базы данных в AppDatabase
-val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
-val factory = SupportFactory(passphrase)
-
-Room.databaseBuilder(
-    context.applicationContext,
-    AppDatabase::class.java,
-    DATABASE_NAME
-)
-.openHelperFactory(factory)
-.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-.build()
-```
-
-### Компоненты безопасности
-
-- `DatabaseEncryption` - класс для управления ключами шифрования и паролями базы данных
-- Интеграция с Android Keystore для безопасного хранения криптографических ключей
-- Механизмы восстановления при повреждении ключей шифрования
-
-```kotlin
-class DatabaseEncryption @Inject constructor(
-    private val context: Context
-) {
-    companion object {
-        private const val KEY_ALIAS = "database_encryption_key"
-        private const val PREF_NAME = "database_security_prefs"
-        private const val PREF_PASSWORD = "database_password"
-        private const val DEFAULT_PASSWORD = "default_secure_password"
-    }
-    
-    private val keyStore by lazy {
-        KeyStore.getInstance("AndroidKeyStore").apply {
-            load(null)
-        }
-    }
-    
-    private val securePreferences by lazy {
-        EncryptedSharedPreferences.create(
-            PREF_NAME,
-            MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build(),
-            context,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
-    }
-    
-    /**
-     * Получает пароль для шифрования базы данных
-     */
-    fun getDatabasePassword(): String {
-        // Если пароль уже сохранен, возвращаем его
-        if (securePreferences.contains(PREF_PASSWORD)) {
-            return securePreferences.getString(PREF_PASSWORD, DEFAULT_PASSWORD) ?: DEFAULT_PASSWORD
-        }
-        
-        // Генерируем новый пароль и сохраняем его
-        val password = generateSecurePassword()
-        securePreferences.edit().putString(PREF_PASSWORD, password).apply()
-        return password
-    }
-    
-    /**
-     * Генерирует криптографически стойкий пароль
-     */
-    private fun generateSecurePassword(): String {
-        val bytes = ByteArray(32)
-        SecureRandom().nextBytes(bytes)
-        return Base64.encodeToString(bytes, Base64.NO_WRAP)
-    }
-    
-    /**
-     * Сбрасывает пароль и ключи шифрования в случае проблем
-     */
-    fun resetSecurityKeys() {
-        try {
-            // Удаляем ключ из KeyStore
-            if (keyStore.containsAlias(KEY_ALIAS)) {
-                keyStore.deleteEntry(KEY_ALIAS)
-            }
-            
-            // Сбрасываем пароль
-            securePreferences.edit().remove(PREF_PASSWORD).apply()
-            
-            // Генерируем новый пароль
-            val newPassword = generateSecurePassword()
-            securePreferences.edit().putString(PREF_PASSWORD, newPassword).apply()
-        } catch (e: Exception) {
-            Log.e("DatabaseEncryption", "Ошибка при сбросе ключей безопасности", e)
-            
-            // В случае фатальной ошибки пытаемся сбросить все настройки
-            context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-                .edit().clear().apply()
-        }
-    }
-}
-```
-
-### Защита конфиденциальных данных
-
-Приложение обеспечивает безопасность через:
-
-- Шифрование всех конфиденциальных данных в базе данных с использованием SQLCipher
-- Использование EncryptedSharedPreferences для хранения чувствительных настроек
-- Механизмы очистки кэша и временных файлов при выходе из приложения
-- Защиту от экспорта незашифрованных данных
-
-### Безопасность медиафайлов
-
-Для защиты фотографий и документов применяются следующие меры:
-
-- Хранение в приватной директории приложения, недоступной другим приложениям
-- Контролируемый доступ к файлам через FileProvider
-- Безопасное удаление файлов при удалении связанных с ними записей
-- Шифрование особо важных документов с помощью AES шифрования
-
-### Аварийное восстановление
-
-В приложении реализован механизм восстановления при нарушении целостности криптографических ключей или повреждении базы данных:
-
-```kotlin
-try {
-    // Используем зашифрованную базу данных
-    database.openHelper.readableDatabase
-} catch (e: Exception) {
-    // Обрабатываем ошибки целостности ключей
-    if (e is AEADBadTagException || e.cause is AEADBadTagException) {
-        // Сброс повреждённых ключей и восстановление хранилища
-        databaseEncryption.resetSecurityKeys()
-        
-        // Пытаемся пересоздать базу данных
-        resetDatabaseFiles(context)
-        
-        // Создаем новый экземпляр базы данных с новыми ключами
-        createDatabaseWithNewKeys(context, databaseEncryption)
-    } else {
-        // Обработка других ошибок базы данных
-        Log.e(TAG, "Ошибка при доступе к базе данных", e)
-        
-        // Регистрируем ошибку в системе аналитики
-        reportDatabaseError(e)
-        
-        // Уведомляем пользователя о проблеме
-        showDatabaseErrorNotification(context)
-    }
-}
-```
-
-## Бронирования и календарь
-
-Модуль бронирований предоставляет функциональность для управления бронированиями объектов недвижимости как для долгосрочной, так и для посуточной аренды.
-
-### Модель бронирования
-
-Модель `Booking` объединяет информацию о бронировании, включая даты, статус, клиента и финансовую информацию:
-
-```kotlin
-data class Booking(
-    val id: String = "",
-    val propertyId: String,
-    val clientId: String? = null,
-    val startDate: Long,
-    val endDate: Long,
-    val status: BookingStatus = BookingStatus.PENDING,
-    val paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
-    val totalAmount: Double,
-    val depositAmount: Double? = null,
-    val notes: String? = null,
-    val guestsCount: Int? = null,
-    val checkInTime: String? = null,
-    val checkOutTime: String? = null,
-    val includedServices: List<String> = emptyList(),
-    val additionalServices: List<AdditionalService> = emptyList(),
-    val rentPeriodMonths: Int? = null,
-    val monthlyPaymentAmount: Double? = null,
-    val utilityPayments: Boolean? = null,
-    val contractType: String? = null,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
-)
-```
-
-### Статусы бронирования
-
-```kotlin
-enum class BookingStatus {
-    PENDING,    // Ожидает подтверждения
-    CONFIRMED,  // Подтверждено
-    CANCELLED,  // Отменено
-    COMPLETED,  // Завершено
-    NO_SHOW     // Клиент не явился
-}
-
-enum class PaymentStatus {
-    UNPAID,         // Не оплачено
-    PARTIALLY_PAID, // Частично оплачено
-    FULLY_PAID,     // Полностью оплачено
-    REFUNDED,       // Возвращено
-    DEPOSIT_PAID    // Оплачен только депозит
-}
-```
-
-### Репозиторий бронирований
-
-Интерфейс `BookingRepository` предоставляет методы для работы с бронированиями:
-
-```kotlin
-interface BookingRepository {
-    suspend fun addBooking(booking: Booking): Result<Booking>
-    suspend fun updateBooking(booking: Booking): Result<Unit>
-    suspend fun deleteBooking(bookingId: String): Result<Unit>
-    suspend fun getBooking(bookingId: String): Result<Booking>
-    suspend fun getAllBookings(): Result<List<Booking>>
-    fun observeAllBookings(): Flow<List<Booking>>
-    fun observeBookingsByProperty(propertyId: String): Flow<List<Booking>>
-    fun observeBookingsByClient(clientId: String): Flow<List<Booking>>
-    fun observeBookingsInDateRange(fromDate: Long, toDate: Long): Flow<List<Booking>>
-    fun observeBookingsForPropertyInDateRange(propertyId: String, fromDate: Long, toDate: Long): Flow<List<Booking>>
-    suspend fun hasBookingConflicts(propertyId: String, fromDate: Long, toDate: Long): Result<Boolean>
-    suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<Unit>
-    suspend fun updatePaymentStatus(bookingId: String, status: PaymentStatus): Result<Unit>
-    suspend fun autoUpdateBookingStatuses(): Result<Int>
-}
-```
-
-### Календарь бронирований
-
-Календарь бронирований позволяет визуализировать занятые и свободные даты для объектов недвижимости, а также создавать и управлять бронированиями.
-
-#### BookingCalendarScreen
-
-```kotlin
-@Composable
-fun BookingCalendarScreen(
-    propertyId: String,
-    onNavigateBack: () -> Unit,
-    viewModel: BookingCalendarViewModel = hiltViewModel()
-) {
-    val state by viewModel.state.collectAsState()
-    
-    // Загружаем бронирования для выбранного объекта
-    LaunchedEffect(propertyId) {
-        viewModel.handleEvent(BookingCalendarEvent.SelectProperty(propertyId))
-    }
-    
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Календарь бронирований") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Назад")
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Отображение календаря с отмеченными датами бронирований
-            BookingCalendarView(
-                bookings = state.bookings,
-                selectedStartDate = state.selectedStartDate,
-                selectedEndDate = state.selectedEndDate,
-                onDateSelected = { date ->
-                    viewModel.handleEvent(BookingCalendarEvent.SelectDate(date))
-                },
-                onDateRangeConfirmed = {
-                    viewModel.handleEvent(BookingCalendarEvent.ConfirmDateSelection)
-                }
-            )
-            
-            // Отображение доступных окон для бронирования
-            if (state.availableTimeSlots.isNotEmpty()) {
-                Text(
-                    text = "Доступные периоды для бронирования:",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-                
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    items(state.availableTimeSlots) { slot ->
-                        AvailableTimeSlotItem(
-                            slot = slot,
-                            onClick = {
-                                viewModel.handleEvent(
-                                    BookingCalendarEvent.UpdateDates(
-                                        start = slot.startDate,
-                                        end = slot.endDate
-                                    )
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // Список бронирований для выбранного объекта
-            Text(
-                text = "Бронирования:",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            
-            if (state.bookings.isEmpty()) {
-                Text(
-                    text = "Нет активных бронирований",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .align(Alignment.CenterHorizontally)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    items(state.bookings) { booking ->
-                        BookingListItem(
-                            booking = booking,
-                            onClick = {
-                                viewModel.handleEvent(BookingCalendarEvent.SelectBooking(booking))
-                                viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // Кнопка создания бронирования
-            Button(
-                onClick = {
-                    viewModel.handleEvent(BookingCalendarEvent.ShowBookingDialog)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Создать бронирование")
-            }
-        }
-        
-        // Диалог создания/редактирования бронирования
-        if (state.isBookingDialogVisible) {
-            BookingFormDialog(
-                propertyId = propertyId,
-                startDate = state.selectedStartDate,
-                endDate = state.selectedEndDate,
-                clients = state.clients,
-                selectedClient = state.selectedClient,
-                editing = !state.isInfoMode,
-                booking = state.selectedBooking,
-                onClientSelected = { client ->
-                    viewModel.handleEvent(BookingCalendarEvent.SelectClient(client))
-                },
-                onSave = { clientId, startDate, endDate, amount, guestsCount, notes ->
-                    if (state.selectedBooking != null && !state.isInfoMode) {
-                        viewModel.handleEvent(
-                            BookingCalendarEvent.UpdateBooking(
-                                state.selectedBooking.id,
-                                clientId,
-                                startDate,
-                                endDate,
-                                amount,
-                                guestsCount,
-                                notes
-                            )
-                        )
-                    } else {
-                        viewModel.handleEvent(
-                            BookingCalendarEvent.CreateBooking(
-                                propertyId,
-                                clientId,
-                                startDate,
-                                endDate,
-                                amount,
-                                guestsCount,
-                                notes
-                            )
-                        )
-                    }
-                },
-                onDelete = {
-                    state.selectedBooking?.let { booking ->
-                        viewModel.handleEvent(BookingCalendarEvent.DeleteBooking(booking.id))
-                    }
-                },
-                onDismiss = {
-                    viewModel.handleEvent(BookingCalendarEvent.HideBookingDialog)
-                }
-            )
-        }
-    }
-}
-```
-
-#### BookingCalendarView
-
-```kotlin
-@Composable
-fun BookingCalendarView(
-    bookings: List<Booking>,
-    selectedStartDate: LocalDate?,
-    selectedEndDate: LocalDate?,
-    onDateSelected: (LocalDate) -> Unit,
-    onDateRangeConfirmed: () -> Unit
-) {
-    val currentMonth = remember { mutableStateOf(YearMonth.now()) }
-    
-    Column(modifier = Modifier.fillMaxWidth()) {
-        // Заголовок с навигацией по месяцам
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = {
-                    currentMonth.value = currentMonth.value.minusMonths(1)
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ChevronLeft,
-                    contentDescription = "Предыдущий месяц"
-                )
-            }
-            
-            Text(
-                text = currentMonth.value.format(DateTimeFormatter.ofPattern("LLLL yyyy")),
-                style = MaterialTheme.typography.titleMedium
-            )
-            
-            IconButton(
-                onClick = {
-                    currentMonth.value = currentMonth.value.plusMonths(1)
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "Следующий месяц"
-                )
-            }
-        }
-        
-        // Дни недели
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            val daysOfWeek = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
-            daysOfWeek.forEach { day ->
-                Text(
-                    text = day,
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-        
-        // Календарная сетка
-        val firstDayOfMonth = currentMonth.value.atDay(1)
-        val lastDayOfMonth = currentMonth.value.atEndOfMonth()
-        
-        // Определяем первый день для отображения (может быть из предыдущего месяца)
-        val firstDay = firstDayOfMonth.minusDays(
-            (firstDayOfMonth.dayOfWeek.value - 1).toLong()
-        )
-        
-        // Создаем список всех дней для отображения
-        val calendarDays = mutableListOf<LocalDate>()
-        var day = firstDay
-        while (day.isBefore(lastDayOfMonth) || day.isEqual(lastDayOfMonth) || calendarDays.size % 7 != 0) {
-            calendarDays.add(day)
-            day = day.plusDays(1)
-        }
-        
-        // Преобразуем бронирования в множество дат
-        val bookedDates = bookings.flatMap { booking ->
-            val start = LocalDate.ofEpochDay(booking.startDate / (24 * 60 * 60 * 1000))
-            val end = LocalDate.ofEpochDay(booking.endDate / (24 * 60 * 60 * 1000))
-            start.datesUntil(end.plusDays(1)).collect(Collectors.toList())
-        }.toSet()
-        
-        // Отображаем календарь
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(7),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(320.dp)
-                .padding(16.dp)
-        ) {
-            items(calendarDays) { date ->
-                val isCurrentMonth = date.month == currentMonth.value.month
-                val isBooked = date in bookedDates
-                val isSelected = (selectedStartDate != null && selectedEndDate != null && 
-                    (date.isEqual(selectedStartDate) || date.isEqual(selectedEndDate) || 
-                    (date.isAfter(selectedStartDate) && date.isBefore(selectedEndDate))))
-                val isSelectionStart = date == selectedStartDate
-                val isSelectionEnd = date == selectedEndDate
-                
-                Box(
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .padding(2.dp)
-                        .clip(CircleShape)
-                        .background(
-                            when {
-                                isSelected -> MaterialTheme.colorScheme.primaryContainer
-                                isBooked -> MaterialTheme.colorScheme.errorContainer
-                                else -> Color.Transparent
-                            }
-                        )
-                        .border(
-                            width = if (isSelectionStart || isSelectionEnd) 2.dp else 0.dp,
-                            color = if (isSelectionStart || isSelectionEnd) 
-                                MaterialTheme.colorScheme.primary else Color.Transparent,
-                            shape = CircleShape
-                        )
-                        .clickable(
-                            enabled = !isBooked,
-                            onClick = {
-                                onDateSelected(date)
-                            }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = date.dayOfMonth.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = when {
-                            !isCurrentMonth -> MaterialTheme.colorScheme.outline
-                            isBooked -> MaterialTheme.colorScheme.onErrorContainer
-                            isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
-                            else -> MaterialTheme.colorScheme.onSurface
-                        }
-                    )
-                }
-            }
-        }
-        
-        // Кнопки для подтверждения выбора дат
-        if (selectedStartDate != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        onDateSelected(LocalDate.now()) // Сбрасываем выбор
-                    }
-                ) {
-                    Text("Отменить")
-                }
-                
-                Button(
-                    onClick = onDateRangeConfirmed,
-                    enabled = selectedStartDate != null && selectedEndDate != null
-                ) {
-                    Text("Подтвердить")
-                }
-            }
-        }
-    }
-}
-```
-
-### Автоматическое обновление статусов
-
-Приложение включает в себя механизм автоматического обновления статусов бронирований в зависимости от текущей даты:
-
-```kotlin
-class AutoUpdateBookingStatusesUseCase @Inject constructor(
-    private val repository: BookingRepository
-) {
-    suspend operator fun invoke(): Result<Int> {
-        return repository.autoUpdateBookingStatuses()
-    }
-}
-
-// Реализация в репозитории
-override suspend fun autoUpdateBookingStatuses(): Result<Int> = withContext(Dispatchers.IO) {
-    try {
-        val allBookings = bookingDao.getAllBookings()
-        val currentTime = System.currentTimeMillis()
-        var updatedCount = 0
-        
-        allBookings.forEach { bookingEntity ->
-            val newStatus = when {
-                // Если дата окончания в прошлом и статус не COMPLETED или CANCELLED, меняем на COMPLETED
-                bookingEntity.endDate < currentTime && 
-                bookingEntity.status != BookingStatus.COMPLETED.name && 
-                bookingEntity.status != BookingStatus.CANCELLED.name -> {
-                    updatedCount++
-                    BookingStatus.COMPLETED.name
-                }
-                // Если дата начала в прошлом, но до даты окончания, и статус PENDING, меняем на CONFIRMED
-                bookingEntity.startDate < currentTime && 
-                bookingEntity.endDate > currentTime && 
-                bookingEntity.status == BookingStatus.PENDING.name -> {
-                    updatedCount++
-                    BookingStatus.CONFIRMED.name
-                }
-                else -> null
-            }
-            
-            newStatus?.let { status ->
-                bookingDao.updateBookingStatus(bookingEntity.id, status)
-            }
-        }
-        
-        Result.success(updatedCount)
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
-}
-```
-
-## Управление зависимостями
-
-Для управления зависимостями в проекте используется Dagger Hilt. Основные модули:
-
-### AppModule
-
-Предоставляет основные зависимости приложения:
-
-```kotlin
-@Module
-@InstallIn(SingletonComponent::class)
-object AppModule {
-    @Provides
-    @Singleton
-    fun provideClientRepository(clientDao: ClientDao): ClientRepository {
-        return ClientRepositoryImpl(clientDao)
-    }
-    
-    @Provides
-    @Singleton
-    fun providePropertyRepository(propertyDao: PropertyDao): PropertyRepository {
-        return PropertyRepositoryImpl(propertyDao)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideAppointmentRepository(appointmentDao: AppointmentDao): AppointmentRepository {
-        return AppointmentRepositoryImpl(appointmentDao)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideBookingRepository(bookingDao: BookingDao): BookingRepository {
-        return BookingRepositoryImpl(bookingDao)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideImageRepository(@ApplicationContext context: Context): ImageRepository {
-        return ImageRepositoryImpl(context)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideDocumentRepository(@ApplicationContext context: Context): DocumentRepository {
-        return DocumentRepositoryImpl(context)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideDatabaseEncryption(@ApplicationContext context: Context): DatabaseEncryption {
-        return DatabaseEncryption(context)
-    }
-    
-    // Предоставление юзкейсов
-    @Provides
-    @Singleton
-    fun provideClientUseCases(repository: ClientRepository): ClientUseCases {
-        return ClientUseCases(
-            addClient = AddClientUseCase(repository),
-            updateClient = UpdateClientUseCase(repository),
-            deleteClient = DeleteClientUseCase(repository),
-            getClient = GetClientUseCase(repository),
-            getAllClients = GetAllClientsUseCase(repository),
-            getClientsByRentalType = GetClientsByRentalTypeUseCase(repository)
-        )
-    }
-    
-    @Provides
-    @Singleton
-    fun providePropertyUseCases(repository: PropertyRepository): PropertyUseCases {
-        return PropertyUseCases(
-            addProperty = AddPropertyUseCase(repository),
-            updateProperty = UpdatePropertyUseCase(repository),
-            deleteProperty = DeletePropertyUseCase(repository),
-            getProperty = GetPropertyUseCase(repository),
-            getAllProperties = GetAllPropertiesUseCase(repository),
-            observeAllProperties = ObserveAllPropertiesUseCase(repository),
-            observePropertiesByType = ObservePropertiesByTypeUseCase(repository)
-        )
-    }
-    
-    // Остальные юзкейсы...
-}
-```
-
-### DatabaseModule
-
-Предоставляет компоненты базы данных:
-
-```kotlin
-@Module
-@InstallIn(SingletonComponent::class)
-object DatabaseModule {
-    private const val DATABASE_NAME = "realestate_assistant_db"
-    
-    @Provides
-    @Singleton
-    fun provideAppDatabase(
-        @ApplicationContext context: Context,
-        databaseEncryption: DatabaseEncryption
-    ): AppDatabase {
-        try {
-            val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
-            val factory = SupportFactory(passphrase)
-            
-            return Room.databaseBuilder(
-                context.applicationContext,
-                AppDatabase::class.java,
-                DATABASE_NAME
-            )
-            .openHelperFactory(factory)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-            .build()
-        } catch (e: Exception) {
-            // Обработка ошибок инициализации базы данных
-            Log.e("DatabaseModule", "Ошибка при инициализации базы данных", e)
-            
-            // Сброс ключей шифрования и повторная попытка
-            databaseEncryption.resetSecurityKeys()
-            
-            // Создаем новую базу данных с новыми ключами
-            val newPassphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
-            val newFactory = SupportFactory(newPassphrase)
-            
-            return Room.databaseBuilder(
-                context.applicationContext,
-                AppDatabase::class.java,
-                DATABASE_NAME
-            )
-            .openHelperFactory(newFactory)
-            .fallbackToDestructiveMigration()
-            .build()
-        }
-    }
-    
-    @Provides
-    @Singleton
-    fun providePropertyDao(database: AppDatabase): PropertyDao {
-        return database.propertyDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideClientDao(database: AppDatabase): ClientDao {
-        return database.clientDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideAppointmentDao(database: AppDatabase): AppointmentDao {
-        return database.appointmentDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideBookingDao(database: AppDatabase): BookingDao {
-        return database.bookingDao()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideUserDao(database: AppDatabase): UserDao {
-        return database.userDao()
-    }
-}
-```
-
-## Технический долг и планы развития
-
-### Технический долг
-
-1. **Оптимизация производительности**
-   - Оптимизация загрузки и кэширования изображений для более быстрого отображения
-   - Внедрение пагинации для больших списков объектов и клиентов
-   - Оптимизация главного экрана для улучшения скорости загрузки и уменьшения использования ресурсов
-
-2. **Улучшение UI/UX**
-   - Доработка отзывчивости UI для разных размеров экранов
-   - Улучшение доступности приложения
-   - Добавление анимаций для улучшения UX
-
-3. **Тесты**
-   - Покрытие основных компонентов UI тестами
-   - Написание unit-тестов для репозиториев и юзкейсов
-   - Интеграционные тесты для проверки работы базы данных
-
-### Планы развития
-
-1. **Разработка полноценных модулей для клиентов и показов**
-   - Реализация полного функционала раздела клиентов по аналогии с объектами:
-     - Создание детальной формы добавления/редактирования клиентов
-     - Разработка удобных карточек клиентов для списка
-     - Детальная страница с информацией о клиенте
-     - Система связи клиентов с подходящими объектами
-   - Разработка модуля показов/встреч:
-     - Форма создания и редактирования показов
-     - Календарь показов с разными представлениями
-     - Карточки показов с возможностью быстрого доступа
-     - Система уведомлений о предстоящих показах
-
-2. **Новые функции**
-   - Добавление аналитического модуля для отслеживания эффективности работы
-   - Экспорт данных в различные форматы (PDF, Excel)
-
-3. **Улучшение существующих функций**
-   - Расширенный поиск и фильтрация объектов
-   - Интеллектуальный поиск по всем сущностям приложения
-   - Система тегов для объектов, клиентов и встреч
-   - Продвинутая сортировка с возможностью настройки пользователем
-   - Улучшенный календарь встреч с напоминаниями
-   - Система заметок для объектов и клиентов
-   - Чек-листы для просмотров объектов
-   - Расширение функциональности карт с возможностью поиска объектов на карте
-
-4. **Технические улучшения**
-   - Реализация синхронизации данных с облаком (Supabase):
-     - Настройка API для синхронизации
-     - Механизм разрешения конфликтов при синхронизации
-     - Возможность работы в офлайн-режиме с последующей синхронизацией
-   - Внедрение многопользовательского режима
-   - Улучшение безопасности и защиты данных
-
-## Безопасность и шифрование данных
-
-В приложении реализована система безопасности для защиты конфиденциальных данных пользователей и объектов недвижимости.
-
-### Шифрование базы данных
-
-Основой системы безопасности является шифрование локальной базы данных с использованием SQLCipher:
-
-```kotlin
-// Пример конфигурации шифрованной базы данных в AppDatabase
-val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
-val factory = SupportFactory(passphrase)
-
-Room.databaseBuilder(
-    context.applicationContext,
-    AppDatabase::class.java,
-    DATABASE_NAME
-)
-.openHelperFactory(factory)
-.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-.build()
-```
-
-### Компоненты безопасности
-
-- `DatabaseEncryption` - класс для управления ключами шифрования и паролями базы данных
-- Интеграция с Android Keystore для безопасного хранения криптографических ключей
-- Механизмы восстановления при повреждении ключей шифрования
-
-```kotlin
-class DatabaseEncryption @Inject constructor(
-    private val context: Context
-) {
-    companion object {
-        private const val KEY_ALIAS = "database_encryption_key"
-        private const val PREF_NAME = "database_security_prefs"
-        private const val PREF_PASSWORD = "database_password"
-        private const val DEFAULT_PASSWORD = "default_secure_password"
-    }
-    
-    private val keyStore by lazy {
-        KeyStore.getInstance("AndroidKeyStore").apply {
-            load(null)
-        }
-    }
-    
-    private val securePreferences by lazy {
-        EncryptedSharedPreferences.create(
-            PREF_NAME,
-            MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build(),
-            context,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
-    }
-    
-    /**
-     * Получает пароль для шифрования базы данных
-     */
-    fun getDatabasePassword(): String {
-        // Если пароль уже сохранен, возвращаем его
-        if (securePreferences.contains(PREF_PASSWORD)) {
-            return securePreferences.getString(PREF_PASSWORD, DEFAULT_PASSWORD) ?: DEFAULT_PASSWORD
-        }
-        
-        // Генерируем новый пароль и сохраняем его
-        val password = generateSecurePassword()
-        securePreferences.edit().putString(PREF_PASSWORD, password).apply()
-        return password
-    }
-    
-    /**
-     * Генерирует криптографически стойкий пароль
-     */
-    private fun generateSecurePassword(): String {
-        val bytes = ByteArray(32)
-        SecureRandom().nextBytes(bytes)
-        return Base64.encodeToString(bytes, Base64.NO_WRAP)
-    }
-    
-    /**
-     * Сбрасывает пароль и ключи шифрования в случае проблем
-     */
-    fun resetSecurityKeys() {
-        try {
-            // Удаляем ключ из KeyStore
-            if (keyStore.containsAlias(KEY_ALIAS)) {
-                keyStore.deleteEntry(KEY_ALIAS)
-            }
-            
-            // Сбрасываем пароль
-            securePreferences.edit().remove(PREF_PASSWORD).apply()
-            
-            // Генерируем новый пароль
-            val newPassword = generateSecurePassword()
-            securePreferences.edit().putString(PREF_PASSWORD, newPassword).apply()
-        } catch (e: Exception) {
-            Log.e("DatabaseEncryption", "Ошибка при сбросе ключей безопасности", e)
-            
-            // В случае фатальной ошибки пытаемся сбросить все настройки
-            context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-                .edit().clear().apply()
-        }
-    }
-}
-```
-
-### Защита конфиденциальных данных
-
-Приложение обеспечивает безопасность через:
-
-- Шифрование всех конфиденциальных данных в базе данных с использованием SQLCipher
-- Использование EncryptedSharedPreferences для хранения чувствительных настроек
-- Механизмы очистки кэша и временных файлов при выходе из приложения
-- Защиту от экспорта незашифрованных данных
-
-### Безопасность медиафайлов
-
-Для защиты фотографий и документов применяются следующие меры:
-
-- Хранение в приватной директории приложения, недоступной другим приложениям
-- Контролируемый доступ к файлам через FileProvider
-- Безопасное удаление файлов при удалении связанных с ними записей
-- Шифрование особо важных документов с помощью AES шифрования
-
-### Аварийное восстановление
-
-В приложении реализован механизм восстановления при нарушении целостности криптографических ключей или повреждении базы данных:
-
-```kotlin
-try {
-    // Используем зашифрованную базу данных
-    database.openHelper.readableDatabase
-} catch (e: Exception) {
-    // Обрабатываем ошибки целостности ключей
-    if (e is AEADBadTagException || e.cause is AEADBadTagException) {
-        // Сброс повреждённых ключей и восстановление хранилища
-        databaseEncryption.resetSecurityKeys()
-        
-        // Пытаемся пересоздать базу данных
-        resetDatabaseFiles(context)
-        
-        // Создаем новый экземпляр базы данных с новыми ключами
-        createDatabaseWithNewKeys(context, databaseEncryption)
-    } else {
+### 2.6. Фоновые задачи
+Приложение использует WorkManager для выполнения фоновых задач:
+
+#### 2.6.1. Основные фоновые задачи
+- **PropertyStatusUpdateWorker**: периодическая задача для обновления статусов объектов
+  - Анализ текущих бронирований и изменение статусов объектов
+  - Планирование с периодичностью в 4 часа
+  - Ограничения для экономии батареи
+  - Поддержка повторных попыток при ошибках
+
+### 2.6.2. Настройка WorkManager
+Конфигурация фоновых задач:
+
+#### 2.6.2.1. Ограничения выполнения
+- Требования к сети (NetworkType.NOT_REQUIRED)
+- Требования к заряду батареи (setRequiresBatteryNotLow)
+- Гибкий интервал запуска для оптимизации энергопотребления
+
+#### 2.6.2.2. Интеграция с Hilt
+- Использование HiltWorkerFactory для внедрения зависимостей в воркеры
+- Регистрация фабрики в конфигурации приложения
+
+## 3. Модели и сущности
+
+### 3.1. Property (Объект недвижимости)
+Основная модель объекта недвижимости содержит:
+
+#### 3.1.1. Общие атрибуты:
+- **id**: уникальный идентификатор
+- **propertyType**: тип недвижимости (квартира, дом, комната и т.д.)
+- **address**: адрес объекта
+- **district**: район или ориентир
+- **area**: площадь (кв.м)
+- **roomsCount**: количество комнат
+- **floor**: этаж
+- **totalFloors**: этажность здания
+- **repairState**: состояние ремонта
+- **latitude/longitude**: координаты для отображения на карте
+- **photos**: фотографии объекта
+- **status**: статус объекта (доступен, сдан и т.д.)
+
+#### 3.1.2. Атрибуты для долгосрочной аренды:
+- **monthlyRent**: стоимость аренды за месяц
+- **winterMonthlyRent**: зимняя цена аренды
+- **summerMonthlyRent**: летняя цена аренды
+- **securityDeposit**: залог
+- **utilitiesIncluded**: включены ли коммунальные платежи
+- **minRentPeriod**: минимальный срок аренды
+
+#### 3.1.3. Атрибуты для краткосрочной аренды:
+- **dailyPrice**: стоимость аренды за сутки
+- **weekendPrice**: цена в выходные дни
+- **minStayDays**: минимальное количество дней проживания
+- **maxGuests**: максимальное количество гостей
+- **checkInTime/checkOutTime**: время заезда и выезда
+- **cleaningService**: услуги уборки
+- **seasonalPrices**: сезонные цены с указанием периодов
+
+#### 3.1.4. Дополнительные характеристики
+- **amenities**: удобства (список строк)
+- **views**: виды из окна (список строк)
+- **nearbyObjects**: близлежащие объекты инфраструктуры
+- **parkingType**: тип парковки
+- **hasGarage/garageSpaces**: наличие гаража и количество мест
+- **bathroomsCount**: количество санузлов
+- **bathroomType**: тип санузла
+- **heatingType**: тип отопления
+- **balconiesCount**: количество балконов
+
+### 3.2. Client (Клиент)
+Модель клиента включает:
+
+#### 3.2.1. Личные данные:
+- **id**: уникальный идентификатор
+- **fullName**: ФИО клиента
+- **phone**: контактные телефоны
+- **familyComposition**: состав семьи
+- **peopleCount**: количество проживающих
+- **hasPets**: наличие домашних животных
+- **petTypes**: типы животных
+- **petCount**: количество животных
+- **occupation**: род занятий
+- **isSmokingClient**: является ли клиент курящим
+
+#### 3.2.2. Предпочтения:
+- **rentalType**: тип аренды (длительная/посуточная)
+- **preferredDistrict**: предпочитаемый район
+- **budgetFlexibility**: гибкость по бюджету
+- **preferredAmenities**: желаемые удобства
+- **priorityCriteria**: приоритетные критерии
+- **urgencyLevel**: срочность поиска
+
+#### 3.2.3. Бюджет:
+- **longTermBudgetMin/Max**: диапазон бюджета для длительной аренды
+- **shortTermBudgetMin/Max**: диапазон бюджета для краткосрочной аренды
+
+#### 3.2.4. Детальные предпочтения по жилью
+- **desiredPropertyType**: желаемый тип недвижимости
+- **desiredRoomsCount**: желаемое количество комнат
+- **desiredArea**: желаемая площадь
+- **preferredFloorMin/Max**: предпочитаемый диапазон этажей
+- **needsElevator**: требуется ли лифт
+- **needsFurniture**: требуется ли мебель
+- **needsAppliances**: требуется ли бытовая техника
+- **needsParking**: требуется ли парковка
+- **preferredViews**: предпочитаемые виды из окна
+
+### 3.3. Appointment (Встреча)
+Модель встречи или показа:
+- **id**: уникальный идентификатор
+- **title**: название встречи
+- **dateTime**: дата и время
+- **duration**: продолжительность
+- **status**: статус (запланирована, завершена, отменена, в процессе)
+- **type**: тип встречи (показ, консультация, подписание договора, прочее)
+- **clientId**: связанный клиент
+- **propertyId**: связанный объект недвижимости
+- **notes**: заметки по встрече
+- **location**: место встречи
+- **reminder**: время напоминания (за сколько времени до встречи)
+- **isRecurring**: является ли встреча повторяющейся
+- **recurringPattern**: шаблон повторения (еженедельно, ежемесячно и т.д.)
+
+### 3.4. Booking (Бронирование)
+Модель бронирования объекта:
+- **id**: уникальный идентификатор
+- **propertyId**: ID объекта недвижимости
+- **clientId**: ID клиента
+- **startDate**: дата заезда
+- **endDate**: дата выезда
+- **status**: статус бронирования (подтверждено, в ожидании, отменено, завершено)
+- **guestsCount**: количество гостей
+- **totalPrice**: общая стоимость
+- **notes**: дополнительные примечания
+- **paymentStatus**: статус оплаты
+- **depositPaid**: внесен ли депозит
+- **checkInTime**: время заезда
+- **checkOutTime**: время выезда
+- **hasSpecialRequests**: наличие особых пожеланий гостя
+
+### 3.5. Статусы и перечисления
+- **PropertyStatus**: Available, Rented, Maintenance, Reserved, Hidden
+- **AppointmentStatus**: Planned, Completed, Canceled, InProgress
+- **AppointmentType**: Showing, Consultation, Contract, Other
+- **BookingStatus**: Confirmed, Pending, Canceled, Completed
+
+### 3.6. Маппинг данных
+Для преобразования данных между слоями используются специализированные мапперы:
+
+- **PropertyMapper**: маппинг между `PropertyEntity` и `Property`
+  - `mapToDomain`: преобразование из Entity в Domain модель
+  - `toEntity`: преобразование из Domain в Entity модель
+  - Дополнительные методы преобразования для вложенных объектов
+
+- **BookingMapper**: маппинг между `BookingEntity` и `Booking`
+- **ClientMapper**: маппинг между `ClientEntity` и `Client`
+- **AppointmentMapper**: маппинг между `AppointmentEntity` и `Appointment`
+
+## 4. UI и навигация
+
+### 4.1. Структура навигации
+Приложение использует Navigation Compose для маршрутизации между экранами. Основные маршруты определены в `AppRoutes`.
+
+#### 4.1.1. Основные экраны:
+- **DASHBOARD**: основная панель управления
+- **PROPERTIES**: список объектов недвижимости
+- **PROPERTY_DETAIL**: детали объекта
+- **ADD_PROPERTY**: добавление нового объекта
+- **EDIT_PROPERTY**: редактирование объекта
+- **CLIENTS**: список клиентов
+- **CLIENT_DETAIL**: детали клиента
+- **ADD_CLIENT**: добавление нового клиента
+- **EDIT_CLIENT**: редактирование информации о клиенте
+- **APPOINTMENTS**: список встреч
+- **APPOINTMENT_DETAIL**: детали встречи
+- **BOOKING_CALENDAR**: календарь бронирований
+- **PROPERTY_RECOMMENDATIONS**: рекомендации объектов для клиентов
+- **SETTINGS**: настройки приложения
+- **HELP**: справка
+- **ABOUT**: информация о приложении
+
+#### 4.1.2. Параметры маршрутов:
+- **PropertyId**: идентификатор объекта недвижимости
+- **ClientId**: идентификатор клиента
+- **AppointmentId**: идентификатор встречи
+
+### 4.2. Основные экраны приложения
+
+#### 4.2.1. Дэшборд (Dashboard)
+Главный экран приложения, отображающий ключевые метрики и предстоящие события:
+- Статистика объектов недвижимости по статусам
+- Предстоящие встречи и показы
+- Новые клиенты
+- Новые бронирования
+- Графики с аналитикой
+- Карта с расположением объектов недвижимости
+
+#### 4.2.2. Экраны объектов недвижимости
+- **PropertyListScreen**: список объектов с фильтрацией
+  - Фильтрация по типам аренды (долгосрочная/краткосрочная)
+  - Фильтрация по статусу, цене, типу недвижимости, району и другим параметрам
+  - Сортировка по различным критериям
+  - Поиск по ключевым словам
+  - Возможность просмотра в виде списка или плиток
+
+- **PropertyDetailScreen**: детальная информация об объекте
+  - Галерея фотографий с возможностью масштабирования
+  - Детальная информация об объекте
+  - Местоположение на карте
+  - Календарь бронирований (для краткосрочной аренды)
+  - Контактная информация владельца
+  - Возможность поделиться информацией об объекте
+  - Формирование PDF-отчета
+
+- **AddPropertyScreen**: форма добавления нового объекта
+  - Многоэтапная форма с пошаговым заполнением
+  - Загрузка и обрезка фотографий
+  - Выбор местоположения на карте
+  - Подсказки при вводе адреса с использованием Yandex API
+  - Валидация форм с отображением ошибок
+
+- **EditPropertyScreen**: редактирование существующего объекта
+  - Аналогично AddPropertyScreen, но с предзаполненными полями
+
+#### 4.2.3. Экраны клиентов
+- **ClientListScreen**: список клиентов с возможностью поиска
+  - Фильтрация клиентов по различным критериям
+  - Поиск по имени и контактной информации
+  - Различные режимы отображения
+
+- **ClientDetailScreen**: детальная информация о клиенте
+  - Личная информация
+  - Предпочтения по аренде
+  - История встреч и показов
+  - Подходящие объекты недвижимости
+  - Возможность назначить встречу
+
+- **AddClientScreen**: форма добавления нового клиента
+  - Многоэтапная форма
+  - Выбор предпочтений по аренде
+  - Задание бюджета и критериев поиска
+  - Автоматическое сохранение черновиков
+
+- **EditClientScreen**: редактирование информации о клиенте
+  - Аналогично AddClientScreen, но с предзаполненными полями
+
+#### 4.2.4. Экраны встреч и бронирований
+- **AppointmentListScreen**: список встреч и показов
+  - Фильтрация по дате, статусу, типу
+  - Календарный вид
+  - Интеграция с системным календарем
+
+- **BookingCalendarScreen**: календарь с бронированиями объекта
+  - Визуальное отображение занятых и свободных дат
+  - Возможность создания нового бронирования
+  - Управление существующими бронированиями
+  - Просмотр деталей бронирования
+
+### 4.3. UI компоненты
+Приложение использует Material Design 3 и реализовано на Jetpack Compose:
+
+#### 4.3.1. Основные компоненты
+- **ExpandablePropertyCard**: карточка объекта недвижимости с возможностью раскрытия дополнительной информации
+- **ExpandableClientCard**: карточка клиента с возможностью раскрытия
+- **PropertyFormComponents**: набор компонентов для форм редактирования объекта
+- **ValidationComponents**: компоненты для валидации ввода с отображением ошибок
+
+#### 4.3.2. Специализированные поля ввода
+- **AddressTextField**: поле ввода адреса с подсказками
+- **AddressSuggestField**: поле с автодополнением адреса
+- **PhoneInputField**: поле ввода телефонного номера с форматированием
+- **CountryCodePicker**: выбор кода страны для телефона
+- **MultiSelectField**: поле множественного выбора
+- **EditableDropdownField**: выпадающий список с возможностью добавления новых значений
+- **NumericTextField**: поле для ввода числовых значений
+- **DatePickerField**: поле выбора даты
+- **TimeTextField**: поле выбора времени
+
+#### 4.3.3. Диалоговые окна
+- **DatePickerDialog**: диалог выбора даты
+- **TimePickerDialog**: диалог выбора времени
+- **CallLogSelector**: диалог выбора номера из журнала вызовов
+
+#### 4.3.4. Медиа-компоненты
+- **MediaComponents**: компоненты для работы с мультимедиа
+  - Загрузка и отображение изображений
+  - Галерея изображений с возможностью пролистывания
+  - Обрезка изображений
+  - Получение изображений с камеры и из галереи
+
+#### 4.3.5. Картографические компоненты
+- **MapPropertySelector**: карта для выбора местоположения объекта недвижимости
+- **MapPropertiesDisplay**: отображение нескольких объектов на карте
+- **MapComponent**: базовый компонент для работы с картой
+
+### 4.4. Адаптивный дизайн
+Интерфейс адаптируется под различные размеры экрана:
+
+#### 4.4.1. Поддержка различных устройств
+- Поддержка разных ориентаций экрана
+- Адаптация под планшеты
+- Поддержка различных плотностей экрана
+
+#### 4.4.2. Особенности адаптивного дизайна
+- Динамические размеры компонентов в зависимости от размера экрана
+- Различная компоновка элементов для разных размеров экрана
+- Режим многооконности для планшетов
+- Использование составных компонентов
+
+#### 4.4.3. Темная тема
+- Полная поддержка темной темы
+- Цветовая схема, оптимизированная для разных режимов
+- Автоматическое переключение на основе системных настроек
+- Опциональная поддержка динамических цветов (Material You)
+
+### 4.5. Работа с картами и геолокацией
+Приложение использует Yandex MapKit для работы с картами и геолокацией:
+
+#### 4.5.1. Геокодирование
+- **YandexGeocoderService**: сервис для преобразования адреса в координаты
+  - Асинхронное получение координат по адресу
+  - Обработка ошибок и некорректных адресов
+  - Использование API Яндекс.Карт
+
+#### 4.5.2. Автодополнение адресов
+- **YandexSuggestService**: сервис для получения подсказок при вводе адреса
+  - Интерактивное автодополнение при вводе
+  - Фильтрация результатов по релевантности
+  - Кэширование результатов для оптимизации
+
+#### 4.5.3. Отображение на карте
+- Отображение объектов недвижимости на карте
+- Кластеризация маркеров при большом количестве объектов
+- Интерактивное взаимодействие с маркерами
+- Определение оптимального масштаба и центра карты
+
+## 5. Система безопасности и хранения данных
+
+### 5.1. Шифрование базы данных
+Система обеспечивает безопасное хранение конфиденциальных данных:
+
+#### 5.1.1. SQLCipher интеграция
+- Полное шифрование базы данных Room с использованием SQLCipher
+- Безопасное хранение пароля базы данных в EncryptedSharedPreferences
+- Механизм автоматической генерации пароля при первом запуске
+- Дополнительный механизм восстановления при повреждении криптографических ключей
+
+#### 5.1.2. Механизмы восстановления
+- Обнаружение повреждения криптографических ключей
+- Резервное хранение ключей для восстановления доступа
+- Полный сброс базы данных при критических ошибках
+
+### 5.2. Работа с файлами
+Приложение обеспечивает безопасный доступ к файловой системе:
+
+#### 5.2.1. FileProvider
+- Безопасный доступ к файлам приложения для других приложений
+- Определение путей доступа в XML-конфигурации
+- Интеграция с системной камерой и галереей
+
+#### 5.2.2. Хранение изображений
+- Оптимизация изображений перед сохранением
+- Компрессия для уменьшения размера
+- Кэширование для быстрого доступа
+- Уникальные имена файлов для исключения коллизий
+
+### 5.3. Управление данными
+Приложение включает механизмы для эффективной работы с данными:
+
+#### 5.3.1. Асинхронная инициализация
+- Асинхронная инициализация базы данных при запуске приложения
+- Использование App Startup для параллельной инициализации компонентов
+- Оптимизация времени запуска приложения
+
+#### 5.3.2. Flow для наблюдения за данными
+- Использование Flow для реактивной работы с данными
+- Трансформация потоков данных с помощью операторов Flow
+- Отмена подписок при уничтожении ViewModel
+
+## 6. Тема и стилизация приложения
+
+### 6.1. Цветовая схема
+Приложение использует собственную цветовую схему:
+
+#### 6.1.1. Основные цвета
+- **Primary**: основной синий цвет (#1A56DB)
+- **Secondary**: вторичный синий цвет (#3F4DB0)
+- **Tertiary**: третичный синий цвет (#00639D)
+- **Background/Surface**: светлый фон с синим оттенком (#F8F9FF)
+
+#### 6.1.2. Темная тема
+- **DarkPrimary**: светло-синий для темной темы (#A1C6FF)
+- **DarkBackground/DarkSurface**: темный фон (#1A1C1E)
+- **DarkOnBackground/DarkOnSurface**: светлый текст на темном фоне (#E2E2E6)
+
+#### 6.1.3. Семантические цвета
+- **Error**: цвет ошибки (#BA1B1B)
+- **Цвета для статусов встреч**: различные цвета для визуального обозначения статусов
+
+### 6.2. Типография
+Приложение использует систему типографии Material Design 3:
+
+#### 6.2.1. Шрифты
+- Использование системных шрифтов для единообразного отображения
+- Масштабируемые размеры текста для поддержки доступности
+
+#### 6.2.2. Стилизация текста
+- Определение стилей для всех категорий текста (заголовки, подзаголовки, основной текст, метки)
+- Настройка интерлиньяжа и плотности текста
+- Поддержка выделения важной информации
+
+## 7. Интеграции и API
+
+### 7.1. Yandex MapKit интеграция
+Приложение использует Yandex MapKit для отображения карт и геолокации объектов недвижимости:
+
+#### 7.1.1. Инициализация и настройка
+- Инициализация MapKit выполняется в классе `RealEstateApplication`:
+  ```
+  // Инициализация Yandex MapKit
+  MapKitFactory.setApiKey("80b06c04-6156-4dfd-a086-2cee0b05fdb8")
+  ```
+- Настройка жизненного цикла карты с использованием `MapKitFactory.getInstance().onStart()/onStop()`
+- Обработка событий lifecycle с использованием Compose DisposableEffect
+
+#### 7.1.2. Компоненты для работы с картами
+- `PropertyMapView`: Composable-компонент для отображения объекта недвижимости на карте
+  - Добавление маркеров с настраиваемым цветом
+  - Настройка камеры и масштаба
+  - Добавление текстовых подписей к маркерам
+
+### 7.2. PDF генерация
+Приложение имеет функциональность экспорта данных объектов недвижимости в PDF-документы:
+
+#### 7.2.1. ExportPropertyToPdfUseCase
+- Генерация PDF-документов с информацией об объектах недвижимости
+- Использование `android.graphics.pdf.PdfDocument` для создания многостраничных документов
+- Сохранение во внутреннее или внешнее хранилище (с проверкой разрешений)
+- Поддержка версий Android 10+ и более старых с разными подходами к сохранению
+
+#### 7.2.2. PdfExportService
+- Сервис для отрисовки содержимого PDF-документов
+- Многостраничная верстка с информацией об объекте недвижимости
+- Включение изображений объекта в документ
+- Настройка шрифтов, размеров и цветов текста
+
+### 7.3. Интеграция с телефонией
+Приложение предоставляет удобные способы коммуникации с клиентами и владельцами недвижимости:
+
+#### 7.3.1. Функции обработки и форматирования номеров
+- Класс `PhoneUtils` предоставляет набор функций для работы с номерами телефонов:
+  - Форматирование номеров для отображения с учетом региональных особенностей
+  - Поддержка различных форматов для России, США, Великобритании, Германии
+  - Очистка номеров от нецифровых символов
+
+#### 7.3.2. Интеграции с коммуникационными сервисами
+- Звонки: `Intent.ACTION_DIAL` для набора номера телефона
+- SMS: `Intent.ACTION_SENDTO` для отправки текстовых сообщений
+- WhatsApp: интеграция через URL-схему "https://api.whatsapp.com/send"
+- Telegram: поддержка открытия приложения или веб-версии Telegram
+
+### 7.4. Работа с файловой системой
+Приложение имеет продуманную систему работы с файлами для безопасного хранения и доступа:
+
+#### 7.4.1. StorageHelper
+- Вспомогательный класс для безопасной работы с файловой системой Android
+- Поддержка внутреннего и внешнего хранилища
+- Обработка различий в API для разных версий Android
+- Создание директорий для разных типов файлов (PDF, изображения, документы)
+
+#### 7.4.2. FileProvider
+- Безопасное предоставление доступа к файлам через `androidx.core.content.FileProvider`
+- Конфигурация в AndroidManifest.xml:
+  ```
+  <provider
+      android:name="androidx.core.content.FileProvider"
+      android:authorities="${applicationId}.fileprovider"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <!-- ... -->
+  </provider>
+  ```
+- Механизмы для открытия файлов в других приложениях при экспорте
+
+## 8. Защита данных и безопасность
+
+### 8.1. Шифрование базы данных с SQLCipher
+Приложение обеспечивает надежную защиту конфиденциальных данных:
+
+#### 8.1.1. Реализация DatabaseEncryption
+- Класс `DatabaseEncryption` управляет ключами шифрования для базы данных:
+  ```kotlin
+  class DatabaseEncryption @Inject constructor(
+      private val context: Context,
+      private val securityManager: SecurityManager
+  ) {
+      // ...
+      
+      fun getDatabasePassword(): String {
+          var password = securePrefs.getString(KEY_DATABASE_PASSWORD, null)
+          
+          if (password == null) {
+              password = generateSecurePassword()
+              securePrefs.edit().putString(KEY_DATABASE_PASSWORD, password).apply()
+              
+              // Дополнительная копия для восстановления
+              backupPrefs.edit().putString(KEY_DATABASE_PASSWORD_BACKUP, password).apply()
+          }
+          
+          return password
+      }
+      
+      // ...
+  }
+  ```
+
+- Использование `EncryptedSharedPreferences` для безопасного хранения паролей
+- Автоматическая генерация паролей с высокой криптографической стойкостью
+- Резервный механизм восстановления ключей шифрования
+
+#### 8.1.2. Интеграция с Room
+- Настройка SQLCipher в `DatabaseModule`:
+  ```kotlin
+  @Provides
+  @Singleton
+  fun provideAppDatabase(
+      @ApplicationContext context: Context,
+      databaseEncryption: DatabaseEncryption
+  ): AppDatabase {
+      try {
+          // Получение ключа шифрования
+          val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+          val factory = SupportFactory(passphrase)
+          
+          // Создание зашифрованной базы данных
+          return Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
+              .fallbackToDestructiveMigration()
+              .openHelperFactory(factory)  // Интеграция SQLCipher
+              .build()
+      } catch (e: Exception) {
+          // Обработка ошибок шифрования
+      }
+  }
+  ```
+- Автоматический перевыпуск ключей шифрования при проблемах
+
+### 8.2. Безопасное хранение настроек
+Приложение обеспечивает безопасное хранение пользовательских настроек:
+
+#### 8.2.1. SecureAppPreferences
+- Использование `EncryptedSharedPreferences` для шифрования данных настроек:
+  ```kotlin
+  private val encryptedPreferences by lazy {
+      try {
+          EncryptedSharedPreferences.create(
+              context,
+              PREFERENCES_FILE_NAME,
+              masterKey,
+              EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+              EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+          )
+      } catch (e: Exception) {
+          // Fallback
+      }
+  }
+  ```
+- Шифрование как ключей, так и значений с использованием алгоритмов AES
+- Использование Android Keystore для хранения мастер-ключа
+
+### 8.3. Управление разрешениями
+Приложение тщательно управляет системными разрешениями:
+
+#### 8.3.1. Необходимые разрешения
+- `READ_EXTERNAL_STORAGE` и `WRITE_EXTERNAL_STORAGE` для работы с файлами
+- `CAMERA` для фотографирования объектов недвижимости
+- `ACCESS_FINE_LOCATION` и `ACCESS_COARSE_LOCATION` для геолокации
+- `READ_CALL_LOG` для интеграции с журналом звонков
+- `READ_MEDIA_IMAGES` для современной обработки медиафайлов
+
+#### 8.3.2. Runtime проверки разрешений
+- Использование `ContextCompat.checkSelfPermission()` перед выполнением операций
+- Реализация в `ExportPropertyToPdfUseCase`:
+  ```kotlin
+  private fun checkStoragePermission(): Boolean {
+      // На Android 10 (API 29) и выше разрешение не требуется для записи
+      // в директорию Download/RealEstateAssistant
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          return true
+      }
+      
+      // Для более старых версий проверяем наличие разрешения WRITE_EXTERNAL_STORAGE
+      return ContextCompat.checkSelfPermission(
+          context,
+          Manifest.permission.WRITE_EXTERNAL_STORAGE
+      ) == PackageManager.PERMISSION_GRANTED
+  }
+  ```
+- Адаптация функциональности в зависимости от доступных разрешений
+
+### 8.4. Шифрование файлов
+Приложение применяет Security-Crypto для шифрования файлов:
+
+#### 8.4.1. FileEncryptionManager
+- Использование `EncryptedFile` для шифрования файлов:
+  ```kotlin
+  suspend fun encryptFile(inputFile: File, fileName: String): Result<File> = withContext(Dispatchers.IO) {
+      try {
+          val encryptedFile = EncryptedFile.Builder(
+              File(context.filesDir, fileName),
+              context,
+              masterKey,
+              EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
+          ).build()
+          
+          encryptedFile.openFileOutput().use { outputStream ->
+              inputFile.inputStream().use { it.copyTo(outputStream) }
+          }
+          
+          Result.Success(encryptedFile.file)
+      } catch (e: Exception) {
+          Result.Error(e)
+      }
+  }
+  ```
+- Надежное шифрование с использованием AES-256-GCM
+- Безопасное восстановление зашифрованных файлов 
