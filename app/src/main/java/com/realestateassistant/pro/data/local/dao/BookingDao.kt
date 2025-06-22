@@ -159,4 +159,10 @@ interface BookingDao {
            "ELSE status END " +
            "THEN :currentTime ELSE updatedAt END")
     suspend fun updateBookingStatusesAutomatically(currentTime: Long = System.currentTimeMillis())
+    
+    /**
+     * Удаляет все бронирования из базы данных
+     */
+    @Query("DELETE FROM bookings")
+    suspend fun deleteAllBookings()
 } 

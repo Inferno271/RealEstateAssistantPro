@@ -106,4 +106,10 @@ interface PropertyDao {
            "(SELECT propertyId FROM bookings WHERE status IN ('CONFIRMED', 'ACTIVE', 'PENDING') " +
            "AND (startDate <= :endDate AND endDate >= :startDate))")
     fun getAvailableProperties(startDate: Long, endDate: Long): Flow<List<PropertyEntity>>
+    
+    /**
+     * Удаляет все объекты недвижимости из базы данных
+     */
+    @Query("DELETE FROM properties")
+    suspend fun deleteAllProperties()
 } 

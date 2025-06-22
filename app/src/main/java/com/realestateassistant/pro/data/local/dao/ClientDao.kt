@@ -89,4 +89,10 @@ interface ClientDao {
      */
     @Query("SELECT * FROM clients")
     suspend fun getAllClientsDirectly(): List<ClientEntity>
+
+    /**
+     * Удаляет всех клиентов из базы данных
+     */
+    @Query("DELETE FROM clients")
+    suspend fun deleteAllClients()
 } 

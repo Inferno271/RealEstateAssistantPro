@@ -48,7 +48,8 @@ data class BookingCalendarState(
     val availableTimeSlots: List<AvailableTimeSlot> = emptyList(), // Доступные окна для бронирования
     val allBookings: List<Booking> = emptyList(),
     val filteredBookings: List<Booking> = emptyList(),
-    val allProperties: List<PropertyId> = emptyList() // Список всех идентификаторов объектов недвижимости
+    val allProperties: List<PropertyId> = emptyList(), // Список всех идентификаторов объектов недвижимости
+    val tempBookingAmount: Double? = null // Временное хранение рекомендуемой суммы для нового бронирования
 )
 
 /**
@@ -178,14 +179,25 @@ class BookingCalendarViewModel @Inject constructor(
                 updateBookingStatus(event.bookingId, event.status)
             }
             is BookingCalendarEvent.ShowBookingDialog -> {
-                _state.update { it.copy(isBookingDialogVisible = true) }
+                // Показываем диалог и рассчитываем предварительную цену
+                _state.update { currentState ->
+                    val startDate = currentState.selectedStartDate ?: LocalDate.now()
+                    val endDate = currentState.selectedEndDate ?: startDate.plusDays(1)
+                    val recommendedPrice = calculateRecommendedPrice(startDate, endDate, currentState.selectedProperty)
+
+                    currentState.copy(
+                        isBookingDialogVisible = true,
+                        tempBookingAmount = recommendedPrice
+                    )
+                }
             }
             is BookingCalendarEvent.HideBookingDialog -> {
                 _state.update { 
                     it.copy(
                         isBookingDialogVisible = false,
                         selectedBooking = null,
-                        error = null
+                        error = null,
+                        tempBookingAmount = null
                     ) 
                 }
             }
@@ -227,11 +239,20 @@ class BookingCalendarViewModel @Inject constructor(
                 updateBookingStatusesAutomatically()
             }
             is BookingCalendarEvent.ConfirmDateSelection -> {
-                _state.update { 
-                    it.copy(
+                _state.update { currentState -> 
+                    val startDate = currentState.selectedStartDate ?: LocalDate.now()
+                    val endDate = currentState.selectedEndDate ?: startDate.plusDays(1)
+                    val recommendedPrice = calculateRecommendedPrice(startDate, endDate, currentState.selectedProperty)
+                
+                    currentState.copy(
                         isSelectionMode = false,
                         isBookingDialogVisible = true,
-                        isInfoMode = false
+                        isInfoMode = false,
+                        // Создаем временное бронирование с рекомендуемой ценой, но без ID
+                        // Это не сохраняемое бронирование, а только для отображения в диалоге
+                        selectedBooking = null, // Убираем временное бронирование, чтобы не вызывать UpdateBooking
+                        // Храним рекомендуемую цену в другом месте
+                        tempBookingAmount = recommendedPrice
                     )
                 }
             }
@@ -569,6 +590,81 @@ class BookingCalendarViewModel @Inject constructor(
         return slots
     }
     
+    /**
+     * Вычисляет рекомендуемую стоимость бронирования на основе выбранных дат и объекта недвижимости
+     * 
+     * @param startDate начальная дата бронирования
+     * @param endDate конечная дата бронирования
+     * @param property объект недвижимости
+     * @return рекомендуемая стоимость бронирования
+     */
+    private fun calculateRecommendedPrice(startDate: LocalDate, endDate: LocalDate, property: Property?): Double {
+        if (property == null) return 0.0
+        
+        // Рассчитываем количество ночей
+        val nightsCount = ChronoUnit.DAYS.between(startDate, endDate)
+        
+        // Определяем, является ли бронирование долгосрочным (более 30 дней)
+        val isLongTerm = nightsCount > 30
+        
+        if (isLongTerm) {
+            // Для долгосрочной аренды используем месячную стоимость
+            val monthlyPrice = property.monthlyRent ?: 0.0
+            
+            // Проверяем, есть ли сезонные цены для долгосрочной аренды
+            val currentMonth = LocalDate.now().monthValue
+            val isSummerSeason = currentMonth in 5..9 // Май-Сентябрь
+            
+            val adjustedMonthlyPrice = if (isSummerSeason && property.summerMonthlyRent != null) {
+                property.summerMonthlyRent
+            } else if (!isSummerSeason && property.winterMonthlyRent != null) {
+                property.winterMonthlyRent
+            } else {
+                monthlyPrice
+            }
+            
+            // Рассчитываем стоимость на основе количества месяцев
+            val months = nightsCount / 30.0
+            return adjustedMonthlyPrice * months
+        } else {
+            // Для краткосрочной аренды проверяем наличие сезонных цен
+            var dailyPrice = property.dailyPrice ?: 0.0
+            
+            // Проверяем, попадает ли бронирование в период сезонной цены
+            property.seasonalPrices.forEach { seasonalPrice ->
+                val seasonStartDate = Instant.ofEpochMilli(seasonalPrice.startDate)
+                    .atZone(ZoneId.systemDefault()).toLocalDate()
+                val seasonEndDate = Instant.ofEpochMilli(seasonalPrice.endDate)
+                    .atZone(ZoneId.systemDefault()).toLocalDate()
+                
+                // Если текущая дата находится в диапазоне сезона, используем сезонную цену
+                val today = LocalDate.now()
+                if ((today.isEqual(seasonStartDate) || today.isAfter(seasonStartDate)) &&
+                    (today.isEqual(seasonEndDate) || today.isBefore(seasonEndDate))) {
+                    dailyPrice = seasonalPrice.price
+                }
+            }
+            
+            // Применяем скидки для более длительного проживания, если они указаны
+            val weeklyDiscount = property.weeklyDiscount ?: 0.0
+            val monthlyDiscount = property.monthlyDiscount ?: 0.0
+            
+            val totalPrice = when {
+                nightsCount >= 30 && monthlyDiscount > 0 -> {
+                    dailyPrice * nightsCount * (1 - monthlyDiscount / 100)
+                }
+                nightsCount >= 7 && weeklyDiscount > 0 -> {
+                    dailyPrice * nightsCount * (1 - weeklyDiscount / 100)
+                }
+                else -> {
+                    dailyPrice * nightsCount
+                }
+            }
+            
+            return totalPrice
+        }
+    }
+    
     private fun selectDate(date: LocalDate) {
         val currentState = _state.value
         
@@ -660,6 +756,10 @@ class BookingCalendarViewModel @Inject constructor(
                 val startDateMillis = startDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
                 val endDateMillis = endDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
                 
+                // Определяем, является ли бронирование долгосрочным (более 30 дней)
+                val nightsCount = ChronoUnit.DAYS.between(startDate, endDate)
+                val isLongTerm = nightsCount > 30
+                
                 // Создаем новое бронирование
                 val newBooking = Booking(
                     id = UUID.randomUUID().toString(),
@@ -670,7 +770,11 @@ class BookingCalendarViewModel @Inject constructor(
                     status = BookingStatus.PENDING,
                     totalAmount = amount,
                     guestsCount = guestsCount,
-                    notes = notes
+                    notes = notes,
+                    
+                    // Дополнительные поля для долгосрочной аренды
+                    rentPeriodMonths = if (isLongTerm) (nightsCount / 30).toInt() else null,
+                    monthlyPaymentAmount = if (isLongTerm) currentState.selectedProperty?.monthlyRent else null
                 )
                 
                 val result = bookingUseCases.addBookingUseCase(newBooking)

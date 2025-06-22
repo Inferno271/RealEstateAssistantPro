@@ -24,6 +24,7 @@ fun SettingsScreen(
     val state by viewModel.state.collectAsState()
 
     var showConfirmDialog by remember { mutableStateOf(false) }
+    var showClearDatabaseDialog by remember { mutableStateOf(false) }
     var propertiesCount by remember { mutableStateOf(20) }
     var clientsCount by remember { mutableStateOf(15) }
     
@@ -143,6 +144,65 @@ fun SettingsScreen(
                 }
             }
             
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Секция для очистки базы данных
+            SettingsSection(
+                title = "Очистка базы данных",
+                icon = Icons.Default.Delete
+            ) {
+                Column {
+                    Text(
+                        "Удаление всех данных из базы данных приложения",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Button(
+                        onClick = { showClearDatabaseDialog = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Очистить базу данных")
+                    }
+                    
+                    if (state.clearDatabaseResult != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = MaterialTheme.shapes.small,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(8.dp)
+                            ) {
+                                val result = state.clearDatabaseResult
+                                Text(
+                                    "Удалено ${result?.propertiesDeleted ?: 0} объектов недвижимости",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    "Удалено ${result?.clientsDeleted ?: 0} клиентов",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    "Всего удалено: ${result?.totalItemsDeleted ?: 0} записей",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
             Divider(modifier = Modifier.padding(vertical = 8.dp))
             
             Text(
@@ -176,7 +236,7 @@ fun SettingsScreen(
                         value = propertiesCount.toFloat(),
                         onValueChange = { propertiesCount = it.toInt() },
                         valueRange = 5f..50f,
-                        steps = 9,
+                        steps = 45,
                         modifier = Modifier.padding(vertical = 4.dp)
                     )
                     Text("$propertiesCount объектов")
@@ -188,25 +248,10 @@ fun SettingsScreen(
                         value = clientsCount.toFloat(),
                         onValueChange = { clientsCount = it.toInt() },
                         valueRange = 5f..30f,
-                        steps = 5,
+                        steps = 25,
                         modifier = Modifier.padding(vertical = 4.dp)
                     )
                     Text("$clientsCount клиентов")
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Button(
-                        onClick = {
-                            viewModel.populateTestData(
-                                propertiesCount = propertiesCount,
-                                clientsCount = clientsCount
-                            )
-                            showConfirmDialog = false
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Создать тестовые данные")
-                    }
                 }
             },
             confirmButton = {
@@ -222,6 +267,38 @@ fun SettingsScreen(
             dismissButton = {
                 OutlinedButton(
                     onClick = { showConfirmDialog = false }
+                ) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
+    
+    // Диалог подтверждения очистки базы данных
+    if (showClearDatabaseDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDatabaseDialog = false },
+            title = { Text("Очистка базы данных") },
+            text = {
+                Text("Вы уверены, что хотите удалить все данные из базы данных? Это действие нельзя отменить.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.clearDatabase()
+                        showClearDatabaseDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text("Удалить все данные")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showClearDatabaseDialog = false }
                 ) {
                     Text("Отмена")
                 }

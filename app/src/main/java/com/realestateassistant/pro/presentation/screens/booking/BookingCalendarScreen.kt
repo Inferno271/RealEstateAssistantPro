@@ -251,57 +251,84 @@ fun BookingCalendarScreen(
                         )
                     }
                 } else {
-                    // Режим создания/редактирования бронирования
-                    BookingDialog(
-                        propertyId = propertyId,
-                        startDate = state.selectedStartDate,
-                        endDate = state.selectedEndDate,
-                        clients = state.clients,
-                        selectedClient = state.selectedClient,
-                        onClientSelect = { client ->
-                            viewModel.onEvent(BookingCalendarEvent.SelectClient(client))
-                        },
-                        onDateChange = { start, end ->
-                            viewModel.onEvent(BookingCalendarEvent.UpdateDates(start, end))
-                        },
-                        onCancel = {
-                            viewModel.onEvent(BookingCalendarEvent.HideBookingDialog)
-                        },
-                        onSave = { amount, guestsCount, notes ->
-                            val booking = state.selectedBooking
-                            if (booking != null) {
-                                // Редактирование существующего бронирования
+                    // Режим создания или редактирования бронирования
+                    val booking = state.selectedBooking
+                    val startDate = state.selectedStartDate ?: LocalDate.now()
+                    val endDate = state.selectedEndDate ?: LocalDate.now().plusDays(1)
+
+                    if (booking != null) {
+                        // Редактирование существующего бронирования
+                        BookingDialog(
+                            propertyId = booking.propertyId,
+                            startDate = startDate,
+                            endDate = endDate,
+                            clients = state.clients,
+                            selectedClient = state.selectedClient,
+                            property = state.selectedProperty, // Передаем объект недвижимости
+                            onClientSelect = { client ->
+                                viewModel.onEvent(BookingCalendarEvent.SelectClient(client))
+                            },
+                            onDateChange = { start, end ->
+                                viewModel.onEvent(BookingCalendarEvent.UpdateDates(start, end))
+                            },
+                            onCancel = {
+                                viewModel.onEvent(BookingCalendarEvent.HideBookingDialog)
+                            },
+                            onSave = { amount, guestsCount, notes ->
                                 viewModel.onEvent(
                                     BookingCalendarEvent.UpdateBooking(
                                         bookingId = booking.id,
                                         clientId = state.selectedClient?.id,
-                                        startDate = state.selectedStartDate ?: LocalDate.now(),
-                                        endDate = state.selectedEndDate ?: LocalDate.now(),
+                                        startDate = startDate,
+                                        endDate = endDate,
                                         amount = amount,
                                         guestsCount = guestsCount,
                                         notes = notes
                                     )
                                 )
-                            } else {
-                                // Создание нового бронирования
-                                viewModel.onEvent(
-                                    BookingCalendarEvent.CreateBooking(
-                                        propertyId = propertyId,
-                                        clientId = state.selectedClient?.id,
-                                        startDate = state.selectedStartDate ?: LocalDate.now(),
-                                        endDate = state.selectedEndDate ?: LocalDate.now(),
-                                        amount = amount,
-                                        guestsCount = guestsCount,
-                                        notes = notes
+                            },
+                            initialAmount = booking.totalAmount,
+                            initialGuestsCount = booking.guestsCount ?: 1,
+                            initialNotes = booking.notes,
+                            isEditing = true
+                        )
+                    } else {
+                        // Создание нового бронирования
+                        BookingDialog(
+                            propertyId = state.selectedPropertyId ?: "",
+                            startDate = startDate,
+                            endDate = endDate,
+                            clients = state.clients,
+                            selectedClient = state.selectedClient,
+                            property = state.selectedProperty, // Передаем объект недвижимости
+                            onClientSelect = { client ->
+                                viewModel.onEvent(BookingCalendarEvent.SelectClient(client))
+                            },
+                            onDateChange = { start, end ->
+                                viewModel.onEvent(BookingCalendarEvent.UpdateDates(start, end))
+                            },
+                            onCancel = {
+                                viewModel.onEvent(BookingCalendarEvent.HideBookingDialog)
+                            },
+                            onSave = { amount, guestsCount, notes ->
+                                val propertyId = state.selectedPropertyId
+                                if (propertyId != null && propertyId.isNotEmpty()) {
+                                    viewModel.onEvent(
+                                        BookingCalendarEvent.CreateBooking(
+                                            propertyId = propertyId,
+                                            clientId = state.selectedClient?.id,
+                                            startDate = startDate,
+                                            endDate = endDate,
+                                            amount = amount,
+                                            guestsCount = guestsCount,
+                                            notes = notes
+                                        )
                                     )
-                                )
-                            }
-                        },
-                        initialAmount = state.selectedBooking?.totalAmount,
-                        initialGuestsCount = state.selectedBooking?.guestsCount ?: 1,
-                        initialNotes = state.selectedBooking?.notes,
-                        isEditing = state.selectedBooking != null && !state.isInfoMode
-                    )
+                                }
+                            },
+                            initialAmount = state.tempBookingAmount
+                        )
+                    }
                 }
             }
         }

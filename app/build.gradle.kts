@@ -121,4 +121,11 @@ dependencies {
 
     // Yandex MapKit
     implementation("com.yandex.android:maps.mobile:4.15.0-lite")
+    
+    // Mockito для тестирования
+    testImplementation("org.mockito:mockito-core:5.7.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    androidTestImplementation("org.mockito:mockito-core:5.7.0")
+    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    androidTestImplementation("org.mockito:mockito-android:5.7.0")
 }

@@ -524,6 +524,29 @@ class AppointmentViewModel @Inject constructor(
                         showClientSelector = false
                     ) 
                 }
+                
+                // Проверяем валидность после установки клиента
+                val formState = _state.value.formState
+                val (clientRequired, propertyRequired) = getParticipantRequirements(formState.type)
+                
+                if (propertyRequired && formState.propertyId.isBlank()) {
+                    _state.update {
+                        it.copy(formState = it.formState.copy(
+                            propertyError = "Для встречи типа '${translateAppointmentType(formState.type)}' также необходим объект недвижимости"
+                        ))
+                    }
+                } else if (!clientRequired && !propertyRequired && formState.propertyId.isBlank()) {
+                    // Если установлен клиент, можно снять ошибку "необходим хотя бы один участник"
+                    _state.update {
+                        it.copy(formState = it.formState.copy(clientError = null))
+                    }
+                    
+                    // Проверяем пересечения, если все валидно
+                    checkForOverlappingAppointments()
+                } else {
+                    // Проверяем пересечения, если все валидно
+                    checkForOverlappingAppointments()
+                }
             }
             is AppointmentDialogEvent.SetProperty -> {
                 updateFormState { 
@@ -533,6 +556,29 @@ class AppointmentViewModel @Inject constructor(
                         propertyError = null,
                         showPropertySelector = false
                     ) 
+                }
+                
+                // Проверяем валидность после установки объекта недвижимости
+                val formState = _state.value.formState
+                val (clientRequired, propertyRequired) = getParticipantRequirements(formState.type)
+                
+                if (clientRequired && formState.clientId.isBlank()) {
+                    _state.update {
+                        it.copy(formState = it.formState.copy(
+                            clientError = "Для встречи типа '${translateAppointmentType(formState.type)}' также необходим клиент"
+                        ))
+                    }
+                } else if (!clientRequired && !propertyRequired && formState.clientId.isBlank()) {
+                    // Если установлен объект недвижимости, можно снять ошибку "необходим хотя бы один участник"
+                    _state.update {
+                        it.copy(formState = it.formState.copy(propertyError = null))
+                    }
+                    
+                    // Проверяем пересечения, если все валидно
+                    checkForOverlappingAppointments()
+                } else {
+                    // Проверяем пересечения, если все валидно
+                    checkForOverlappingAppointments()
                 }
             }
             is AppointmentDialogEvent.ShowClientSelector -> {
@@ -571,6 +617,7 @@ class AppointmentViewModel @Inject constructor(
                 }
                 validateEndDate()
                 validateEndTime()
+                checkForOverlappingAppointments()
             }
             is AppointmentDialogEvent.SetEndDate -> {
                 updateFormState { 
@@ -582,6 +629,7 @@ class AppointmentViewModel @Inject constructor(
                 }
                 validateEndDate()
                 validateEndTime()
+                checkForOverlappingAppointments()
             }
             is AppointmentDialogEvent.SetStartTime -> {
                 updateFormState { 
@@ -604,6 +652,7 @@ class AppointmentViewModel @Inject constructor(
                     }
                 }
                 validateEndTime()
+                checkForOverlappingAppointments()
             }
             is AppointmentDialogEvent.SetEndTime -> {
                 updateFormState { 
@@ -613,6 +662,7 @@ class AppointmentViewModel @Inject constructor(
                     ) 
                 }
                 validateEndTime()
+                checkForOverlappingAppointments()
             }
             is AppointmentDialogEvent.SetIsAllDay -> {
                 updateFormState { 
@@ -622,6 +672,8 @@ class AppointmentViewModel @Inject constructor(
                         timeError = if (event.isAllDay) null else it.timeError
                     ) 
                 }
+                // Для режима "весь день" тоже проверяем на пересечения
+                checkForOverlappingAppointments()
             }
             is AppointmentDialogEvent.ShowDatePicker -> {
                 updateFormState { 
@@ -643,6 +695,54 @@ class AppointmentViewModel @Inject constructor(
                 try {
                     val type = AppointmentType.valueOf(event.type)
                     updateFormState { it.copy(type = type) }
+                    
+                    // При изменении типа сразу проверяем соответствие требованиям к участникам
+                    val (clientRequired, propertyRequired) = getParticipantRequirements(type)
+                    val formState = _state.value.formState
+                    
+                    // Очищаем прежние ошибки для корректного отображения
+                    _state.update { 
+                        it.copy(formState = it.formState.copy(
+                            clientError = null,
+                            propertyError = null
+                        ))
+                    }
+                    
+                    // Проверяем соответствие участников типу встречи
+                    var hasError = false
+                    
+                    if (clientRequired && formState.clientId.isBlank()) {
+                        _state.update { 
+                            it.copy(formState = it.formState.copy(
+                                clientError = "Для встречи типа '${translateAppointmentType(type)}' необходим клиент"
+                            ))
+                        }
+                        hasError = true
+                    }
+                    
+                    if (propertyRequired && formState.propertyId.isBlank()) {
+                        _state.update { 
+                            it.copy(formState = it.formState.copy(
+                                propertyError = "Для встречи типа '${translateAppointmentType(type)}' необходим объект недвижимости"
+                            ))
+                        }
+                        hasError = true
+                    }
+                    
+                    if (!clientRequired && !propertyRequired && 
+                        formState.clientId.isBlank() && formState.propertyId.isBlank()) {
+                        _state.update { 
+                            it.copy(formState = it.formState.copy(
+                                clientError = "Необходимо указать как минимум клиента или объект недвижимости"
+                            ))
+                        }
+                        hasError = true
+                    }
+                    
+                    // Если данные корректны, проверяем пересечение времени
+                    if (!hasError) {
+                        checkForOverlappingAppointments()
+                    }
                 } catch (e: Exception) {
                     _state.update { it.copy(error = "Неизвестный тип встречи") }
                 }
@@ -708,8 +808,8 @@ class AppointmentViewModel @Inject constructor(
         val formState = _state.value.formState
         val isEditMode = _state.value.isEditMode
         
-        // Проверяем валидность формы
-        if (!validateForm()) {
+        // Выполняем базовую валидацию формы
+        if (!validateFormBasic()) {
             // Если есть ошибка времени, явно показываем пользователю предупреждение
             if (formState.timeError != null) {
                 _state.update { it.copy(error = formState.timeError) }
@@ -717,7 +817,26 @@ class AppointmentViewModel @Inject constructor(
             return
         }
         
+        // Сбрасываем ошибку пересекающихся встреч перед проверкой
+        _state.update { it.copy(formState = it.formState.copy(timeError = null)) }
+        
         viewModelScope.launch {
+            // Проверяем наличие пересекающихся встреч
+            val appointment = formState.toAppointment()
+            val excludeId = if (isEditMode) formState.id else ""
+            val hasOverlaps = checkOverlappingAppointments(appointment.startTime, appointment.endTime, excludeId)
+            
+            if (hasOverlaps) {
+                val errorMessage = "⚠️ ВНИМАНИЕ! Уже есть встречи на это время. Пожалуйста, выберите другое время."
+                _state.update { 
+                    it.copy(
+                        formState = it.formState.copy(timeError = errorMessage),
+                        error = errorMessage
+                    )
+                }
+                return@launch
+            }
+        
             try {
                 if (isEditMode) {
                     // Получаем текущую встречу, чтобы сохранить createdAt
@@ -765,9 +884,55 @@ class AppointmentViewModel @Inject constructor(
     }
 
     /**
-     * Валидирует форму
+     * Определяет требования к участникам встречи в зависимости от типа
+     * @return Pair<Boolean, Boolean> - (требуется клиент, требуется объект)
      */
-    private fun validateForm(): Boolean {
+    private fun getParticipantRequirements(type: AppointmentType): Pair<Boolean, Boolean> {
+        return when(type) {
+            // Для этих типов нужны оба участника
+            AppointmentType.SHOWING,          // Показ объекта клиенту
+            AppointmentType.CONTRACT_SIGNING, // Подписание договора с клиентом об объекте
+            AppointmentType.KEY_HANDOVER -> Pair(true, true)  // Передача ключей клиенту от объекта
+            
+            // Для этих типов нужен только клиент
+            AppointmentType.CLIENT_MEETING -> Pair(true, false) // Встреча с клиентом
+            
+            // Для этих типов нужен только объект
+            AppointmentType.PROPERTY_INSPECTION, // Осмотр объекта
+            AppointmentType.OWNER_MEETING,       // Встреча с собственником
+            AppointmentType.INSPECTION,          // Инспекция объекта
+            AppointmentType.PHOTO_SESSION,       // Фотосессия объекта
+            AppointmentType.MAINTENANCE -> Pair(false, true)  // Техническое обслуживание
+            
+            // Для других типов - зависит от контекста, но требуем хотя бы одного участника
+            AppointmentType.SIGNING,
+            AppointmentType.OTHER -> Pair(false, false)
+        }
+    }
+    
+    /**
+     * Преобразует тип встречи в русскоязычное наименование
+     */
+    private fun translateAppointmentType(type: AppointmentType): String {
+        return when(type) {
+            AppointmentType.SHOWING -> "Показ объекта"
+            AppointmentType.CLIENT_MEETING -> "Встреча с клиентом"
+            AppointmentType.PROPERTY_INSPECTION -> "Осмотр объекта"
+            AppointmentType.CONTRACT_SIGNING -> "Подписание договора"
+            AppointmentType.KEY_HANDOVER -> "Передача ключей"
+            AppointmentType.OWNER_MEETING -> "Встреча с собственником"
+            AppointmentType.SIGNING -> "Подписание документов"
+            AppointmentType.INSPECTION -> "Инспекция объекта" 
+            AppointmentType.PHOTO_SESSION -> "Фотосессия объекта"
+            AppointmentType.MAINTENANCE -> "Техническое обслуживание"
+            AppointmentType.OTHER -> "Другое"
+        }
+    }
+    
+    /**
+     * Выполняет базовую валидацию формы (без проверки пересечений)
+     */
+    private fun validateFormBasic(): Boolean {
         var isValid = true
         val formState = _state.value.formState
         
@@ -783,27 +948,40 @@ class AppointmentViewModel @Inject constructor(
             _state.update { it.copy(formState = it.formState.copy(titleError = null)) }
         }
         
-        // Проверяем клиента
-        if (formState.clientId.isBlank()) {
-            _state.update { 
+        // Определяем требования к участникам встречи в зависимости от типа
+        val (clientRequired, propertyRequired) = getParticipantRequirements(formState.type)
+        
+        // Проверяем наличие хотя бы одного участника, если ни один не требуется
+        if (!clientRequired && !propertyRequired && formState.clientId.isBlank() && formState.propertyId.isBlank()) {
+            _state.update {
                 it.copy(formState = it.formState.copy(
-                    clientError = "Необходимо выбрать клиента"
+                    clientError = "Необходимо указать как минимум клиента или объект недвижимости"
                 ))
             }
             isValid = false
-        } else {
+        }
+        
+        // Проверяем клиента, если он требуется
+        if (clientRequired && formState.clientId.isBlank()) {
+            _state.update { 
+                it.copy(formState = it.formState.copy(
+                    clientError = "Для данного типа встречи необходимо выбрать клиента"
+                ))
+            }
+            isValid = false
+        } else if (!clientRequired || formState.clientId.isNotBlank()) {
             _state.update { it.copy(formState = it.formState.copy(clientError = null)) }
         }
         
-        // Проверяем объект недвижимости
-        if (formState.propertyId.isBlank()) {
+        // Проверяем объект недвижимости, если он требуется
+        if (propertyRequired && formState.propertyId.isBlank()) {
             _state.update { 
                 it.copy(formState = it.formState.copy(
-                    propertyError = "Необходимо выбрать объект недвижимости"
+                    propertyError = "Для данного типа встречи необходимо выбрать объект недвижимости"
                 ))
             }
             isValid = false
-        } else {
+        } else if (!propertyRequired || formState.propertyId.isNotBlank()) {
             _state.update { it.copy(formState = it.formState.copy(propertyError = null)) }
         }
         
@@ -835,6 +1013,22 @@ class AppointmentViewModel @Inject constructor(
         
         return isValid
     }
+    
+    /**
+     * Проверяет наличие пересекающихся встреч
+     */
+    private suspend fun checkOverlappingAppointments(startTime: Long, endTime: Long, excludeId: String = ""): Boolean {
+        try {
+            val result = appointmentUseCases.getOverlappingAppointments(startTime, endTime, excludeId)
+            if (result.isSuccess) {
+                val overlappingAppointments = result.getOrNull()
+                return overlappingAppointments != null && overlappingAppointments.isNotEmpty()
+            }
+        } catch (e: Exception) {
+            _state.update { it.copy(error = "Ошибка проверки пересекающихся встреч: ${e.message}") }
+        }
+        return false
+    }
 
     /**
      * Проверяет корректность даты окончания
@@ -848,6 +1042,8 @@ class AppointmentViewModel @Inject constructor(
             ) }
         } else {
             updateFormState { it.copy(endDateError = null) }
+            // Если дата корректна, запускаем проверку на пересечения
+            checkForOverlappingAppointments()
         }
     }
 
@@ -867,6 +1063,55 @@ class AppointmentViewModel @Inject constructor(
                 }
             } else {
                 updateFormState { it.copy(timeError = null) }
+                // Если время корректно, запускаем проверку на пересечения
+                checkForOverlappingAppointments()
+            }
+        }
+    }
+    
+    /**
+     * Запускает проверку на пересечение встреч при изменении времени/даты
+     */
+    private fun checkForOverlappingAppointments() {
+        val formState = _state.value.formState
+        
+        // Проверяем только если заголовок и дата валидны
+        if (formState.titleError == null && formState.endDateError == null) {
+            // Определяем требования к участникам в зависимости от типа встречи
+            val (clientRequired, propertyRequired) = getParticipantRequirements(formState.type)
+            
+            // Если клиент требуется, но его нет, или объект требуется, но его нет - не проверяем пересечения
+            if ((clientRequired && formState.clientId.isBlank()) || 
+                (propertyRequired && formState.propertyId.isBlank())) {
+                return
+            }
+            
+            // Если не требуется ни клиент, ни объект, проверяем наличие хотя бы одного участника
+            if (!clientRequired && !propertyRequired && 
+                formState.clientId.isBlank() && formState.propertyId.isBlank()) {
+                return
+            }
+            
+            viewModelScope.launch {
+                val appointment = formState.toAppointment()
+                val excludeId = if (_state.value.isEditMode) formState.id else ""
+                
+                val hasOverlaps = checkOverlappingAppointments(
+                    appointment.startTime, 
+                    appointment.endTime, 
+                    excludeId
+                )
+                
+                // Обновляем статус ошибки - устанавливаем если есть пересечения,
+                // или очищаем если пересечений нет
+                _state.update { 
+                    it.copy(formState = it.formState.copy(
+                        timeError = if (hasOverlaps) 
+                            "⚠️ ВНИМАНИЕ! Уже есть встречи на это время. Пожалуйста, выберите другое время."
+                        else 
+                            null
+                    ))
+                }
             }
         }
     }

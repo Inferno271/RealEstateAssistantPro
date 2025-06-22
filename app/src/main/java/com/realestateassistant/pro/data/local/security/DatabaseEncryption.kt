@@ -87,9 +87,7 @@ class DatabaseEncryption @Inject constructor(
                 val deleted = secureDbFile.delete()
                 Log.d(TAG, "Файл secure_db.xml ${if (deleted) "удален" else "не удален"}")
             }
-            
-            // Также можно удалить файлы ключей AndroidKeyStore, но это более сложно
-            // и требует особых разрешений, поэтому здесь этого не делаем
+        
             
             Log.d(TAG, "Зашифрованное хранилище сброшено")
         } catch (e: Exception) {

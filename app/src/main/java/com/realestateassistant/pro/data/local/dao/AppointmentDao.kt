@@ -162,4 +162,10 @@ interface AppointmentDao {
         ORDER BY startTime ASC
     """)
     fun getAppointmentsForWeek(startOfWeek: Long, endOfWeek: Long): Flow<List<AppointmentEntity>>
+    
+    /**
+     * Удаляет все встречи из базы данных
+     */
+    @Query("DELETE FROM appointments")
+    suspend fun deleteAllAppointments()
 } 

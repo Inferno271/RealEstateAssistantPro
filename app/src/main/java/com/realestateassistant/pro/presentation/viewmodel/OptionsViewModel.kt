@@ -366,7 +366,7 @@ class OptionsViewModel @Inject constructor(
         )
         
         private val DEFAULT_DISTRICTS = listOf(
-            "Центральный", "Ленинский", "Московский", "Приморский", "Петроградский", "Василеостровский"
+            "Ленинский", "Гагаринский", "Нахимовский", "Балаклавский", "Инкерманский", "Северная сторона", "Центр"
         )
         
         private val DEFAULT_LAYOUTS = listOf(

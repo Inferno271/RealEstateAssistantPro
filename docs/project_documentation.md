@@ -345,9 +345,8 @@ data class Booking(
   - `CheckAvailabilityUseCase` - проверка доступности объекта
   - `CancelBookingUseCase` - отмена бронирования
 
-- **RecommendationUseCases** (`app/src/main/java/com/realestateassistant/pro/domain/usecase/recommendation/`):
+- **RСecommendationUseCases** (`app/src/main/java/com/realestateassistant/pro/domain/usecase/recommendation/`):
   - `GetPropertiesForClientUseCase` - получение подходящих объектов для клиента
-  - `GetClientsForPropertyUseCase` - получение подходящих клиентов для объекта
   - `CalculateMatchScoreUseCase` - расчет оценки соответствия
 
 #### 2.2.3. Репозитории (Interfaces)
@@ -903,7 +902,7 @@ class DatabaseEncryption @Inject constructor(
               val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
               val encryptedFile = EncryptedFile.Builder(
                   File(context.filesDir, fileName),
-                  context,
+                            context,
                   masterKeyAlias,
                   EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
               ).build()
@@ -915,7 +914,7 @@ class DatabaseEncryption @Inject constructor(
               }
               
               Result.Success(encryptedFile.file)
-        } catch (e: Exception) {
+                } catch (e: Exception) {
               Log.e(TAG, "Error encrypting file", e)
               Result.Error(e)
           }
@@ -939,7 +938,7 @@ class DatabaseEncryption @Inject constructor(
               }
               
               Result.Success(bytes)
-          } catch (e: Exception) {
+                                    } catch (e: Exception) {
               Log.e(TAG, "Error decrypting file", e)
               Result.Error(e)
           }
@@ -1791,7 +1790,7 @@ object AppModule {
 
 #### 8.1.1. Реализация DatabaseEncryption
 - Класс `DatabaseEncryption` управляет ключами шифрования для базы данных:
-  ```kotlin
+```kotlin
   class DatabaseEncryption @Inject constructor(
       private val context: Context,
       private val securityManager: SecurityManager
@@ -1822,24 +1821,24 @@ object AppModule {
 
 #### 8.1.2. Интеграция с Room
 - Настройка SQLCipher в `DatabaseModule`:
-  ```kotlin
-  @Provides
-  @Singleton
-  fun provideAppDatabase(
-      @ApplicationContext context: Context,
-      databaseEncryption: DatabaseEncryption
-  ): AppDatabase {
-      try {
+```kotlin
+    @Provides
+    @Singleton
+    fun provideAppDatabase(
+        @ApplicationContext context: Context,
+        databaseEncryption: DatabaseEncryption
+    ): AppDatabase {
+        try {
           // Получение ключа шифрования
-          val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
-          val factory = SupportFactory(passphrase)
-          
+            val passphrase = SQLiteDatabase.getBytes(databaseEncryption.getDatabasePassword().toCharArray())
+            val factory = SupportFactory(passphrase)
+            
           // Создание зашифрованной базы данных
           return Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
               .fallbackToDestructiveMigration()
               .openHelperFactory(factory)  // Интеграция SQLCipher
-              .build()
-      } catch (e: Exception) {
+            .build()
+        } catch (e: Exception) {
           // Обработка ошибок шифрования
       }
   }

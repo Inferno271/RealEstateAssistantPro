@@ -59,6 +59,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -86,6 +87,7 @@ import com.realestateassistant.pro.domain.model.Booking
 import com.realestateassistant.pro.domain.model.BookingStatus
 import com.realestateassistant.pro.domain.model.Client
 import com.realestateassistant.pro.domain.model.PaymentStatus
+import com.realestateassistant.pro.domain.model.Property
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -101,6 +103,7 @@ import java.time.temporal.ChronoUnit
  * @param endDate Выбранная конечная дата
  * @param clients Список клиентов
  * @param selectedClient Выбранный клиент
+ * @param property Объект недвижимости
  * @param onClientSelect Колбэк для выбора клиента
  * @param onDateChange Колбэк для изменения дат
  * @param onCancel Колбэк для отмены диалога
@@ -114,6 +117,7 @@ fun BookingDialog(
     endDate: LocalDate?,
     clients: List<Client>,
     selectedClient: Client?,
+    property: Property?,
     onClientSelect: (Client) -> Unit,
     onDateChange: (LocalDate, LocalDate) -> Unit,
     onCancel: () -> Unit,
@@ -142,6 +146,9 @@ fun BookingDialog(
     
     // Расчет количества ночей
     val nightsCount = ChronoUnit.DAYS.between(localStartDate, localEndDate)
+    
+    // Определяем, является ли бронирование долгосрочным (более 30 дней)
+    val isLongTerm = nightsCount > 30
     
     Dialog(
         onDismissRequest = onCancel,
@@ -208,16 +215,20 @@ fun BookingDialog(
                         onClick = { showClientSelector = true }
                     )
                     
-                    // Поле для ввода суммы
+                    // Поле для ввода суммы с разными вариантами цен
                     AmountField(
                         value = amount,
-                        onValueChange = { amount = it }
+                        onValueChange = { amount = it },
+                        nightsCount = nightsCount,
+                        isLongTerm = isLongTerm,
+                        property = property
                     )
                     
                     // Поле для количества гостей
                     GuestsField(
                         value = guestsCount,
-                        onValueChange = { guestsCount = it }
+                        onValueChange = { guestsCount = it },
+                        maxGuests = property?.maxGuests
                     )
                     
                     // Поле для примечаний
@@ -748,7 +759,10 @@ private fun DateRangeSelector(
 @Composable
 private fun AmountField(
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    nightsCount: Long,
+    isLongTerm: Boolean,
+    property: Property?
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -758,6 +772,88 @@ private fun AmountField(
             modifier = Modifier.padding(bottom = 4.dp)
         )
         
+        // Находим текущую сезонную цену, если возможно
+        val seasonalPrice = remember(property, nightsCount) {
+            property?.seasonalPrices?.find { seasonalPrice ->
+                val today = LocalDate.now()
+                val startDate = Instant.ofEpochMilli(seasonalPrice.startDate)
+                    .atZone(ZoneId.systemDefault()).toLocalDate()
+                val endDate = Instant.ofEpochMilli(seasonalPrice.endDate)
+                    .atZone(ZoneId.systemDefault()).toLocalDate()
+                
+                // Проверяем, находится ли текущая дата в диапазоне сезона
+                (today.isEqual(startDate) || today.isAfter(startDate)) &&
+                (today.isEqual(endDate) || today.isBefore(endDate))
+            }
+        }
+        
+        // Рассчитываем цены для различных вариантов
+        val dailyPriceAmount = property?.dailyPrice ?: 0.0
+        val seasonalPriceAmount = seasonalPrice?.price ?: 0.0
+        val monthlyPriceAmount = property?.monthlyRent ?: 0.0
+        val summerMonthlyPriceAmount = property?.summerMonthlyRent ?: monthlyPriceAmount
+        val winterMonthlyPriceAmount = property?.winterMonthlyRent ?: monthlyPriceAmount
+        
+        // Определяем, какой сейчас месяц для определения сезонной цены месячной аренды
+        val currentMonth = LocalDate.now().monthValue
+        val isSummerSeason = currentMonth in 5..9  // Май-Сентябрь
+        
+        // Рассчитываем итоговые суммы
+        val dailyTotal = dailyPriceAmount * nightsCount
+        val seasonalTotal = seasonalPriceAmount * nightsCount
+        
+        // Показываем варианты цен в зависимости от типа аренды
+        if (isLongTerm) {
+            // Компонент для долгосрочной аренды
+            PriceOptions(
+                title = "Вариант цены для долгосрочной аренды:",
+                options = listOf(
+                    PriceOption(
+                        label = "Ежемесячная (стандартная)",
+                        price = monthlyPriceAmount,
+                        description = "${formatCurrency(monthlyPriceAmount)} × ${nightsCount / 30} мес."
+                    ),
+                    PriceOption(
+                        label = if (isSummerSeason) "Летний сезон" else "Зимний сезон",
+                        price = if (isSummerSeason) summerMonthlyPriceAmount else winterMonthlyPriceAmount,
+                        description = "${formatCurrency(if (isSummerSeason) summerMonthlyPriceAmount else winterMonthlyPriceAmount)} × ${nightsCount / 30} мес."
+                    ),
+                    PriceOption(
+                        label = "Произвольная сумма",
+                        isCustom = true
+                    )
+                ),
+                currentValue = value,
+                onValueSelected = onValueChange
+            )
+        } else {
+            // Компонент для краткосрочной аренды
+            PriceOptions(
+                title = "Вариант цены для посуточной аренды:",
+                options = buildList {
+                    add(PriceOption(
+                        label = "Стандартная",
+                        price = dailyTotal,
+                        description = "${formatCurrency(dailyPriceAmount)} × $nightsCount ночей"
+                    ))
+                    if (seasonalPrice != null) {
+                        add(PriceOption(
+                            label = "Сезонная",
+                            price = seasonalTotal,
+                            description = "${formatCurrency(seasonalPriceAmount)} × $nightsCount ночей"
+                        ))
+                    }
+                    add(PriceOption(
+                        label = "Произвольная сумма",
+                        isCustom = true
+                    ))
+                },
+                currentValue = value,
+                onValueSelected = onValueChange
+            )
+        }
+        
+        // Поле для ручного ввода суммы
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
@@ -776,14 +872,105 @@ private fun AmountField(
     }
 }
 
+// Модель для варианта цены
+data class PriceOption(
+    val label: String,
+    val price: Double = 0.0,
+    val description: String = "",
+    val isCustom: Boolean = false
+)
+
+@Composable
+fun PriceOptions(
+    title: String,
+    options: List<PriceOption>,
+    currentValue: String,
+    onValueSelected: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        
+        options.forEach { option ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable {
+                        if (!option.isCustom) {
+                            onValueSelected(option.price.toString())
+                        }
+                    }
+                    .border(
+                        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        RoundedCornerShape(8.dp)
+                    )
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = if (option.isCustom) {
+                        currentValue.isNotEmpty() && options.none { !it.isCustom && it.price.toString() == currentValue }
+                    } else {
+                        currentValue == option.price.toString()
+                    },
+                    onClick = {
+                        if (!option.isCustom) {
+                            onValueSelected(option.price.toString())
+                        }
+                    }
+                )
+                
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = option.label,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (option.description.isNotEmpty()) {
+                        Text(
+                            text = option.description,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                if (!option.isCustom) {
+                    Text(
+                        text = formatCurrency(option.price),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
+}
+
+// Функция форматирования суммы в валюту
+private fun formatCurrency(amount: Double): String {
+    val formatter = NumberFormat.getCurrencyInstance().apply {
+        maximumFractionDigits = 0
+        currency = java.util.Currency.getInstance("RUB")
+    }
+    return formatter.format(amount)
+}
+
 @Composable
 private fun GuestsField(
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    maxGuests: Int? = null
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Количество гостей",
+            text = "Количество гостей" + (maxGuests?.let { " (макс. $it)" } ?: ""),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(bottom = 4.dp)
@@ -791,7 +978,12 @@ private fun GuestsField(
         
         OutlinedTextField(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = { newValue ->
+                // Проверяем, что не превышен максимум гостей
+                if (maxGuests == null || newValue.isEmpty() || (newValue.toIntOrNull() ?: 0) <= maxGuests) {
+                    onValueChange(newValue)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Введите число") },
             leadingIcon = {
